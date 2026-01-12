@@ -5,15 +5,32 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>لوحة التحكم - FAST NET</title>
 <link rel="stylesheet" href="assets/css/style.css">
+<style>
+body { font-family: Arial, sans-serif; background:#f5f5f5; margin:0; padding:0; }
+header { background:#007bff; color:white; padding:15px; text-align:center; }
+header h1 { margin:0; font-size:1.8em; }
+nav ul { list-style:none; padding:0; display:flex; justify-content:center; margin:10px 0 0 0; flex-wrap:wrap; }
+nav ul li { margin:0 10px; }
+nav ul li a { color:white; text-decoration:none; padding:5px 12px; border-radius:4px; }
+nav ul li a.active, nav ul li a:hover { background-color:#0056b3; }
+main { padding:20px; max-width:1200px; margin:auto; }
+.dashboard { display:flex; gap:20px; flex-wrap:wrap; justify-content:center; margin-bottom:20px; }
+.card { background:white; padding:20px; border-radius:8px; flex:1 1 200px; text-align:center; box-shadow:0 2px 5px rgba(0,0,0,0.1); }
+.card h2 { margin:0 0 10px 0; font-size:2em; }
+.quick-links { text-align:center; margin-top:20px; }
+.quick-links a { display:inline-block; margin:5px 10px; padding:10px 16px; background:#007bff; color:white; text-decoration:none; border-radius:5px; transition:0.3s; }
+.quick-links a:hover { background:#0056b3; }
+footer { text-align:center; padding:15px; background:#f1f1f1; margin-top:30px; }
+</style>
 </head>
 <body>
+
 <header>
 <h1>لوحة التحكم - FAST NET</h1>
 <nav>
 <ul>
 <li><a href="index.html" class="active">الرئيسية</a></li>
 <li><a href="subscribers.html">المشتركين</a></li>
-<li><a href="packages.html">الباقات</a></li>
 <li><a href="payments.html">الدفع</a></li>
 <li><a href="receipts.html">الإيصالات</a></li>
 <li><a href="search.html">بحث المشتركين</a></li>
@@ -36,15 +53,10 @@
 <h2 id="totalRevenue">$0.00</h2>
 <p>إجمالي الإيرادات بالدولار</p>
 </div>
-<div class="card">
-<h2 id="totalPackages">0</h2>
-<p>عدد الباقات</p>
-</div>
 </section>
 
 <section class="quick-links">
 <a href="subscribers.html">المشتركين</a>
-<a href="packages.html">الباقات</a>
 <a href="payments.html">الدفع</a>
 <a href="receipts.html">الإيصالات</a>
 <a href="search.html">بحث المشتركين</a>
@@ -60,7 +72,6 @@
 // تحميل البيانات من LocalStorage
 let subscribers = JSON.parse(localStorage.getItem("subscribers")) || [];
 let receipts = JSON.parse(localStorage.getItem("receipts")) || [];
-let packages = JSON.parse(localStorage.getItem("packages")) || [];
 
 // تحديث الأرقام على لوحة التحكم
 document.getElementById("totalSubscribers").textContent = subscribers.length;
@@ -68,13 +79,12 @@ document.getElementById("totalReceipts").textContent = receipts.length;
 
 // حساب إجمالي الإيرادات
 let totalRevenue = 0;
-subscribers.forEach(sub=>{
-totalRevenue += parseFloat(sub.paid || 0);
+subscribers.forEach(sub => {
+    const paid = sub.payments?.reduce((sum, p) => sum + Number(p.amount), 0) || 0;
+    totalRevenue += paid;
 });
 document.getElementById("totalRevenue").textContent = `$${totalRevenue.toFixed(2)}`;
-
-// عدد الباقات
-document.getElementById("totalPackages").textContent = packages.length;
 </script>
+
 </body>
 </html>
