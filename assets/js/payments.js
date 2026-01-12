@@ -105,4 +105,43 @@ function sendWhatsApp(id, amount = null, month = null){
     const sub = subscribers.find(s => s.id === id);
     let lastPayment = sub.payments[sub.payments.length - 1];
     if(!lastPayment) return alert("لا توجد دفعات.");
-    const msg = `📩 إشعار دفع FAST NET\n👤 المشترك: ${sub.name}\n💰 المبلغ المدفوع: $${amount ?? lastPayment.amount}\n💵 المبلغ الم
+    const msg = `📩 إشعار دفع FAST NET\n👤 المشترك: ${sub.name}\n💰 المبلغ المدفوع: $${amount ?? lastPayment.amount}\n💵 المبلغ المتبقي: $${sub.remaining}\n🗓️ الشهر: ${month ?? lastPayment.month}\n📅 التاريخ: ${lastPayment.date}`;
+    window.open(`https://wa.me/${sub.phone}?text=${encodeURIComponent(msg)}`, "_blank");
+}
+
+function printReceipt(id){
+    const sub = subscribers.find(s => s.id === id);
+    if(!sub || sub.payments.length === 0) return alert("لا توجد دفعات للطباعة.");
+
+    const lastPayment = sub.payments[sub.payments.length - 1];
+    const receipt = receipts.find(r => r.subscriberId === id && r.amount === lastPayment.amount && r.date === lastPayment.date);
+    if(!receipt) return alert("الإيصال غير موجود.");
+
+    const status = receipt.remaining===0 ? 'مدفوع كليًا' : (receipt.remaining<receipt.total ? 'مدفوع جزئيًا':'غير مدفوع');
+
+    const win = window.open("", "PrintReceipt", "width=300,height=600");
+    win.document.write(`
+    <div style="font-family:Arial, sans-serif; width:280px; padding:10px; line-height:1.5; font-size:14px;">
+        <h2 style="text-align:center; margin:0;">FAST NET</h2>
+        <p style="text-align:center; margin:2px 0;">71346411 / 71338640</p>
+        <hr style="margin:5px 0;">
+        <table style="width:100%; border-collapse:collapse;">
+            <tr><td><strong>رقم الإيصال:</strong></td><td>${receipt.id}</td></tr>
+            <tr><td><strong>المشترك:</strong></td><td>${sub.name}</td></tr>
+            <tr><td><strong>رقم الهاتف:</strong></td><td>${sub.phone}</td></tr>
+            <tr><td><strong>سعر الاشتراك:</strong></td><td>$${receipt.total}</td></tr>
+            <tr><td><strong>المبلغ المدفوع:</strong></td><td>$${receipt.amount}</td></tr>
+            <tr><td><strong>المتبقي:</strong></td><td>$${receipt.remaining}</td></tr>
+            <tr><td><strong>الشهر:</strong></td><td>${receipt.month}</td></tr>
+            <tr><td><strong>حالة الدفع:</strong></td><td>${status}</td></tr>
+            <tr><td><strong>تاريخ الدفع:</strong></td><td>${receipt.date}</td></tr>
+        </table>
+        <hr style="margin:5px 0;">
+        <p style="text-align:center; margin:5px 0;">📩 شكراً لاستخدامكم خدماتنا! 🚀</p>
+    </div>
+    `);
+    win.print();
+}
+
+// عرض الجدول عند تحميل الصفحة
+renderTable();
