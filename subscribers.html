@@ -78,7 +78,7 @@
         if(!name || !phone || isNaN(price)) return alert("الرجاء إدخال بيانات صحيحة");
 
         const newId = subscribers.length > 0 ? subscribers[subscribers.length-1].id + 1 : 1;
-        subscribers.push({id: newId, name, phone, price, remaining: price});
+        subscribers.push({id: newId, name, phone, price, remaining: price, payments: []});
         localStorage.setItem("subscribers", JSON.stringify(subscribers));
         form.reset();
         renderTable();
