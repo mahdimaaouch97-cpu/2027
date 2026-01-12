@@ -22,6 +22,7 @@ th { background-color: #007bff; color: white; }
 .home-btn:hover { background-color: #0056b3; }
 #importFile { display: none; }
 #search, #filterStatus { max-width: 300px; margin: 10px auto; display: block; padding: 8px; }
+.reminder-btn { background-color: #25D366; color:white; font-size:12px; padding:3px 6px; border-radius:3px; margin-left:5px; }
 </style>
 </head>
 <body>
@@ -33,7 +34,6 @@ th { background-color: #007bff; color: white; }
     <button class="home-btn" onclick="goPayments()">صفحة الدفع</button>
 </div>
 
-<!-- شريط البحث والفلاتر -->
 <input type="text" id="search" placeholder="ابحث عن المشترك بالاسم..." onkeyup="renderTable()">
 <select id="filterStatus" onchange="renderTable()">
     <option value="all">الكل</option>
@@ -66,14 +66,13 @@ th { background-color: #007bff; color: white; }
             <th>المدفوع ($)</th>
             <th>المتبقي ($)</th>
             <th>حالة الدفع</th>
-            <th>حذف</th>
+            <th>إجراءات</th>
         </tr>
     </thead>
     <tbody></tbody>
 </table>
 
 <script>
-// جلب البيانات من LocalStorage
 let subscribers = JSON.parse(localStorage.getItem("subscribers")) || [];
 
 // تصحيح البيانات القديمة
@@ -108,7 +107,6 @@ function renderTable(){
         if(remaining == 0) status = "full";
         else if(remaining < sub.price) status = "partial";
 
-        // فلتر حسب البحث
         const matchesSearch = sub.name.toLowerCase().includes(searchValue);
         const matchesFilter = filterValue === "all" || status === filterValue;
 
@@ -137,7 +135,10 @@ function renderTable(){
             <td>$${paidAmount}</td>
             <td>$${remaining}</td>
             <td class="${statusClass}">${statusText}</td>
-            <td><button class="delete-btn" onclick="deleteSubscriber(${sub.id})">حذف</button></td>
+            <td>
+                <button class="delete-btn" onclick="deleteSubscriber(${sub.id})">حذف</button>
+                ${remaining > 0 ? `<button class="reminder-btn" onclick="sendReminder(${sub.id})">تذكير واتساب</button>` : ''}
+            </td>
         `;
         tableBody.appendChild(tr);
     });
@@ -174,6 +175,25 @@ function deleteAllSubscribers(){
     renderTable();
 }
 
+// إرسال تذكير واتساب
+function sendReminder(id){
+    const sub = subscribers.find(s => s.id === id);
+    const paidAmount = sub.payments.reduce((sum, p) => sum + Number(p.amount), 0).toFixed(2);
+    const remaining = (sub.price - paidAmount).toFixed(2);
+    const today = new Date().toLocaleDateString();
+    const statusText = remaining < sub.price ? 'مدفوع جزئيًا' : 'غير مدفوع';
+
+    const msg = `عزيزي المشترك/ة، نذكركم بتسديد اشتراك الإنترنت.
+👤 الاسم: ${sub.name}
+💵 المبلغ المتبقي: $${remaining}
+📅 التاريخ: ${today}
+📌 الحالة: ${statusText}
+
+شكراً لاستخدامكم خدماتنا! 🚀`;
+
+    window.open(`https://wa.me/${sub.phone}?text=${encodeURIComponent(msg)}`, "_blank");
+}
+
 // استيراد CSV
 function importCSV(event){
     const file = event.target.files[0];
@@ -182,7 +202,7 @@ function importCSV(event){
     reader.onload = function(e){
         const text = e.target.result;
         const rows = text.trim().split("\n");
-        rows.shift(); // تجاهل العنوان
+        rows.shift();
         rows.forEach(row=>{
             const cols = row.split(",").map(c => c.replace(/^"(.*)"$/,'$1').trim());
             const [id,name,phone,price,paid,remaining,status] = cols;
@@ -206,7 +226,7 @@ function importCSV(event){
     reader.readAsText(file, "UTF-8");
 }
 
-// تصدير CSV مع دعم العربية
+// تصدير CSV
 function exportCSV(){
     if(subscribers.length === 0) return alert("لا يوجد مشتركين للتصدير");
     const headers = ["ID","اسم المشترك","رقم الهاتف","سعر الاشتراك","المدفوع","المتبقي","حالة الدفع"];
