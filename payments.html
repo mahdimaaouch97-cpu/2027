@@ -42,102 +42,105 @@
 </table>
 
 <script>
-    let subscribers = JSON.parse(localStorage.getItem("subscribers")) || [];
+let subscribers = JSON.parse(localStorage.getItem("subscribers")) || [];
+const tableBody = document.querySelector("#subscribersTable tbody");
 
-    const tableBody = document.querySelector("#subscribersTable tbody");
+function renderTable() {
+    tableBody.innerHTML = "";
+    if(subscribers.length === 0){
+        tableBody.innerHTML = `<tr><td colspan="8">لا يوجد مشتركين حاليا.</td></tr>`;
+        return;
+    }
+    subscribers.forEach(sub => {
+        let status = "غير مدفوع";
+        if(sub.remaining === 0) status = "مدفوع كليًا";
+        else if(sub.remaining < sub.price) status = "مدفوع جزئيًا";
 
-    function renderTable() {
-        tableBody.innerHTML = "";
-        if(subscribers.length === 0){
-            const tr = document.createElement("tr");
-            tr.innerHTML = `<td colspan="8">لا يوجد مشتركين حاليا.</td>`;
-            tableBody.appendChild(tr);
-            return;
-        }
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td>${sub.id}</td>
+            <td>${sub.name}</td>
+            <td>${sub.phone}</td>
+            <td>$${sub.price}</td>
+            <td>$${sub.remaining}</td>
+            <td>${status}</td>
+            <td>
+                <input type="number" id="pay-${sub.id}" placeholder="المبلغ" min="0" max="${sub.remaining}" ${sub.remaining === 0 ? "disabled" : ""}>
+                <button class="pay-btn" onclick="pay(${sub.id})" ${sub.remaining === 0 ? "disabled" : ""}>دفع</button>
+            </td>
+            <td>
+                <button class="print-btn" onclick="printReceipt(${sub.id})">طباعة</button>
+            </td>
+        `;
+        tableBody.appendChild(tr);
+    });
+}
 
-        subscribers.forEach(sub => {
-            let status = "غير مدفوع";
-            if(sub.remaining === 0) status = "مدفوع كليًا";
-            else if(sub.remaining < sub.price) status = "مدفوع جزئيًا";
+function pay(id) {
+    const sub = subscribers.find(s => s.id === id);
+    const input = document.getElementById(`pay-${id}`);
+    let amount = parseFloat(input.value);
 
-            const tr = document.createElement("tr");
-            tr.innerHTML = `
-                <td>${sub.id}</td>
-                <td>${sub.name}</td>
-                <td>${sub.phone}</td>
-                <td>$${sub.price}</td>
-                <td>$${sub.remaining}</td>
-                <td>${status}</td>
-                <td>
-                    <input type="number" id="pay-${sub.id}" placeholder="المبلغ" min="0" max="${sub.remaining}" ${sub.remaining === 0 ? "disabled" : ""}>
-                    <button class="pay-btn" onclick="pay(${sub.id})" ${sub.remaining === 0 ? "disabled" : ""}>دفع</button>
-                </td>
-                <td>
-                    <button class="print-btn" onclick="printReceipt(${sub.id})">طباعة</button>
-                </td>
-            `;
-            tableBody.appendChild(tr);
-        });
+    if(!input.value || isNaN(amount) || amount <= 0) {
+        alert("الرجاء إدخال مبلغ صالح أكبر من صفر.");
+        return;
     }
 
-    function pay(id) {
-        const sub = subscribers.find(s => s.id === id);
-        const input = document.getElementById(`pay-${id}`);
-        let amount = parseFloat(input.value);
-
-        if(isNaN(amount) || amount <= 0) {
-            alert("الرجاء إدخال مبلغ صالح أكبر من صفر.");
-            return;
-        }
-
-        if(amount > sub.remaining) {
-            alert(`المبلغ المدفوع أكبر من المبلغ المتبقي ($${sub.remaining}).`);
-            return;
-        }
-
-        sub.remaining -= amount; // خصم المبلغ المدفوع
-        localStorage.setItem("subscribers", JSON.stringify(subscribers)); // حفظ التغيير
-
-        alert(`تم دفع $${amount} للمشترك ${sub.name}. المبلغ المتبقي: $${sub.remaining}`);
-
-        input.value = ""; // مسح الحقل
-        renderTable(); // تحديث الجدول
+    if(amount > sub.remaining) {
+        alert(`المبلغ المدفوع أكبر من المبلغ المتبقي ($${sub.remaining}).`);
+        return;
     }
 
-    function printReceipt(id) {
-        const sub = subscribers.find(s => s.id === id);
-        const status = sub.remaining === 0 ? "مدفوع كليًا" : (sub.remaining < sub.price ? "مدفوع جزئيًا" : "غير مدفوع");
-        const receiptWindow = window.open("", "PrintReceipt", "width=400,height=600");
-        receiptWindow.document.write(`
-            <h2 style="text-align:center;">FAST NET</h2>
-            <p>رقم الإيصال: ${Math.floor(Math.random()*10000)}</p>
-            <p>المشترك: ${sub.name}</p>
-            <p>رقم الهاتف: ${sub.phone}</p>
-            <p>سعر الاشتراك: $${sub.price}</p>
-            <p>المتبقي: $${sub.remaining}</p>
-            <p>حالة الدفع: ${status}</p>
-            <p>التاريخ: ${new Date().toLocaleDateString()}</p>
-            <hr>
-            <p style="text-align:center;">شكراً لاستخدامكم FAST NET</p>
-        `);
-        receiptWindow.print();
-    }
+    sub.remaining -= amount;
+    sub.payments.push({amount, date: new Date().toLocaleDateString()}); // سجل الدفعة
+    localStorage.setItem("subscribers", JSON.stringify(subscribers));
 
-    function searchTable() {
-        const filter = document.getElementById("search").value.toLowerCase();
-        const trs = tableBody.getElementsByTagName("tr");
-        Array.from(trs).forEach(tr => {
-            const name = tr.cells[1]?.textContent.toLowerCase() || "";
-            const phone = tr.cells[2]?.textContent.toLowerCase() || "";
-            if(name.includes(filter) || phone.includes(filter)) {
-                tr.style.display = "";
-            } else {
-                tr.style.display = "none";
-            }
-        });
-    }
+    alert(`تم دفع $${amount} للمشترك ${sub.name}. المبلغ المتبقي: $${sub.remaining}`);
 
+    input.value = "";
     renderTable();
+}
+
+function printReceipt(id) {
+    const sub = subscribers.find(s => s.id === id);
+    const status = sub.remaining === 0 ? "مدفوع كليًا" : (sub.remaining < sub.price ? "مدفوع جزئيًا" : "غير مدفوع");
+
+    const receiptWindow = window.open("", "PrintReceipt", "width=400,height=600");
+
+    let paymentsHtml = "";
+    sub.payments.forEach((p, i) => {
+        paymentsHtml += `<p>الدفعة ${i+1}: $${p.amount} (${p.date})</p>`;
+    });
+
+    receiptWindow.document.write(`
+        <h2 style="text-align:center;">FAST NET</h2>
+        <p>رقم الإيصال: ${Math.floor(Math.random()*10000)}</p>
+        <p>المشترك: ${sub.name}</p>
+        <p>رقم الهاتف: ${sub.phone}</p>
+        <p>سعر الاشتراك: $${sub.price}</p>
+        <p>المتبقي: $${sub.remaining}</p>
+        <p>حالة الدفع: ${status}</p>
+        <hr>
+        <h4>سجل الدفعات:</h4>
+        ${paymentsHtml || "<p>لا توجد دفعات حتى الآن</p>"}
+        <hr>
+        <p style="text-align:center;">شكراً لاستخدامكم FAST NET</p>
+    `);
+
+    receiptWindow.print();
+}
+
+function searchTable() {
+    const filter = document.getElementById("search").value.toLowerCase();
+    const trs = tableBody.getElementsByTagName("tr");
+    Array.from(trs).forEach(tr => {
+        const name = tr.cells[1]?.textContent.toLowerCase() || "";
+        const phone = tr.cells[2]?.textContent.toLowerCase() || "";
+        tr.style.display = (name.includes(filter) || phone.includes(filter)) ? "" : "none";
+    });
+}
+
+renderTable();
 </script>
 
 </body>
