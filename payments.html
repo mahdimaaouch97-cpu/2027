@@ -133,7 +133,6 @@ function pay(id) {
     sub.payments.push({ amount, month, date: new Date().toLocaleDateString() });
     localStorage.setItem("subscribers", JSON.stringify(subscribers));
 
-    // إضافة إيصال جديد
     receipts.push({
         id: `${sub.id}-${sub.payments.length}`,
         subscriberId: sub.id,
@@ -142,6 +141,7 @@ function pay(id) {
         amount: amount,
         remaining: sub.remaining,
         total: sub.price,
+        month: month,
         date: new Date().toLocaleDateString()
     });
     localStorage.setItem("receipts", JSON.stringify(receipts));
@@ -149,7 +149,6 @@ function pay(id) {
     document.getElementById(`pay-${id}`).value = "";
     renderTable();
 
-    // إرسال رسالة واتساب
     const msg = `📩 إشعار دفع FAST NET\n👤 المشترك: ${sub.name}\n💰 المبلغ المدفوع: $${amount}\n💵 المبلغ المتبقي: $${sub.remaining}\n🗓️ الشهر: ${month}\n📅 التاريخ: ${new Date().toLocaleDateString()}`;
     window.open(`https://wa.me/${sub.phone}?text=${encodeURIComponent(msg)}`, "_blank");
 }
@@ -163,28 +162,30 @@ function sendWhatsApp(id){
 }
 
 function printReceipt(id){
-    const subReceipts = receipts.filter(r => r.subscriberId === id);
-    if(subReceipts.length === 0) return alert("لا يوجد إيصال للطباعة.");
-    
-    const receipt = subReceipts[subReceipts.length - 1];
+    const receipt = receipts.find(r => r.id === `${id}-${subscribers.find(s=>s.id===id).payments.length}`);
+    if(!receipt) return;
+
+    const sub = subscribers.find(s => s.id === id);
+    const status = receipt.remaining===0 ? 'مدفوع كليًا' : (receipt.remaining<receipt.total ? 'مدفوع جزئيًا':'غير مدفوع');
 
     const win = window.open("", "PrintReceipt", "width=300,height=600");
-    const status = receipt.remaining===0 ? 'مدفوع كليًا' : (receipt.remaining<receipt.total ? 'مدفوع جزئيًا':'غير مدفوع');
     win.document.write(`
-    <div style="font-family:Arial; width:280px; padding:10px;">
-        <h3 style="text-align:center;">FAST NET</h3>
-        <p style="text-align:center;">هاتف الشركة: 71346411 / 71338640</p>
-        <hr>
-        <p><strong>رقم الإيصال:</strong> ${receipt.id}</p>
-        <p><strong>المشترك:</strong> ${receipt.name}</p>
-        <p><strong>رقم الهاتف:</strong> ${receipt.phone}</p>
-        <p><strong>سعر الاشتراك:</strong> $${receipt.total}</p>
-        <p><strong>المبلغ المدفوع:</strong> $${receipt.amount}</p>
-        <p><strong>المتبقي:</strong> $${receipt.remaining}</p>
-        <p><strong>حالة الدفع:</strong> ${status}</p>
-        <p><strong>تاريخ الدفع:</strong> ${receipt.date}</p>
-        <hr>
-        <p style="text-align:center;">شكراً لاستخدامكم خدماتنا!</p>
+    <div style="font-family:Arial, sans-serif; width:280px; padding:10px; line-height:1.4;">
+        <h2 style="text-align:center; margin:5px 0;">FAST NET</h2>
+        <p style="text-align:center; margin:2px 0;">هاتف الشركة: 71346411 / 71338640</p>
+        <hr style="margin:5px 0;">
+        <table style="width:100%; border-collapse:collapse;">
+            <tr><td><strong>المشترك:</strong></td><td>${sub.name}</td></tr>
+            <tr><td><strong>رقم الهاتف:</strong></td><td>${sub.phone}</td></tr>
+            <tr><td><strong>سعر الاشتراك:</strong></td><td>$${receipt.total}</td></tr>
+            <tr><td><strong>المبلغ المدفوع:</strong></td><td>$${receipt.amount}</td></tr>
+            <tr><td><strong>المتبقي:</strong></td><td>$${receipt.remaining}</td></tr>
+            <tr><td><strong>الشهر:</strong></td><td>${receipt.month}</td></tr>
+            <tr><td><strong>حالة الدفع:</strong></td><td>${status}</td></tr>
+            <tr><td><strong>تاريخ الدفع:</strong></td><td>${receipt.date}</td></tr>
+        </table>
+        <hr style="margin:5px 0;">
+        <p style="text-align:center; margin:5px 0;">📩 شكراً لاستخدامكم خدماتنا! 🚀</p>
     </div>
     `);
     win.print();
