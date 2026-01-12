@@ -38,18 +38,11 @@
         </tr>
     </thead>
     <tbody>
-        <!-- البيانات ستظهر هنا بواسطة JavaScript -->
     </tbody>
 </table>
 
 <script>
-    // جلب المشتركين من LocalStorage
     let subscribers = JSON.parse(localStorage.getItem("subscribers")) || [];
-
-    // إذا لم يكن موجود المتغير "remaining" لكل مشترك، نهيئه بقيمة سعر الاشتراك
-    subscribers.forEach(sub => {
-        if(sub.remaining === undefined) sub.remaining = sub.price;
-    });
 
     const tableBody = document.querySelector("#subscribersTable tbody");
 
@@ -61,6 +54,7 @@
             tableBody.appendChild(tr);
             return;
         }
+
         subscribers.forEach(sub => {
             let status = "غير مدفوع";
             if(sub.remaining === 0) status = "مدفوع كليًا";
@@ -99,7 +93,7 @@
             return;
         }
         sub.remaining -= amount;
-        localStorage.setItem("subscribers", JSON.stringify(subscribers)); // تحديث البيانات في LocalStorage
+        localStorage.setItem("subscribers", JSON.stringify(subscribers));
         alert(`تم دفع $${amount} للمشترك ${sub.name}. المبلغ المتبقي: $${sub.remaining}`);
         input.value = "";
         renderTable();
@@ -107,8 +101,8 @@
 
     function printReceipt(id) {
         const sub = subscribers.find(s => s.id === id);
-        const receiptWindow = window.open("", "PrintReceipt", "width=400,height=600");
         const status = sub.remaining === 0 ? "مدفوع كليًا" : (sub.remaining < sub.price ? "مدفوع جزئيًا" : "غير مدفوع");
+        const receiptWindow = window.open("", "PrintReceipt", "width=400,height=600");
         receiptWindow.document.write(`
             <h2 style="text-align:center;">FAST NET</h2>
             <p>رقم الإيصال: ${Math.floor(Math.random()*10000)}</p>
