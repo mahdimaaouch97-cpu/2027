@@ -41,16 +41,19 @@
 </table>
 
 <script>
-    // مثال بيانات المشتركين
-    const subscribers = [
-        {id: 1, name: "أحمد محمد", phone: "71346411", price: 50},
-        {id: 2, name: "سارة علي", phone: "71338640", price: 80}
-    ];
+    // جلب المشتركين من LocalStorage
+    let subscribers = JSON.parse(localStorage.getItem("subscribers")) || [];
 
     const tableBody = document.querySelector("#subscribersTable tbody");
 
     function renderTable() {
         tableBody.innerHTML = "";
+        if(subscribers.length === 0){
+            const tr = document.createElement("tr");
+            tr.innerHTML = `<td colspan="6">لا يوجد مشتركين حاليا.</td>`;
+            tableBody.appendChild(tr);
+            return;
+        }
         subscribers.forEach(sub => {
             const tr = document.createElement("tr");
             tr.innerHTML = `
@@ -83,6 +86,7 @@
             return;
         }
         sub.price -= amount;
+        localStorage.setItem("subscribers", JSON.stringify(subscribers)); // تحديث البيانات في LocalStorage
         alert(`تم دفع $${amount} للمشترك ${sub.name}. المبلغ المتبقي: $${sub.price}`);
         input.value = "";
         renderTable();
@@ -108,8 +112,8 @@
         const filter = document.getElementById("search").value.toLowerCase();
         const trs = tableBody.getElementsByTagName("tr");
         Array.from(trs).forEach(tr => {
-            const name = tr.cells[1].textContent.toLowerCase();
-            const phone = tr.cells[2].textContent.toLowerCase();
+            const name = tr.cells[1]?.textContent.toLowerCase() || "";
+            const phone = tr.cells[2]?.textContent.toLowerCase() || "";
             if(name.includes(filter) || phone.includes(filter)) {
                 tr.style.display = "";
             } else {
