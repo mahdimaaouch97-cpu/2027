@@ -193,7 +193,7 @@ function pay(id) {
     input.value = "";
     renderTable();
 
-    // إرسال واتساب تلقائي بعد الدفع مع كل التفاصيل
+    // واتس أب بعد الدفع (كما كانت)
     const lastPayment = sub.payments[sub.payments.length-1];
     const today = new Date().toLocaleDateString();
     let status = "❌ غير مدفوع";
@@ -205,6 +205,7 @@ function pay(id) {
 👤 المشترك/ة: ${sub.name}
 📞 الهاتف: ${sub.phone}
 💲 سعر الاشتراك: $${sub.price}
+
 💰 المبلغ المدفوع: $${lastPayment.amount}
 💵 المبلغ المتبقي: $${sub.remaining}
 🗓️ الشهر: ${lastPayment.month}
@@ -228,6 +229,7 @@ function sendWhatsApp(id) {
 👤 المشترك/ة: ${sub.name}
 📞 الهاتف: ${sub.phone}
 💲 سعر الاشتراك: $${sub.price}
+
 💰 المبلغ المدفوع: $${last.amount}
 💵 المبلغ المتبقي: $${sub.remaining}
 🗓️ الشهر: ${last.month}
@@ -240,8 +242,54 @@ function sendWhatsApp(id) {
 
 function printReceipt(id) {
     const sub = subscribers.find(s => s.id === id);
-    const win = window.open("", "", "width=400,height=600");
-    win.document.write(`<h3>FAST NET</h3><p>${sub.name}</p>`);
+    const today = new Date().toLocaleDateString();
+
+    let status = "غير مدفوع";
+    if(sub.remaining === 0) status = "مدفوع كليًا";
+    else if(sub.remaining < sub.price) status = "مدفوع جزئيًا";
+
+    let paymentsHtml = "";
+    if(sub.payments.length === 0) {
+        paymentsHtml = "<p>لا توجد دفعات حتى الآن</p>";
+    } else {
+        sub.payments.forEach((p,i) => {
+            paymentsHtml += `<p>الدفعة ${i+1} (شهر ${p.month}): $${p.amount} (${p.date})</p>`;
+        });
+    }
+
+    const companyName = "FAST NET";
+    const companyPhones = "71346411 / 71338640";
+
+    const win = window.open("", "PrintReceipt", "width=400,height=600");
+    win.document.write(`
+<html>
+<head>
+<title>إيصال ${companyName}</title>
+<style>
+body { font-family: Arial, sans-serif; padding: 20px; }
+h2 { text-align:center; }
+hr { margin:10px 0; }
+p { margin:5px 0; }
+</style>
+</head>
+<body>
+<h2>${companyName}</h2>
+<p>📞 الشركة: ${companyPhones}</p>
+<p>رقم الإيصال: ${Math.floor(Math.random()*10000)}</p>
+<p>المشترك/ة: ${sub.name}</p>
+<p>رقم الهاتف: ${sub.phone}</p>
+<p>سعر الاشتراك: $${sub.price}</p>
+<p>المبلغ المتبقي: $${sub.remaining}</p>
+<p>حالة الدفع: ${status}</p>
+<hr>
+<h4>سجل الدفعات:</h4>
+${paymentsHtml}
+<hr>
+<p>التاريخ: ${today}</p>
+<p style="text-align:center;">شكراً لاستخدامكم خدماتنا! 🚀</p>
+</body>
+</html>
+`);
     win.print();
 }
 
