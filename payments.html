@@ -1,170 +1,93 @@
 <!DOCTYPE html>
 <html lang="ar">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>الدفع - POSNEW</title>
-<link rel="stylesheet" href="assets/css/style.css">
-<style>
-body { font-family: Arial, sans-serif; background: #f5f5f5; padding: 20px; }
-h1 { text-align: center; margin-bottom: 20px; }
-#search, #filterStatus { margin-bottom: 15px; padding: 8px; width: 100%; max-width: 400px; display: block; margin-left: auto; margin-right: auto; }
-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-th, td { padding: 10px; border: 1px solid #ddd; text-align: center; }
-th { background-color: #007bff; color: white; }
-input[type="number"] { width: 80px; padding: 5px; }
-button { padding: 5px 10px; margin: 2px; cursor: pointer; }
-.print-btn { background-color: #28a745; color: white; border: none; }
-.pay-btn { background-color: #ffc107; border: none; }
-</style>
+    <meta charset="UTF-8">
+    <title>صفحة الدفع</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f9f9f9;
+            margin: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: #fff;
+        }
+        th, td {
+            padding: 12px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+        button {
+            padding: 6px 12px;
+            background-color: #25D366;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        button:hover {
+            background-color: #1ebe57;
+        }
+    </style>
 </head>
 <body>
 
-<h1>صفحة الدفع</h1>
+<h2>صفحة الدفع</h2>
 
-<input type="text" id="search" placeholder="ابحث عن المشترك بالاسم أو رقم الهاتف..." onkeyup="renderTable()">
-
-<select id="filterStatus" onchange="renderTable()">
-    <option value="all">الكل</option>
-    <option value="full">مدفوع كليًا</option>
-    <option value="partial">مدفوع جزئيًا</option>
-    <option value="unpaid">غير مدفوع</option>
-</select>
-
-<table id="subscribersTable">
-<thead>
-<tr>
-<th>رقم المشترك</th>
-<th>الإسم</th>
-<th>رقم الهاتف</th>
-<th>سعر الاشتراك ($)</th>
-<th>المتبقي ($)</th>
-<th>حالة الدفع</th>
-<th>الدفع</th>
-<th>طباعة الإيصال</th>
-</tr>
-</thead>
-<tbody></tbody>
+<table id="paymentsTable">
+    <thead>
+        <tr>
+            <th>اسم المشترك</th>
+            <th>رقم الهاتف</th>
+            <th>المبلغ</th>
+            <th>الشهر</th>
+            <th>إرسال واتساب</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Mahdi Maaouch</td>
+            <td>96171346411</td>
+            <td>50$</td>
+            <td>يناير</td>
+            <td><button class="waBtn">أرسل رسالة</button></td>
+        </tr>
+        <tr>
+            <td>FAST NET</td>
+            <td>96171338640</td>
+            <td>75$</td>
+            <td>يناير</td>
+            <td><button class="waBtn">أرسل رسالة</button></td>
+        </tr>
+        <!-- يمكنك إضافة المزيد من الصفوف هنا -->
+    </tbody>
 </table>
 
 <script>
-let subscribers = JSON.parse(localStorage.getItem("subscribers")) || [];
+document.querySelectorAll(".waBtn").forEach(button => {
+    button.addEventListener("click", function() {
+        // إيجاد الصف الحالي
+        let row = this.closest("tr");
+        let subscriberName = row.cells[0].innerText;
+        let phone = row.cells[1].innerText;
+        let amount = row.cells[2].innerText;
+        let month = row.cells[3].innerText;
 
-// ✅ تصحيح أي بيانات قديمة أو ناقصة
-subscribers = subscribers.map((sub, index) => {
-    return {
-        id: sub.id !== undefined ? sub.id : index + 1,
-        name: sub.name || "بدون اسم",
-        phone: sub.phone || "غير محدد",
-        price: sub.price !== undefined ? sub.price : 0,
-        remaining: sub.remaining !== undefined ? sub.remaining : (sub.price || 0),
-        payments: Array.isArray(sub.payments) ? sub.payments : []
-    };
+        // تكوين الرسالة
+        let message = `مرحباً ${subscriberName},\nتم استلام دفع بقيمة ${amount} لشهر ${month}.`;
+
+        // فتح واتساب
+        let url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+        window.open(url, "_blank");
+    });
 });
-localStorage.setItem("subscribers", JSON.stringify(subscribers));
-
-const tableBody = document.querySelector("#subscribersTable tbody");
-
-function renderTable() {
-    const searchFilter = document.getElementById("search").value.toLowerCase();
-    const statusFilter = document.getElementById("filterStatus").value;
-
-    tableBody.innerHTML = "";
-
-    let filteredSubscribers = subscribers.filter(sub => {
-        let status = "unpaid";
-        if(sub.remaining === 0) status = "full";
-        else if(sub.remaining < sub.price) status = "partial";
-
-        if(statusFilter !== "all" && status !== statusFilter) return false;
-
-        return sub.name.toLowerCase().includes(searchFilter) || sub.phone.toLowerCase().includes(searchFilter);
-    });
-
-    if(filteredSubscribers.length === 0){
-        tableBody.innerHTML = `<tr><td colspan="8">لا يوجد مشتركين مطابقين.</td></tr>`;
-        return;
-    }
-
-    filteredSubscribers.forEach(sub => {
-        let statusText = "غير مدفوع";
-        if(sub.remaining === 0) statusText = "مدفوع كليًا";
-        else if(sub.remaining < sub.price) statusText = "مدفوع جزئيًا";
-
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-<td>${sub.id}</td>
-<td>${sub.name}</td>
-<td>${sub.phone}</td>
-<td>$${sub.price}</td>
-<td>$${sub.remaining}</td>
-<td>${statusText}</td>
-<td>
-<input type="number" id="pay-${sub.id}" placeholder="المبلغ" min="0.01" max="${sub.remaining}" step="0.01" ${sub.remaining===0?"disabled":""}>
-<button class="pay-btn" onclick="pay(${sub.id})" ${sub.remaining===0?"disabled":""}>دفع</button>
-</td>
-<td><button class="print-btn" onclick="printReceipt(${sub.id})">طباعة</button></td>
-`;
-        tableBody.appendChild(tr);
-    });
-}
-
-function pay(id) {
-    const sub = subscribers.find(s => s.id === id);
-    const input = document.getElementById(`pay-${id}`);
-    let amount = parseFloat(input.value.trim());
-
-    if(isNaN(amount) || amount <= 0){
-        alert("الرجاء إدخال مبلغ صالح أكبر من صفر.");
-        return;
-    }
-
-    if(amount > sub.remaining){
-        alert(`المبلغ المدفوع أكبر من المبلغ المتبقي ($${sub.remaining}).`);
-        return;
-    }
-
-    sub.remaining -= amount;
-    sub.remaining = parseFloat(sub.remaining.toFixed(2));
-    sub.payments.push({amount, date: new Date().toLocaleDateString()});
-    localStorage.setItem("subscribers", JSON.stringify(subscribers));
-
-    alert(`تم دفع $${amount} للمشترك ${sub.name}. المبلغ المتبقي: $${sub.remaining}`);
-
-    input.value = "";
-    renderTable();
-}
-
-function printReceipt(id) {
-    const sub = subscribers.find(s => s.id === id);
-    const status = sub.remaining===0?"مدفوع كليًا":(sub.remaining<sub.price?"مدفوع جزئيًا":"غير مدفوع");
-
-    const receiptWindow = window.open("", "PrintReceipt", "width=400,height=600");
-
-    let paymentsHtml="";
-    sub.payments.forEach((p,i)=>{
-        paymentsHtml+=`<p>الدفعة ${i+1}: $${p.amount} (${p.date})</p>`;
-    });
-
-    receiptWindow.document.write(`
-<h2 style="text-align:center;">FAST NET</h2>
-<p>رقم الإيصال: ${Math.floor(Math.random()*10000)}</p>
-<p>المشترك: ${sub.name}</p>
-<p>رقم الهاتف: ${sub.phone}</p>
-<p>سعر الاشتراك: $${sub.price}</p>
-<p>المتبقي: $${sub.remaining}</p>
-<p>حالة الدفع: ${status}</p>
-<hr>
-<h4>سجل الدفعات:</h4>
-${paymentsHtml || "<p>لا توجد دفعات حتى الآن</p>"}
-<hr>
-<p style="text-align:center;">شكراً لاستخدامكم FAST NET</p>
-`);
-
-    receiptWindow.print();
-}
-
-renderTable();
 </script>
 
 </body>
