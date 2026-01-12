@@ -29,6 +29,7 @@ th { background-color: #007bff; color: white; }
 
 <div style="text-align:center; margin-bottom:15px;">
     <button class="home-btn" onclick="goHome()">العودة إلى الصفحة الرئيسية</button>
+    <button class="home-btn" onclick="goPayments()">الذهاب إلى صفحة الدفع</button>
 </div>
 
 <form id="addSubscriberForm">
@@ -83,6 +84,11 @@ const tableBody = document.querySelector("#subscribersTable tbody");
 // دالة العودة للصفحة الرئيسية
 function goHome(){
     window.location.href = "index.html"; // ضع الرابط الصحيح
+}
+
+// دالة الذهاب إلى صفحة الدفع
+function goPayments(){
+    window.location.href = "payments.html"; // ضع الرابط الصحيح
 }
 
 // عرض الجدول
