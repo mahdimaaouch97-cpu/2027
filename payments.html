@@ -70,7 +70,6 @@ subscribers = subscribers.map((sub, index) => ({
     remaining: sub.remaining !== undefined ? Number(sub.remaining) : Number(sub.price) || 0,
     payments: Array.isArray(sub.payments) ? sub.payments : []
 }));
-
 localStorage.setItem("subscribers", JSON.stringify(subscribers));
 
 function renderTable() {
@@ -164,8 +163,10 @@ function sendWhatsApp(id){
 }
 
 function printReceipt(id){
-    const receipt = receipts.find(r => r.id === `${id}-${subscribers.find(s=>s.id===id).payments.length}`);
-    if(!receipt) return;
+    const subReceipts = receipts.filter(r => r.subscriberId === id);
+    if(subReceipts.length === 0) return alert("لا يوجد إيصال للطباعة.");
+    
+    const receipt = subReceipts[subReceipts.length - 1];
 
     const win = window.open("", "PrintReceipt", "width=300,height=600");
     const status = receipt.remaining===0 ? 'مدفوع كليًا' : (receipt.remaining<receipt.total ? 'مدفوع جزئيًا':'غير مدفوع');
