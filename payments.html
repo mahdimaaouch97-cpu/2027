@@ -58,14 +58,15 @@ function renderTable() {
     tableBody.innerHTML = "";
 
     let filteredSubscribers = subscribers.filter(sub => {
-        // حالة الدفع
+        if(sub.remaining === undefined) sub.remaining = sub.price; // تصحيح أي بيانات ناقصة
+        if(!Array.isArray(sub.payments)) sub.payments = [];
+
         let status = "unpaid";
         if(sub.remaining === 0) status = "full";
         else if(sub.remaining < sub.price) status = "partial";
 
         if(statusFilter !== "all" && status !== statusFilter) return false;
 
-        // البحث
         return sub.name.toLowerCase().includes(searchFilter) || sub.phone.toLowerCase().includes(searchFilter);
     });
 
@@ -88,7 +89,7 @@ function renderTable() {
 <td>$${sub.remaining}</td>
 <td>${statusText}</td>
 <td>
-<input type="number" id="pay-${sub.id}" placeholder="المبلغ" min="0" max="${sub.remaining}" ${sub.remaining===0?"disabled":""}>
+<input type="number" id="pay-${sub.id}" placeholder="المبلغ" min="0.01" max="${sub.remaining}" step="0.01" ${sub.remaining===0?"disabled":""}>
 <button class="pay-btn" onclick="pay(${sub.id})" ${sub.remaining===0?"disabled":""}>دفع</button>
 </td>
 <td><button class="print-btn" onclick="printReceipt(${sub.id})">طباعة</button></td>
@@ -100,17 +101,27 @@ function renderTable() {
 function pay(id) {
     const sub = subscribers.find(s => s.id === id);
     const input = document.getElementById(`pay-${id}`);
-    let amount = parseFloat(input.value);
+    let amount = parseFloat(input.value.trim());
 
-    if(!input.value || isNaN(amount) || amount <=0) { alert("الرجاء إدخال مبلغ صالح أكبر من صفر."); return; }
-    if(amount > sub.remaining){ alert(`المبلغ المدفوع أكبر من المبلغ المتبقي ($${sub.remaining}).`); return; }
+    // التحقق من صحة المبلغ
+    if(isNaN(amount) || amount <= 0){
+        alert("الرجاء إدخال مبلغ صالح أكبر من صفر.");
+        return;
+    }
+
+    if(amount > sub.remaining){
+        alert(`المبلغ المدفوع أكبر من المبلغ المتبقي ($${sub.remaining}).`);
+        return;
+    }
 
     sub.remaining -= amount;
+    sub.remaining = parseFloat(sub.remaining.toFixed(2)); // تجنب الكسور الطويلة
     sub.payments.push({amount, date: new Date().toLocaleDateString()});
     localStorage.setItem("subscribers", JSON.stringify(subscribers));
 
     alert(`تم دفع $${amount} للمشترك ${sub.name}. المبلغ المتبقي: $${sub.remaining}`);
-    input.value="";
+
+    input.value = "";
     renderTable();
 }
 
@@ -143,7 +154,7 @@ ${paymentsHtml || "<p>لا توجد دفعات حتى الآن</p>"}
     receiptWindow.print();
 }
 
-// تحميل الجدول عند فتح الصفحة
+// عرض الجدول عند فتح الصفحة
 renderTable();
 </script>
 
