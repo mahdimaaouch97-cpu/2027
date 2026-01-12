@@ -60,10 +60,10 @@ th {
     text-align: center;
 }
 
-/* ألوان حالة الدفع داكنة */
-.status-full { background-color: #155724; color: #ffffff; font-weight: bold; }   /* أخضر داكن */
-.status-partial { background-color: #663c00; color: #ffffff; font-weight: bold; } /* برتقالي داكن */
-.status-unpaid { background-color: #721c24; color: #ffffff; font-weight: bold; } /* أحمر داكن */
+/* ألوان حالة الدفع مخففة */
+.status-full { background-color: #28a745; color: #ffffff; font-weight: bold; }    /* أخضر متوسط */
+.status-partial { background-color: #ff8c00; color: #ffffff; font-weight: bold; } /* برتقالي متوسط */
+.status-unpaid { background-color: #dc3545; color: #ffffff; font-weight: bold; }  /* أحمر متوسط */
 
 /* أزرار الجدول */
 button { padding: 5px 10px; margin: 2px; cursor: pointer; border-radius:4px; }
@@ -193,7 +193,7 @@ function pay(id) {
     input.value = "";
     renderTable();
 
-    // إرسال رسالة واتساب مباشرة بعد الدفع
+    // إرسال واتساب مباشر بعد الدفع
     const lastPayment = sub.payments[sub.payments.length-1];
     const today = new Date().toLocaleDateString();
     const msg = `📩 إشعار دفع FAST NET
