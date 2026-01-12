@@ -10,11 +10,14 @@ body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
 h1 { text-align: center; margin-bottom: 20px; }
 form { max-width: 500px; margin: auto; background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 0 5px rgba(0,0,0,0.2); }
 input { width: 100%; padding: 8px; margin-bottom: 10px; }
-button { padding: 8px 12px; background-color: #007bff; color: white; border: none; cursor: pointer; }
-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+button { padding: 8px 12px; background-color: #007bff; color: white; border: none; cursor: pointer; border-radius: 4px; }
+table { width: 100%; border-collapse: collapse; margin-top: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
 th, td { padding: 8px; border: 1px solid #ddd; text-align: center; }
 th { background-color: #007bff; color: white; }
-.delete-btn { background-color: #dc3545; color: white; border: none; padding: 5px 8px; cursor: pointer; }
+.delete-btn { background-color: #dc3545; color: white; border: none; padding: 5px 8px; cursor: pointer; border-radius:4px; }
+.status-full { background-color: #28a745; color:white; font-weight:bold; }
+.status-partial { background-color: #ff8c00; color:white; font-weight:bold; }
+.status-unpaid { background-color: #dc3545; color:white; font-weight:bold; }
 </style>
 </head>
 <body>
@@ -35,6 +38,9 @@ th { background-color: #007bff; color: white; }
             <th>الإسم</th>
             <th>رقم الهاتف</th>
             <th>سعر الاشتراك ($)</th>
+            <th>المدفوع ($)</th>
+            <th>المتبقي ($)</th>
+            <th>حالة الدفع</th>
             <th>حذف</th>
         </tr>
     </thead>
@@ -44,7 +50,7 @@ th { background-color: #007bff; color: white; }
 <script>
 let subscribers = JSON.parse(localStorage.getItem("subscribers")) || [];
 
-// ✅ تصحيح أي بيانات قديمة أو ناقصة
+// تصحيح أي بيانات قديمة أو ناقصة
 subscribers = subscribers.map((sub, index) => {
     return {
         id: sub.id !== undefined ? sub.id : index + 1,
@@ -63,16 +69,27 @@ const tableBody = document.querySelector("#subscribersTable tbody");
 function renderTable() {
     tableBody.innerHTML = "";
     if(subscribers.length === 0){
-        tableBody.innerHTML = `<tr><td colspan="5">لا يوجد مشتركين حاليا.</td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="8">لا يوجد مشتركين حاليا.</td></tr>`;
         return;
     }
+
     subscribers.forEach(sub => {
+        const paidAmount = sub.payments.reduce((sum, p) => sum + Number(p.amount), 0).toFixed(2);
+        const remaining = (sub.price - paidAmount).toFixed(2);
+        let status = "غير مدفوع";
+        let statusClass = "status-unpaid";
+        if(remaining == 0) { status = "مدفوع كليًا"; statusClass = "status-full"; }
+        else if(remaining < sub.price) { status = "مدفوع جزئيًا"; statusClass = "status-partial"; }
+
         const tr = document.createElement("tr");
         tr.innerHTML = `
             <td>${sub.id}</td>
             <td>${sub.name}</td>
             <td>${sub.phone}</td>
             <td>$${sub.price}</td>
+            <td>$${paidAmount}</td>
+            <td>$${remaining}</td>
+            <td class="${statusClass}">${status}</td>
             <td><button class="delete-btn" onclick="deleteSubscriber(${sub.id})">حذف</button></td>
         `;
         tableBody.appendChild(tr);
