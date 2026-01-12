@@ -22,7 +22,7 @@ th { background-color: #007bff; color: white; }
 .home-btn:hover { background-color: #0056b3; }
 #importFile { display: none; }
 #search, #filterStatus { max-width: 300px; margin: 10px auto; display: block; padding: 8px; }
-.reminder-btn { background-color: #25D366; color:white; font-size:12px; padding:3px 6px; border-radius:3px; margin-left:5px; }
+.reminder-btn { background-color: #25D366; color:white; font-size:12px; padding:3px 6px; border-radius:3px; }
 </style>
 </head>
 <body>
@@ -67,6 +67,7 @@ th { background-color: #007bff; color: white; }
             <th>المتبقي ($)</th>
             <th>حالة الدفع</th>
             <th>إجراءات</th>
+            <th>تذكير</th>
         </tr>
     </thead>
     <tbody></tbody>
@@ -114,7 +115,7 @@ function renderTable(){
     });
 
     if(filtered.length === 0){
-        tableBody.innerHTML = `<tr><td colspan="8">لا يوجد مشتركين.</td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="9">لا يوجد مشتركين.</td></tr>`;
         return;
     }
 
@@ -137,6 +138,8 @@ function renderTable(){
             <td class="${statusClass}">${statusText}</td>
             <td>
                 <button class="delete-btn" onclick="deleteSubscriber(${sub.id})">حذف</button>
+            </td>
+            <td>
                 ${remaining > 0 ? `<button class="reminder-btn" onclick="sendReminder(${sub.id})">تذكير واتساب</button>` : ''}
             </td>
         `;
