@@ -13,6 +13,7 @@ table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
 th, td { padding: 10px; border: 1px solid #ddd; text-align: center; }
 th { background-color: #007bff; color: white; }
 input[type="number"] { width: 80px; padding: 5px; }
+select { padding: 5px; }
 button { padding: 5px 10px; margin: 2px; cursor: pointer; }
 .print-btn { background-color: #28a745; color: white; border: none; }
 .pay-btn { background-color: #ffc107; border: none; }
@@ -102,26 +103,41 @@ function renderTable() {
 <td>$${sub.remaining}</td>
 <td>${statusText}</td>
 <td>
+<select id="month-${sub.id}">
+  <option value="يناير">يناير</option>
+  <option value="فبراير">فبراير</option>
+  <option value="مارس">مارس</option>
+  <option value="أبريل">أبريل</option>
+  <option value="مايو">مايو</option>
+  <option value="يونيو">يونيو</option>
+  <option value="يوليو">يوليو</option>
+  <option value="أغسطس">أغسطس</option>
+  <option value="سبتمبر">سبتمبر</option>
+  <option value="أكتوبر">أكتوبر</option>
+  <option value="نوفمبر">نوفمبر</option>
+  <option value="ديسمبر">ديسمبر</option>
+</select>
 <input type="number" id="pay-${sub.id}" placeholder="المبلغ" min="0.01" max="${sub.remaining}" step="0.01" ${sub.remaining===0?"disabled":""}>
 <button class="pay-btn" onclick="pay(${sub.id})" ${sub.remaining===0?"disabled":""}>دفع</button>
 </td>
 <td><button class="print-btn" onclick="printReceipt(${sub.id})">طباعة</button></td>
 `;
-        // زر واتساب لكل صف
+        // زر واتساب لكل صف لإعادة الإرسال
         const waCell = document.createElement("td");
         const waBtn = document.createElement("button");
         waBtn.innerText = "أرسل واتساب";
         waBtn.className = "wa-btn";
         waBtn.addEventListener("click", () => {
-            const paidAmount = sub.price - sub.remaining;
+            const lastPayment = sub.payments[sub.payments.length-1] || {amount: 0, month: "غير محدد"};
             const today = new Date().toLocaleDateString();
             const message = `📩 إشعار دفع FAST NET
 
 👤 المشترك: ${sub.name}
 📞 الهاتف: ${sub.phone}
-💰 المبلغ المدفوع: $${paidAmount}
+💰 المبلغ المدفوع: $${lastPayment.amount}
 💵 المبلغ المتبقي: $${sub.remaining}
-🗓️ التاريخ: ${today}
+🗓️ الشهر: ${lastPayment.month}
+📅 التاريخ: ${today}
 
 شكراً لاستخدامكم خدماتنا! 🚀`;
             const url = `https://wa.me/${sub.phone}?text=${encodeURIComponent(message)}`;
@@ -137,6 +153,9 @@ function renderTable() {
 function pay(id) {
     const sub = subscribers.find(s => s.id === id);
     const input = document.getElementById(`pay-${id}`);
+    const monthSelect = document.getElementById(`month-${id}`);
+    const selectedMonth = monthSelect.value;
+
     let amount = parseFloat(input.value.trim());
 
     if(isNaN(amount) || amount <= 0){
@@ -151,15 +170,15 @@ function pay(id) {
 
     sub.remaining -= amount;
     sub.remaining = parseFloat(sub.remaining.toFixed(2));
-    sub.payments.push({amount, date: new Date().toLocaleDateString()});
+    sub.payments.push({amount, date: new Date().toLocaleDateString(), month: selectedMonth});
     localStorage.setItem("subscribers", JSON.stringify(subscribers));
 
-    alert(`تم دفع $${amount} للمشترك ${sub.name}. المبلغ المتبقي: $${sub.remaining}`);
+    alert(`تم دفع $${amount} للمشترك ${sub.name} لشهر ${selectedMonth}. المبلغ المتبقي: $${sub.remaining}`);
 
     input.value = "";
     renderTable();
 
-    // إرسال واتساب تلقائي بعد الدفع
+    // إرسال واتساب تلقائي بعد الدفع مع الشهر
     const today = new Date().toLocaleDateString();
     const message = `📩 إشعار دفع FAST NET
 
@@ -167,9 +186,11 @@ function pay(id) {
 📞 الهاتف: ${sub.phone}
 💰 المبلغ المدفوع: $${amount}
 💵 المبلغ المتبقي: $${sub.remaining}
-🗓️ التاريخ: ${today}
+🗓️ الشهر: ${selectedMonth}
+📅 التاريخ: ${today}
 
 شكراً لاستخدامكم خدماتنا! 🚀`;
+
     const url = `https://wa.me/${sub.phone}?text=${encodeURIComponent(message)}`;
     window.open(url, "_blank");
 }
@@ -182,7 +203,7 @@ function printReceipt(id) {
 
     let paymentsHtml="";
     sub.payments.forEach((p,i)=>{
-        paymentsHtml+=`<p>الدفعة ${i+1}: $${p.amount} (${p.date})</p>`;
+        paymentsHtml+=`<p>الدفعة ${i+1} (${p.month}): $${p.amount} (${p.date})</p>`;
     });
 
     receiptWindow.document.write(`
