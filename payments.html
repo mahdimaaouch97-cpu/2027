@@ -193,29 +193,50 @@ function pay(id) {
     input.value = "";
     renderTable();
 
-    // إرسال واتساب مباشر بعد الدفع
+    // إرسال واتساب تلقائي بعد الدفع مع كل التفاصيل
     const lastPayment = sub.payments[sub.payments.length-1];
     const today = new Date().toLocaleDateString();
+    let status = "❌ غير مدفوع";
+    if(sub.remaining === 0) status = "✅ مدفوع بالكامل";
+    else if(sub.remaining < sub.price) status = "⚠️ مدفوع جزئيًا";
+
     const msg = `📩 إشعار دفع FAST NET
-👤 المشترك: ${sub.name}
+
+👤 المشترك/ة: ${sub.name}
 📞 الهاتف: ${sub.phone}
+💲 سعر الاشتراك: $${sub.price}
+
 💰 المبلغ المدفوع: $${lastPayment.amount}
-💵 المتبقي: $${sub.remaining}
+💵 المبلغ المتبقي: $${sub.remaining}
 🗓️ الشهر: ${lastPayment.month}
 📅 التاريخ: ${today}
+📌 الحالة: ${status}
+
 شكراً لاستخدامكم خدماتنا! 🚀`;
+
     window.open(`https://wa.me/${sub.phone}?text=${encodeURIComponent(msg)}`, "_blank");
 }
 
 function sendWhatsApp(id) {
     const sub = subscribers.find(s => s.id === id);
     const last = sub.payments[sub.payments.length-1] || {amount:0, month:"-"};
+    let status = "❌ غير مدفوع";
+    if(sub.remaining === 0) status = "✅ مدفوع بالكامل";
+    else if(sub.remaining < sub.price) status = "⚠️ مدفوع جزئيًا";
+
     const msg = `📩 إشعار دفع FAST NET
-👤 ${sub.name}
-📞 ${sub.phone}
-💰 المدفوع: $${last.amount}
-💵 المتبقي: $${sub.remaining}
-🗓️ الشهر: ${last.month}`;
+
+👤 المشترك/ة: ${sub.name}
+📞 الهاتف: ${sub.phone}
+💲 سعر الاشتراك: $${sub.price}
+
+💰 المبلغ المدفوع: $${last.amount}
+💵 المبلغ المتبقي: $${sub.remaining}
+🗓️ الشهر: ${last.month}
+📌 الحالة: ${status}
+
+شكراً لاستخدامكم خدماتنا! 🚀`;
+
     window.open(`https://wa.me/${sub.phone}?text=${encodeURIComponent(msg)}`);
 }
 
