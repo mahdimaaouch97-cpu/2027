@@ -15,9 +15,9 @@ table { width: 100%; border-collapse: collapse; margin-top: 20px; box-shadow: 0 
 th, td { padding: 8px; border: 1px solid #ddd; text-align: center; }
 th { background-color: #007bff; color: white; }
 .delete-btn { background-color: #dc3545; color: white; border: none; padding: 5px 8px; cursor: pointer; border-radius:4px; }
-.status-full { background-color: #28a745; color:white; font-weight:bold; }
-.status-partial { background-color: #ff8c00; color:white; font-weight:bold; }
-.status-unpaid { background-color: #dc3545; color:white; font-weight:bold; }
+.status-full { background-color: #2e7d32; color:white; font-weight:bold; }
+.status-partial { background-color: #f57c00; color:white; font-weight:bold; }
+.status-unpaid { background-color: #c62828; color:white; font-weight:bold; }
 #importFile { display: none; }
 </style>
 </head>
@@ -56,9 +56,10 @@ th { background-color: #007bff; color: white; }
 </table>
 
 <script>
+// جلب البيانات من LocalStorage
 let subscribers = JSON.parse(localStorage.getItem("subscribers")) || [];
 
-// تصحيح أي بيانات قديمة أو ناقصة
+// تصحيح البيانات القديمة
 subscribers = subscribers.map((sub, index) => ({
     id: sub.id !== undefined ? sub.id : index + 1,
     name: sub.name || "بدون اسم",
@@ -73,7 +74,9 @@ localStorage.setItem("subscribers", JSON.stringify(subscribers));
 const form = document.getElementById("addSubscriberForm");
 const tableBody = document.querySelector("#subscribersTable tbody");
 
+// عرض الجدول
 function renderTable() {
+    subscribers = JSON.parse(localStorage.getItem("subscribers")) || [];
     tableBody.innerHTML = "";
     if(subscribers.length === 0){
         tableBody.innerHTML = `<tr><td colspan="8">لا يوجد مشتركين حاليا.</td></tr>`;
@@ -103,6 +106,7 @@ function renderTable() {
     });
 }
 
+// إضافة مشترك
 form.addEventListener("submit", (e) => {
     e.preventDefault();
     const name = document.getElementById("name").value.trim();
@@ -126,6 +130,7 @@ form.addEventListener("submit", (e) => {
     renderTable();
 });
 
+// حذف مشترك
 function deleteSubscriber(id){
     if(!confirm("هل أنت متأكد من حذف هذا المشترك؟")) return;
     subscribers = subscribers.filter(sub => sub.id !== id);
@@ -133,6 +138,7 @@ function deleteSubscriber(id){
     renderTable();
 }
 
+// حذف جميع المشتركين
 function deleteAllSubscribers(){
     if(!confirm("هل أنت متأكد من حذف جميع المشتركين؟")) return;
     subscribers = [];
@@ -182,6 +188,15 @@ function exportCSV(){
     link.click();
 }
 
+// تحديث تلقائي عند أي تغيير في LocalStorage (مثل الدفع في payments.html)
+window.addEventListener("storage", function(event){
+    if(event.key === "subscribers"){
+        subscribers = JSON.parse(localStorage.getItem("subscribers")) || [];
+        renderTable();
+    }
+});
+
+// عرض الجدول عند تحميل الصفحة
 renderTable();
 </script>
 
