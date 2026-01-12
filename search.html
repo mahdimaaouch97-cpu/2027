@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>بحث المشتركين - FAST NET</title>
+<link rel="stylesheet" href="assets/css/style.css">
+<style>
+body{font-family:Arial; background:#f5f5f5; margin:0; padding:0;}
+header{background:#007bff; color:#fff; padding:20px; text-align:center;}
+nav ul{display:flex; justify-content:center; list-style:none; padding:0; margin:10px 0 0; gap:10px; flex-wrap:wrap;}
+nav ul li a{color:#fff; text-decoration:none; padding:10px 15px; background:#0056b3; border-radius:5px;}
+nav ul li a:hover, nav ul li a.active{background:#003f7f;}
+main{padding:20px;}
+input, button{padding:8px; margin:5px 0; border-radius:5px; border:1px solid #ccc;}
+button{border:none; background:#28a745; color:#fff; cursor:pointer; transition:0.3s;}
+button:hover{background:#218838;}
+table{width:100%; border-collapse:collapse; margin-top:20px; background:#fff;}
+th,td{border:1px solid #000; padding:8px; text-align:center;}
+.status-paid{color:green; font-weight:bold;}
+.status-unpaid{color:red; font-weight:bold;}
+</style>
+</head>
+<body>
+
+<header>
+<h1>بحث المشتركين - FAST NET</h1>
+<nav>
+<ul>
+<li><a href="index.html">الرئيسية</a></li>
+<li><a href="subscribers.html">المشتركين</a></li>
+<li><a href="packages.html">الباقات</a></li>
+<li><a href="payments.html">الدفع</a></li>
+<li><a href="receipts.html">الإيصالات</a></li>
+<li><a href="search.html" class="active">بحث المشتركين</a></li>
+<li><a href="report.html">التقارير</a></li>
+</ul>
+</nav>
+</header>
+
+<main>
+<h2>البحث عن المشتركين</h2>
+<input type="text" id="searchInput" placeholder="أدخل اسم المشترك">
+<button id="searchBtn">بحث</button>
+<button id="resetBtn">عرض الكل</button>
+
+<table id="searchTable">
+<thead>
+<tr>
+<th>الرقم</th>
+<th>الاسم</th>
+<th>الباقة</th>
+<th>المبلغ المدفوع ($)</th>
+<th>المبلغ المتبقي ($)</th>
+<th>حالة الدفع</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+</main>
+
+<footer style="text-align:center; padding:15px; background:#007bff; color:#fff;">
+<p>© 2026 FAST NET. جميع الحقوق محفوظة.</p>
+</footer>
+
+<script>
+let subscribers = JSON.parse(localStorage.getItem("subscribers")) || [];
+let packages = JSON.parse(localStorage.getItem("packages")) || [];
+
+function renderTable(data=subscribers){
+    const tbody = document.querySelector("#searchTable tbody");
+    tbody.innerHTML="";
+    data.forEach((sub,index)=>{
+        const pkgPrice = packages.find(p=>p.name===sub.package)?.price || 0;
+        const remaining = (pkgPrice - sub.paid).toFixed(2);
+        const status = remaining<=0 ? "مدفوع" : "غير مدفوع";
+        const statusClass = remaining<=0 ? "status-paid" : "status-unpaid";
+        const row = document.createElement("tr");
+        row.innerHTML=`
+        <td>${index+1}</td>
+        <td>${sub.name}</td>
+        <td>${sub.package}</td>
+        <td>$${sub.paid.toFixed(2)}</td>
+        <td>$${remaining}</td>
+        <td class="${statusClass}">${status}</td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+document.getElementById("searchBtn").addEventListener("click", function(){
+    const query = document.getElementById("searchInput").value.trim().toLowerCase();
+    if(!query) return alert("أدخل اسم المشترك للبحث!");
+    const filtered = subscribers.filter(sub => sub.name.toLowerCase().includes(query));
+    renderTable(filtered);
+});
+
+document.getElementById("resetBtn").addEventListener("click", function(){
+    document.getElementById("searchInput").value="";
+    renderTable();
+});
+
+// عرض الجدول عند تحميل الصفحة
+renderTable();
+</script>
+
+</body>
+</html>

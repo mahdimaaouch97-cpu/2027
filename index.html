@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>لوحة التحكم - FAST NET</title>
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+<header>
+<h1>لوحة التحكم - FAST NET</h1>
+<nav>
+<ul>
+<li><a href="index.html" class="active">الرئيسية</a></li>
+<li><a href="subscribers.html">المشتركين</a></li>
+<li><a href="packages.html">الباقات</a></li>
+<li><a href="payments.html">الدفع</a></li>
+<li><a href="receipts.html">الإيصالات</a></li>
+<li><a href="search.html">بحث المشتركين</a></li>
+<li><a href="report.html">التقارير</a></li>
+</ul>
+</nav>
+</header>
+
+<main>
+<section class="dashboard">
+<div class="card">
+<h2 id="totalSubscribers">0</h2>
+<p>عدد المشتركين</p>
+</div>
+<div class="card">
+<h2 id="totalReceipts">0</h2>
+<p>عدد الإيصالات</p>
+</div>
+<div class="card">
+<h2 id="totalRevenue">$0.00</h2>
+<p>إجمالي الإيرادات بالدولار</p>
+</div>
+<div class="card">
+<h2 id="totalPackages">0</h2>
+<p>عدد الباقات</p>
+</div>
+</section>
+
+<section class="quick-links">
+<a href="subscribers.html">المشتركين</a>
+<a href="packages.html">الباقات</a>
+<a href="payments.html">الدفع</a>
+<a href="receipts.html">الإيصالات</a>
+<a href="search.html">بحث المشتركين</a>
+<a href="report.html">التقارير</a>
+</section>
+</main>
+
+<footer>
+<p>© 2026 FAST NET. جميع الحقوق محفوظة.</p>
+</footer>
+
+<script>
+// تحميل البيانات من LocalStorage
+let subscribers = JSON.parse(localStorage.getItem("subscribers")) || [];
+let receipts = JSON.parse(localStorage.getItem("receipts")) || [];
+let packages = JSON.parse(localStorage.getItem("packages")) || [];
+
+// تحديث الأرقام على لوحة التحكم
+document.getElementById("totalSubscribers").textContent = subscribers.length;
+document.getElementById("totalReceipts").textContent = receipts.length;
+
+// حساب إجمالي الإيرادات
+let totalRevenue = 0;
+subscribers.forEach(sub=>{
+totalRevenue += parseFloat(sub.paid || 0);
+});
+document.getElementById("totalRevenue").textContent = `$${totalRevenue.toFixed(2)}`;
+
+// عدد الباقات
+document.getElementById("totalPackages").textContent = packages.length;
+</script>
+</body>
+</html>

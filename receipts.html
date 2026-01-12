@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<title>أرشيف الإيصالات</title>
+<link rel="stylesheet" href="assets/css/style.css">
+<script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+
+<header>
+<h1>أرشيف الإيصالات</h1>
+</header>
+
+<main>
+
+<div style="margin-bottom:15px;">
+<button onclick="exportReceiptsExcel()">تصدير Excel</button>
+<button onclick="exportReceiptsPDF()">تصدير PDF</button>
+</div>
+
+<table id="receiptsTable">
+<thead>
+<tr>
+<th>#</th>
+<th>رقم الإيصال</th>
+<th>الاسم</th>
+<th>الباقة</th>
+<th>المدفوع ($)</th>
+<th>التاريخ</th>
+<th>الحالة</th>
+<th>طباعة</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+
+</main>
+
+<script src="assets/js/receipts.js"></script>
+</body>
+</html>

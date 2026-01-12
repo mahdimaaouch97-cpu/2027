@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>الباقات - FAST NET</title>
+<link rel="stylesheet" href="assets/css/style.css">
+<style>
+body{font-family:Arial; background:#f5f5f5; margin:0; padding:0;}
+header{background:#007bff;color:#fff;padding:20px;text-align:center;}
+nav ul{display:flex; justify-content:center; list-style:none; padding:0; margin:10px 0 0; gap:10px; flex-wrap:wrap;}
+nav ul li a{color:#fff;text-decoration:none;padding:10px 15px;background:#0056b3;border-radius:5px;}
+nav ul li a:hover, nav ul li a.active{background:#003f7f;}
+main{padding:20px;}
+form input,form button{padding:8px;margin:5px 0;border-radius:5px;border:1px solid #ccc;}
+form button{border:none;background:#28a745;color:#fff;cursor:pointer;transition:0.3s;}
+form button:hover{background:#218838;}
+table{width:100%;border-collapse:collapse;margin-top:10px;background:#fff;}
+th,td{border:1px solid #000;padding:8px;text-align:center;}
+</style>
+</head>
+<body>
+
+<header>
+<h1>إدارة الباقات - FAST NET</h1>
+<nav>
+<ul>
+<li><a href="index.html">الرئيسية</a></li>
+<li><a href="subscribers.html">المشتركين</a></li>
+<li><a href="packages.html" class="active">الباقات</a></li>
+<li><a href="payments.html">الدفع</a></li>
+<li><a href="receipts.html">الإيصالات</a></li>
+<li><a href="search.html">بحث المشتركين</a></li>
+<li><a href="report.html">التقارير</a></li>
+</ul>
+</nav>
+</header>
+
+<main>
+<h2>إضافة باقة جديدة</h2>
+<form id="addPackageForm">
+<input type="text" id="pkgName" placeholder="اسم الباقة" required>
+<input type="number" id="pkgPrice" placeholder="السعر ($)" min="0" required>
+<button type="submit">إضافة</button>
+</form>
+
+<table id="packagesTable">
+<thead>
+<tr>
+<th>الرقم</th>
+<th>اسم الباقة</th>
+<th>السعر ($)</th>
+<th>الإجراءات</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+</main>
+
+<footer style="text-align:center; padding:15px; background:#007bff;color:#fff;">
+<p>© 2026 FAST NET. جميع الحقوق محفوظة.</p>
+</footer>
+
+<script>
+let packages = JSON.parse(localStorage.getItem("packages")) || [];
+
+function renderPackages(){
+    const tbody = document.querySelector("#packagesTable tbody");
+    tbody.innerHTML="";
+    packages.forEach((p,index)=>{
+        const row = document.createElement("tr");
+        row.innerHTML=`
+            <td>${index+1}</td>
+            <td>${p.name}</td>
+            <td>$${p.price}</td>
+            <td>
+                <button onclick="editPackage(${index})">تعديل</button>
+                <button onclick="deletePackage(${index})">حذف</button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+    localStorage.setItem("packages", JSON.stringify(packages));
+}
+
+document.getElementById("addPackageForm").addEventListener("submit", function(e){
+    e.preventDefault();
+    const name = document.getElementById("pkgName").value.trim();
+    const price = parseFloat(document.getElementById("pkgPrice").value);
+    if(!name || isNaN(price)) return alert("املأ جميع الحقول بشكل صحيح!");
+    packages.push({name, price});
+    renderPackages();
+    this.reset();
+});
+
+function deletePackage(index){
+    if(confirm("هل أنت متأكد من حذف الباقة؟")){
+        packages.splice(index,1);
+        renderPackages();
+    }
+}
+
+function editPackage(index){
+    const pkg = packages[index];
+    const newName = prompt("اسم الباقة:", pkg.name);
+    if(newName === null) return;
+    const newPrice = parseFloat(prompt("السعر ($):", pkg.price));
+    if(newName.trim()==="" || isNaN(newPrice)) return alert("البيانات غير صحيحة!");
+    packages[index]={name:newName, price:newPrice};
+    renderPackages();
+}
+
+renderPackages();
+</script>
+
+</body>
+</html>

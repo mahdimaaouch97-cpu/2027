@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>المشتركين - FAST NET</title>
+<link rel="stylesheet" href="assets/css/style.css">
+<script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+
+<header>
+<h1>إدارة المشتركين - FAST NET</h1>
+<nav>
+<ul>
+<li><a href="index.html">الرئيسية</a></li>
+<li><a href="subscribers.html" class="active">المشتركين</a></li>
+<li><a href="packages.html">الباقات</a></li>
+<li><a href="payments.html">الدفع</a></li>
+<li><a href="receipts.html">الإيصالات</a></li>
+<li><a href="search.html">بحث المشتركين</a></li>
+<li><a href="report.html">التقارير</a></li>
+</ul>
+</nav>
+</header>
+
+<main>
+<h2>المشتركين</h2>
+
+<!-- أدوات التحكم -->
+<div style="margin-bottom:15px;">
+<input type="text" id="searchInput" placeholder="ابحث عن الاسم">
+<button onclick="searchSubscriber()">بحث</button>
+<button onclick="showAddSubscriberForm()">إضافة مشترك</button>
+<input type="file" id="importExcel" accept=".xlsx, .xls">
+<button id="exportExcelBtn">تصدير إلى Excel</button>
+<button onclick="deleteAllSubscribers()">حذف جميع المشتركين</button>
+</div>
+
+<!-- جدول المشتركين -->
+<table id="subscribersTable">
+<thead>
+<tr>
+<th>الرقم</th>
+<th>الاسم</th>
+<th>العنوان</th>
+<th>الباقة</th>
+<th>سعر الباقة ($)</th>
+<th>المبلغ المدفوع ($)</th>
+<th>المبلغ المتبقي ($)</th>
+<th>حالة الدفع</th>
+<th>الإجراءات</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+</main>
+
+<footer style="text-align:center; padding:15px; background:#007bff; color:#fff;">
+<p>© 2026 FAST NET. جميع الحقوق محفوظة.</p>
+</footer>
+
+<!-- تحميل سكربتات المشروع -->
+<script src="assets/js/core.js"></script>
+<script src="assets/js/subscribers.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function(){
+
+    // التصدير إلى Excel
+    document.getElementById("exportExcelBtn").addEventListener("click", function(){
+        const ws_data = window.subscribers.map(sub => ({
+            "الاسم": sub.name,
+            "العنوان": sub.address || "",
+            "الباقة": sub.package,
+            "سعر الباقة ($)": sub.price || 0,
+            "المبلغ المدفوع ($)": sub.paid.toFixed(2),
+            "المبلغ المتبقي ($)": getRemaining(sub)
+        }));
+        const ws = XLSX.utils.json_to_sheet(ws_data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "المشتركين");
+        XLSX.writeFile(wb, "subscribers.xlsx");
+    });
+
+    // الاستيراد من Excel
+    document.getElementById("importExcel").addEventListener("change", function(e){
+        const file = e.target.files[0];
+        if(!file) return;
+        const reader = new FileReader();
+        reader.onload = function(event){
+            const data = new Uint8Array(event.target.result);
+            const workbook = XLSX.read(data, {type:'array'});
+            const firstSheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[firstSheetName];
+            const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+            jsonData.forEach(row=>{
+                window.subscribers.push({
+                    name: row["الاسم"] || "",
+                    address: row["العنوان"] || "",
+                    package: row["الباقة"] || "",
+                    price: parseFloat(row["سعر الباقة ($)"]) || 0,
+                    paid: parseFloat(row["المبلغ المدفوع ($)"]) || 0
+                });
+            });
+            localStorage.setItem("subscribers", JSON.stringify(window.subscribers));
+            renderSubscribers();
+            alert("تم الاستيراد بنجاح!");
+        };
+        reader.readAsArrayBuffer(file);
+    });
+
+    // البحث عن اسم المشترك
+    window.searchSubscriber = function(){
+        const query = document.getElementById("searchInput").value.trim().toLowerCase();
+        const filtered = window.subscribers.filter(sub => sub.name.toLowerCase().includes(query));
+        renderSubscribers(filtered);
+    }
+
+    // إضافة مشترك جديد
+    window.showAddSubscriberForm = function(){
+        const name = prompt("اسم المشترك:");
+        if(!name) return;
+        const address = prompt("العنوان:");
+        const packageName = prompt("الباقة:");
+        const price = parseFloat(prompt("سعر الباقة ($):"));
+        if(isNaN(price)) return alert("السعر غير صالح!");
+        const paid = parseFloat(prompt("المبلغ المدفوع ($):")) || 0;
+
+        window.subscribers.push({name, address, package: packageName, price, paid});
+        localStorage.setItem("subscribers", JSON.stringify(window.subscribers));
+        renderSubscribers();
+    }
+
+});
+</script>
+
+</body>
+</html>
