@@ -13,7 +13,6 @@ body {
 }
 h1 { text-align: center; margin-bottom: 20px; }
 
-/* شريط البحث + زر العودة + الفلتر */
 .top-bar {
     display:flex;
     justify-content:center;
@@ -23,7 +22,6 @@ h1 { text-align: center; margin-bottom: 20px; }
     margin-bottom:15px;
 }
 
-/* زر العودة */
 .back-btn {
     background-color: #007bff;
     color: white;
@@ -35,11 +33,9 @@ h1 { text-align: center; margin-bottom: 20px; }
 }
 .back-btn:hover { background-color: #0056b3; }
 
-/* البحث والفلتر */
 #search { flex:1; min-width:200px; padding:8px; }
 #filterStatus { padding:8px; }
 
-/* الجدول */
 #subscribersTable {
     width: 100%;
     border-collapse: collapse;
@@ -57,15 +53,13 @@ th {
     position: sticky;
     top: 0;
     z-index: 1;
-    text-align: center;
 }
 
 /* ألوان حالة الدفع مخففة */
-.status-full { background-color: #28a745; color: #ffffff; font-weight: bold; }    /* أخضر متوسط */
-.status-partial { background-color: #ff8c00; color: #ffffff; font-weight: bold; } /* برتقالي متوسط */
-.status-unpaid { background-color: #dc3545; color: #ffffff; font-weight: bold; }  /* أحمر متوسط */
+.status-full { background-color: #28a745; color: #ffffff; font-weight: bold; }
+.status-partial { background-color: #ff8c00; color: #ffffff; font-weight: bold; }
+.status-unpaid { background-color: #dc3545; color: #ffffff; font-weight: bold; }
 
-/* أزرار الجدول */
 button { padding: 5px 10px; margin: 2px; cursor: pointer; border-radius:4px; }
 .print-btn { background-color: #28a745; color: white; border: none; }
 .pay-btn { background-color: #ffc107; border: none; }
@@ -193,7 +187,7 @@ function pay(id) {
     input.value = "";
     renderTable();
 
-    // واتس أب بعد الدفع (كما كانت)
+    // واتس أب بعد الدفع
     const lastPayment = sub.payments[sub.payments.length-1];
     const today = new Date().toLocaleDateString();
     let status = "❌ غير مدفوع";
@@ -205,7 +199,6 @@ function pay(id) {
 👤 المشترك/ة: ${sub.name}
 📞 الهاتف: ${sub.phone}
 💲 سعر الاشتراك: $${sub.price}
-
 💰 المبلغ المدفوع: $${lastPayment.amount}
 💵 المبلغ المتبقي: $${sub.remaining}
 🗓️ الشهر: ${lastPayment.month}
@@ -229,7 +222,6 @@ function sendWhatsApp(id) {
 👤 المشترك/ة: ${sub.name}
 📞 الهاتف: ${sub.phone}
 💲 سعر الاشتراك: $${sub.price}
-
 💰 المبلغ المدفوع: $${last.amount}
 💵 المبلغ المتبقي: $${sub.remaining}
 🗓️ الشهر: ${last.month}
@@ -240,6 +232,7 @@ function sendWhatsApp(id) {
     window.open(`https://wa.me/${sub.phone}?text=${encodeURIComponent(msg)}`);
 }
 
+// الإيصال لطباعة 50MM
 function printReceipt(id) {
     const sub = subscribers.find(s => s.id === id);
     const today = new Date().toLocaleDateString();
@@ -250,42 +243,53 @@ function printReceipt(id) {
 
     let paymentsHtml = "";
     if(sub.payments.length === 0) {
-        paymentsHtml = "<p>لا توجد دفعات حتى الآن</p>";
+        paymentsHtml = "<tr><td colspan='3'>لا توجد دفعات</td></tr>";
     } else {
         sub.payments.forEach((p,i) => {
-            paymentsHtml += `<p>الدفعة ${i+1} (شهر ${p.month}): $${p.amount} (${p.date})</p>`;
+            paymentsHtml += `<tr>
+<td>${i+1}</td>
+<td>شهر ${p.month}</td>
+<td>$${p.amount} (${p.date})</td>
+</tr>`;
         });
     }
 
     const companyName = "FAST NET";
     const companyPhones = "71346411 / 71338640";
 
-    const win = window.open("", "PrintReceipt", "width=400,height=600");
+    const win = window.open("", "PrintReceipt", "width=300,height=600");
     win.document.write(`
 <html>
 <head>
 <title>إيصال ${companyName}</title>
 <style>
-body { font-family: Arial, sans-serif; padding: 20px; }
-h2 { text-align:center; }
-hr { margin:10px 0; }
-p { margin:5px 0; }
+body { font-family: monospace; padding:5px; width:50mm; margin:0; }
+h2 { text-align:center; font-size:14px; margin:2px 0; }
+p { font-size:12px; margin:2px 0; }
+table { width:100%; border-collapse: collapse; margin:5px 0; font-size:12px; }
+th, td { border:1px solid #ddd; padding:2px 4px; text-align:center; }
+th { background-color:#000; color:white; }
+hr { margin:5px 0; }
 </style>
 </head>
 <body>
 <h2>${companyName}</h2>
-<p>📞 الشركة: ${companyPhones}</p>
-<p>رقم الإيصال: ${Math.floor(Math.random()*10000)}</p>
-<p>المشترك/ة: ${sub.name}</p>
-<p>رقم الهاتف: ${sub.phone}</p>
-<p>سعر الاشتراك: $${sub.price}</p>
-<p>المبلغ المتبقي: $${sub.remaining}</p>
-<p>حالة الدفع: ${status}</p>
+<p style="text-align:center;">📞 ${companyPhones}</p>
 <hr>
+<table>
+<tr><th>رقم الإيصال</th><td>${Math.floor(Math.random()*10000)}</td></tr>
+<tr><th>المشترك/ة</th><td>${sub.name}</td></tr>
+<tr><th>رقم الهاتف</th><td>${sub.phone}</td></tr>
+<tr><th>سعر الاشتراك</th><td>$${sub.price}</td></tr>
+<tr><th>المتبقي</th><td>$${sub.remaining}</td></tr>
+<tr><th>حالة الدفع</th><td>${status}</td></tr>
+<tr><th>التاريخ</th><td>${today}</td></tr>
+</table>
 <h4>سجل الدفعات:</h4>
+<table>
+<tr><th>#</th><th>الشهر</th><th>المبلغ (التاريخ)</th></tr>
 ${paymentsHtml}
-<hr>
-<p>التاريخ: ${today}</p>
+</table>
 <p style="text-align:center;">شكراً لاستخدامكم خدماتنا! 🚀</p>
 </body>
 </html>
