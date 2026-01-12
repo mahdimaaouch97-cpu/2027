@@ -59,9 +59,11 @@ button { padding: 5px 10px; margin: 2px; cursor: pointer; }
 </table>
 
 <script>
+// تحميل المشتركين والإيصالات من localStorage
 let subscribers = JSON.parse(localStorage.getItem("subscribers")) || [];
 let receipts = JSON.parse(localStorage.getItem("receipts")) || [];
 
+// التأكد من هيكلة المشتركين
 subscribers = subscribers.map((sub, index) => ({
     id: sub.id !== undefined ? sub.id : index + 1,
     name: sub.name || "بدون اسم",
@@ -70,7 +72,6 @@ subscribers = subscribers.map((sub, index) => ({
     remaining: sub.remaining !== undefined ? Number(sub.remaining) : Number(sub.price) || 0,
     payments: Array.isArray(sub.payments) ? sub.payments : []
 }));
-
 localStorage.setItem("subscribers", JSON.stringify(subscribers));
 
 function renderTable() {
@@ -157,25 +158,26 @@ function pay(id) {
     document.getElementById(`pay-${id}`).value = "";
     renderTable();
 
-    // إرسال رسالة واتساب
-    const msg = `📩 إشعار دفع FAST NET\n👤 المشترك: ${sub.name}\n💰 المبلغ المدفوع: $${amount}\n💵 المبلغ المتبقي: $${sub.remaining}\n🗓️ الشهر: ${month}\n📅 التاريخ: ${new Date().toLocaleDateString()}\n📌 رقم الإيصال: ${receiptId}`;
-    window.open(`https://wa.me/${sub.phone}?text=${encodeURIComponent(msg)}`, "_blank");
+    // إرسال رسالة واتساب مباشرة بعد الدفع
+    sendWhatsApp(id, amount, month);
 }
 
-
-function sendWhatsApp(id){
+function sendWhatsApp(id, amount = null, month = null){
     const sub = subscribers.find(s => s.id === id);
-    const last = sub.payments[sub.payments.length-1];
-    if(!last) return alert("لا توجد دفعات.");
-    const msg = `📩 إشعار دفع FAST NET\n👤 المشترك: ${sub.name}\n💰 المبلغ المدفوع: $${last.amount}\n💵 المبلغ المتبقي: $${sub.remaining}\n🗓️ الشهر: ${last.month}\n📅 التاريخ: ${last.date}`;
+    let lastPayment = sub.payments[sub.payments.length - 1];
+    if(!lastPayment) return alert("لا توجد دفعات.");
+    const msg = `📩 إشعار دفع FAST NET\n👤 المشترك: ${sub.name}\n💰 المبلغ المدفوع: $${amount ?? lastPayment.amount}\n💵 المبلغ المتبقي: $${sub.remaining}\n🗓️ الشهر: ${month ?? lastPayment.month}\n📅 التاريخ: ${lastPayment.date}`;
     window.open(`https://wa.me/${sub.phone}?text=${encodeURIComponent(msg)}`, "_blank");
 }
 
 function printReceipt(id){
-    const receipt = receipts.find(r => r.id === `${id}-${subscribers.find(s=>s.id===id).payments.length}`);
-    if(!receipt) return;
-
     const sub = subscribers.find(s => s.id === id);
+    if(!sub || sub.payments.length === 0) return alert("لا توجد دفعات للطباعة.");
+
+    const lastPayment = sub.payments[sub.payments.length - 1];
+    const receipt = receipts.find(r => r.subscriberId === id && r.amount === lastPayment.amount && r.date === lastPayment.date);
+    if(!receipt) return alert("الإيصال غير موجود.");
+
     const status = receipt.remaining===0 ? 'مدفوع كليًا' : (receipt.remaining<receipt.total ? 'مدفوع جزئيًا':'غير مدفوع');
 
     const win = window.open("", "PrintReceipt", "width=300,height=600");
@@ -201,6 +203,7 @@ function printReceipt(id){
     win.print();
 }
 
+// عرض الجدول عند تحميل الصفحة
 renderTable();
 </script>
 
