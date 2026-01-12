@@ -50,7 +50,8 @@ button { padding:5px 10px; cursor:pointer; margin:2px; }
 </table>
 
 <script>
-// جلب الإيصالات من LocalStorage
+// جلب البيانات من LocalStorage
+let subscribers = JSON.parse(localStorage.getItem("subscribers")) || [];
 let receipts = JSON.parse(localStorage.getItem("receipts")) || [];
 
 // عرض جدول الإيصالات
@@ -60,7 +61,29 @@ function renderTable(){
     const statusFilter = document.getElementById("filterStatus").value;
     tableBody.innerHTML = "";
 
-    let filtered = receipts.filter(r => {
+    let rows = [];
+
+    // لكل مشترك، لكل دفعة، نربطها بالإيصال الصحيح
+    subscribers.forEach(sub => {
+        sub.payments.forEach(payment => {
+            const receipt = receipts.find(r => r.subscriberId === sub.id && r.amount === payment.amount && r.date === payment.date);
+            if(receipt){
+                rows.push({
+                    id: receipt.id,
+                    name: sub.name,
+                    phone: sub.phone,
+                    total: receipt.total,
+                    amount: receipt.amount,
+                    remaining: receipt.remaining,
+                    month: receipt.month,
+                    date: receipt.date
+                });
+            }
+        });
+    });
+
+    // فلترة البحث والحالة
+    let filtered = rows.filter(r => {
         const matchesSearch = r.name.toLowerCase().includes(search) || r.phone.toLowerCase().includes(search);
         let matchesStatus = statusFilter === "all";
         if(statusFilter === "full") matchesStatus = r.remaining === 0;
