@@ -134,9 +134,15 @@ function pay(id) {
     sub.payments.push({ amount, month, date: new Date().toLocaleDateString() });
     localStorage.setItem("subscribers", JSON.stringify(subscribers));
 
+    // توليد رقم إيصال فريد
+    let lastNumber = parseInt(localStorage.getItem("lastReceiptNumber")) || 2000;
+    lastNumber++;
+    localStorage.setItem("lastReceiptNumber", lastNumber);
+    const receiptId = lastNumber;
+
     // إضافة إيصال جديد
     receipts.push({
-        id: `${sub.id}-${sub.payments.length}`,
+        id: receiptId,
         subscriberId: sub.id,
         name: sub.name,
         phone: sub.phone,
@@ -152,9 +158,10 @@ function pay(id) {
     renderTable();
 
     // إرسال رسالة واتساب
-    const msg = `📩 إشعار دفع FAST NET\n👤 المشترك: ${sub.name}\n💰 المبلغ المدفوع: $${amount}\n💵 المبلغ المتبقي: $${sub.remaining}\n🗓️ الشهر: ${month}\n📅 التاريخ: ${new Date().toLocaleDateString()}`;
+    const msg = `📩 إشعار دفع FAST NET\n👤 المشترك: ${sub.name}\n💰 المبلغ المدفوع: $${amount}\n💵 المبلغ المتبقي: $${sub.remaining}\n🗓️ الشهر: ${month}\n📅 التاريخ: ${new Date().toLocaleDateString()}\n📌 رقم الإيصال: ${receiptId}`;
     window.open(`https://wa.me/${sub.phone}?text=${encodeURIComponent(msg)}`, "_blank");
 }
+
 
 function sendWhatsApp(id){
     const sub = subscribers.find(s => s.id === id);
