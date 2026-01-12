@@ -22,7 +22,7 @@ button { padding:5px 10px; cursor:pointer; margin:2px; }
 
 <button class="back-btn" onclick="window.location.href='index.html'">العودة للرئيسية</button>
 
-<input type="text" id="search" placeholder="ابحث بالإسم أو رقم الهاتف..." onkeyup="renderTable()">
+<input type="text" id="search" placeholder="ابحث بالإسم..." onkeyup="renderTable()">
 
 <select id="filterStatus" onchange="renderTable()">
     <option value="all">الكل</option>
@@ -36,7 +36,6 @@ button { padding:5px 10px; cursor:pointer; margin:2px; }
 <tr>
 <th>رقم الإيصال</th>
 <th>المشترك</th>
-<th>رقم الهاتف</th>
 <th>سعر الاشتراك</th>
 <th>المبلغ المدفوع</th>
 <th>المتبقي</th>
@@ -71,7 +70,6 @@ function renderTable(){
                 rows.push({
                     id: receipt.id,
                     name: sub.name,
-                    phone: sub.phone,
                     total: receipt.total,
                     amount: receipt.amount,
                     remaining: receipt.remaining,
@@ -84,7 +82,7 @@ function renderTable(){
 
     // فلترة البحث والحالة
     let filtered = rows.filter(r => {
-        const matchesSearch = r.name.toLowerCase().includes(search) || r.phone.toLowerCase().includes(search);
+        const matchesSearch = r.name.toLowerCase().includes(search);
         let matchesStatus = statusFilter === "all";
         if(statusFilter === "full") matchesStatus = r.remaining === 0;
         if(statusFilter === "partial") matchesStatus = r.remaining < r.total && r.remaining > 0;
@@ -93,7 +91,7 @@ function renderTable(){
     });
 
     if(filtered.length === 0){
-        tableBody.innerHTML = `<tr><td colspan="10">لا توجد إيصالات.</td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="9">لا توجد إيصالات.</td></tr>`;
         return;
     }
 
@@ -103,7 +101,6 @@ function renderTable(){
         tr.innerHTML = `
             <td>${r.id}</td>
             <td>${r.name}</td>
-            <td>${r.phone}</td>
             <td>$${r.total}</td>
             <td>$${r.amount}</td>
             <td>$${r.remaining}</td>
@@ -116,7 +113,7 @@ function renderTable(){
     });
 }
 
-// دالة طباعة الإيصال
+// دالة طباعة الإيصال بدون رقم الهاتف
 function printReceipt(receiptId){
     const receipt = receipts.find(r => r.id == receiptId);
     if(!receipt) return alert("الإيصال غير موجود");
@@ -127,12 +124,11 @@ function printReceipt(receiptId){
     win.document.write(`
     <div style="font-family:Arial; width:280px; padding:10px;">
         <h3 style="text-align:center;">FAST NET</h3>
-        <p style="text-align:center;">هاتف الشركة: 71346411 / 71338640</p>
+        <p style="text-align:center;"> 71346411 / 71338640</p>
         <hr>
         <table style="width:100%; border-collapse: collapse;">
             <tr><td><strong>رقم الإيصال:</strong></td><td>${receipt.id}</td></tr>
             <tr><td><strong>المشترك:</strong></td><td>${receipt.name}</td></tr>
-            <tr><td><strong>رقم الهاتف:</strong></td><td>${receipt.phone}</td></tr>
             <tr><td><strong>سعر الاشتراك:</strong></td><td>$${receipt.total}</td></tr>
             <tr><td><strong>المبلغ المدفوع:</strong></td><td>$${receipt.amount}</td></tr>
             <tr><td><strong>المتبقي:</strong></td><td>$${receipt.remaining}</td></tr>
