@@ -14,9 +14,9 @@ th, td { padding:10px; border:1px solid #ddd; text-align:center; }
 th { background-color:#007bff; color:white; }
 button { padding:5px 10px; border:none; border-radius:4px; cursor:pointer; }
 .print-btn { background-color:#28a745; color:white; }
-.status-paid { background-color:#2ecc71; color:white; padding:3px 6px; border-radius:4px; }
-.status-partial { background-color:#f1c40f; color:white; padding:3px 6px; border-radius:4px; }
-.status-unpaid { background-color:#e74c3c; color:white; padding:3px 6px; border-radius:4px; }
+.status-paid { background-color:#27ae60; color:white; padding:3px 6px; border-radius:4px; }
+.status-partial { background-color:#f39c12; color:white; padding:3px 6px; border-radius:4px; }
+.status-unpaid { background-color:#c0392b; color:white; padding:3px 6px; border-radius:4px; }
 </style>
 </head>
 <body>
@@ -61,10 +61,10 @@ function renderTable() {
     }
 
     filtered.forEach(r => {
-        let statusText = '';
-        if(r.remaining === 0) statusText = `<span class="status-paid">مدفوع كليًا</span>`;
-        else if(r.remaining < (r.amount + r.remaining)) statusText = `<span class="status-partial">مدفوع جزئيًا</span>`;
-        else statusText = `<span class="status-unpaid">غير مدفوع</span>`;
+        let statusHtml = '';
+        if(r.remaining === 0) statusHtml = `<span class="status-paid">مدفوع كليًا</span>`;
+        else if(r.remaining < r.total) statusHtml = `<span class="status-partial">مدفوع جزئيًا</span>`;
+        else statusHtml = `<span class="status-unpaid">غير مدفوع</span>`;
 
         const tr = document.createElement("tr");
         tr.innerHTML = `
@@ -73,7 +73,7 @@ function renderTable() {
             <td>${r.phone}</td>
             <td>$${r.amount}</td>
             <td>$${r.remaining}</td>
-            <td>${statusText}</td>
+            <td>${statusHtml}</td>
             <td>${r.date}</td>
             <td><button class="print-btn" onclick="printReceipt('${r.id}')">طباعة</button></td>
         `;
@@ -84,10 +84,10 @@ function renderTable() {
 // طباعة الإيصال بحجم 50mm مع اسم الشركة ورقم الهاتف
 function printReceipt(id) {
     const receipts = JSON.parse(localStorage.getItem("receipts")) || [];
-    const receipt = receipts.find(r => r.id === id);
-    if(!receipt) return;
+    const r = receipts.find(x => x.id === id);
+    if(!r) return;
 
-    const statusText = receipt.remaining === 0 ? 'مدفوع كليًا' : (receipt.remaining < (receipt.amount + receipt.remaining) ? 'مدفوع جزئيًا' : 'غير مدفوع');
+    const statusText = r.remaining === 0 ? 'مدفوع كليًا' : (r.remaining < r.total ? 'مدفوع جزئيًا' : 'غير مدفوع');
 
     const win = window.open("", "PrintReceipt", "width=300,height=600");
     win.document.write(`
@@ -95,13 +95,14 @@ function printReceipt(id) {
         <h3 style="text-align:center;">FAST NET</h3>
         <p style="text-align:center;">هاتف الشركة: 71346411 / 71338640</p>
         <hr>
-        <p><strong>رقم الإيصال:</strong> ${receipt.id}</p>
-        <p><strong>المشترك:</strong> ${receipt.name}</p>
-        <p><strong>رقم الهاتف:</strong> ${receipt.phone}</p>
-        <p><strong>المبلغ المدفوع:</strong> $${receipt.amount}</p>
-        <p><strong>المتبقي:</strong> $${receipt.remaining}</p>
+        <p><strong>رقم الإيصال:</strong> ${r.id}</p>
+        <p><strong>المشترك:</strong> ${r.name}</p>
+        <p><strong>رقم الهاتف:</strong> ${r.phone}</p>
+        <p><strong>سعر الاشتراك:</strong> $${r.total}</p>
+        <p><strong>المبلغ المدفوع:</strong> $${r.amount}</p>
+        <p><strong>المتبقي:</strong> $${r.remaining}</p>
         <p><strong>حالة الدفع:</strong> ${statusText}</p>
-        <p><strong>تاريخ الدفع:</strong> ${receipt.date}</p>
+        <p><strong>تاريخ الدفع:</strong> ${r.date}</p>
         <hr>
         <p style="text-align:center;">شكراً لاستخدامكم خدماتنا!</p>
     </div>
