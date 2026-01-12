@@ -49,6 +49,20 @@ button { padding: 5px 10px; margin: 2px; cursor: pointer; }
 
 <script>
 let subscribers = JSON.parse(localStorage.getItem("subscribers")) || [];
+
+// ✅ تصحيح أي بيانات قديمة أو ناقصة
+subscribers = subscribers.map((sub, index) => {
+    return {
+        id: sub.id !== undefined ? sub.id : index + 1,
+        name: sub.name || "بدون اسم",
+        phone: sub.phone || "غير محدد",
+        price: sub.price !== undefined ? sub.price : 0,
+        remaining: sub.remaining !== undefined ? sub.remaining : (sub.price || 0),
+        payments: Array.isArray(sub.payments) ? sub.payments : []
+    };
+});
+localStorage.setItem("subscribers", JSON.stringify(subscribers));
+
 const tableBody = document.querySelector("#subscribersTable tbody");
 
 function renderTable() {
@@ -58,9 +72,6 @@ function renderTable() {
     tableBody.innerHTML = "";
 
     let filteredSubscribers = subscribers.filter(sub => {
-        if(sub.remaining === undefined) sub.remaining = sub.price; // تصحيح أي بيانات ناقصة
-        if(!Array.isArray(sub.payments)) sub.payments = [];
-
         let status = "unpaid";
         if(sub.remaining === 0) status = "full";
         else if(sub.remaining < sub.price) status = "partial";
@@ -103,7 +114,6 @@ function pay(id) {
     const input = document.getElementById(`pay-${id}`);
     let amount = parseFloat(input.value.trim());
 
-    // التحقق من صحة المبلغ
     if(isNaN(amount) || amount <= 0){
         alert("الرجاء إدخال مبلغ صالح أكبر من صفر.");
         return;
@@ -115,7 +125,7 @@ function pay(id) {
     }
 
     sub.remaining -= amount;
-    sub.remaining = parseFloat(sub.remaining.toFixed(2)); // تجنب الكسور الطويلة
+    sub.remaining = parseFloat(sub.remaining.toFixed(2));
     sub.payments.push({amount, date: new Date().toLocaleDateString()});
     localStorage.setItem("subscribers", JSON.stringify(subscribers));
 
@@ -154,7 +164,6 @@ ${paymentsHtml || "<p>لا توجد دفعات حتى الآن</p>"}
     receiptWindow.print();
 }
 
-// عرض الجدول عند فتح الصفحة
 renderTable();
 </script>
 
