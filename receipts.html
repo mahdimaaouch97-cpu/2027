@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>الإيصالات - FAST NET</title>
+<title>الدفع - FAST NET</title>
 <style>
 body { font-family: Arial, sans-serif; background:#f5f5f5; padding:20px; }
 h1 { text-align:center; margin-bottom:20px; }
@@ -12,18 +12,22 @@ table { width:100%; border-collapse:collapse; margin-top:10px; background:white;
 th, td { padding:10px; border:1px solid #ddd; text-align:center; }
 th { background-color:#007bff; color:white; }
 button { padding:5px 10px; cursor:pointer; margin:2px; }
+.pay-btn { background-color:#ffc107; color:white; border:none; }
 .print-btn { background-color:#28a745; color:white; border:none; }
+.wa-btn { background-color:#25d366; color:white; border:none; }
 .back-btn { background-color:#34495e; color:white; border:none; padding:5px 10px; margin-bottom:10px; border-radius:4px; }
+.status-paid { color:green; }
+.status-partial { color:orange; }
+.status-unpaid { color:red; }
 </style>
 </head>
 <body>
 
-<h1>الإيصالات - FAST NET</h1>
+<h1>الدفع - FAST NET</h1>
 
 <button class="back-btn" onclick="window.location.href='index.html'">العودة للرئيسية</button>
 
 <input type="text" id="search" placeholder="ابحث بالإسم أو رقم الهاتف..." onkeyup="renderTable()">
-
 <select id="filterStatus" onchange="renderTable()">
     <option value="all">الكل</option>
     <option value="full">مدفوع كليًا</option>
@@ -34,71 +38,142 @@ button { padding:5px 10px; cursor:pointer; margin:2px; }
 <table>
 <thead>
 <tr>
-<th>رقم الإيصال</th>
-<th>المشترك</th>
-<th>رقم الهاتف</th>
+<th>#</th>
+<th>الاسم</th>
+<th>الهاتف</th>
 <th>سعر الاشتراك</th>
-<th>المبلغ المدفوع</th>
+<th>المدفوع</th>
 <th>المتبقي</th>
-<th>الشهر</th>
 <th>حالة الدفع</th>
-<th>تاريخ الدفع</th>
+<th>الشهر</th>
+<th>دفع</th>
 <th>طباعة</th>
+<th>واتساب</th>
 </tr>
 </thead>
-<tbody id="receiptsTableBody"></tbody>
+<tbody id="subscribersTable"></tbody>
 </table>
 
 <script>
-// جلب الإيصالات من LocalStorage
+// ====== تحميل البيانات من LocalStorage ======
+let subscribers = JSON.parse(localStorage.getItem("subscribers")) || [];
 let receipts = JSON.parse(localStorage.getItem("receipts")) || [];
 
-// عرض جدول الإيصالات
+// تهيئة المشتركين
+subscribers = subscribers.map((sub, index) => ({
+    id: sub.id !== undefined ? sub.id : index + 1,
+    name: sub.name || "بدون اسم",
+    phone: sub.phone || "غير محدد",
+    price: Number(sub.price) || 0,
+    remaining: sub.remaining !== undefined ? Number(sub.remaining) : Number(sub.price) || 0,
+    payments: Array.isArray(sub.payments) ? sub.payments : []
+}));
+localStorage.setItem("subscribers", JSON.stringify(subscribers));
+
+// ====== عرض الجدول ======
 function renderTable(){
-    const tableBody = document.getElementById("receiptsTableBody");
-    const search = document.getElementById("search").value.toLowerCase();
+    const tableBody = document.getElementById("subscribersTable");
+    const searchFilter = document.getElementById("search").value.toLowerCase();
     const statusFilter = document.getElementById("filterStatus").value;
     tableBody.innerHTML = "";
 
-    let filtered = receipts.filter(r => {
-        const matchesSearch = r.name.toLowerCase().includes(search) || r.phone.toLowerCase().includes(search);
-        let matchesStatus = statusFilter === "all";
-        if(statusFilter === "full") matchesStatus = r.remaining === 0;
-        if(statusFilter === "partial") matchesStatus = r.remaining < r.total && r.remaining > 0;
-        if(statusFilter === "unpaid") matchesStatus = r.remaining === r.total;
+    let filtered = subscribers.filter(sub => {
+        const status = sub.remaining === 0 ? "full" : (sub.remaining < sub.price ? "partial" : "unpaid");
+        const matchesSearch = sub.name.toLowerCase().includes(searchFilter) || sub.phone.toLowerCase().includes(searchFilter);
+        const matchesStatus = statusFilter === "all" || status === statusFilter;
         return matchesSearch && matchesStatus;
     });
 
     if(filtered.length === 0){
-        tableBody.innerHTML = `<tr><td colspan="10">لا توجد إيصالات.</td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="11">لا يوجد مشتركين مطابقين.</td></tr>`;
         return;
     }
 
-    filtered.forEach(r => {
-        const statusText = r.remaining === 0 ? 'مدفوع كليًا' : (r.remaining < r.total ? 'مدفوع جزئيًا' : 'غير مدفوع');
+    filtered.forEach(sub => {
+        const paidAmount = sub.payments.reduce((sum, p) => sum + Number(p.amount), 0).toFixed(2);
+        const statusHtml = sub.remaining === 0 ? '<span class="status-paid">مدفوع كليًا</span>' :
+                           sub.remaining < sub.price ? '<span class="status-partial">مدفوع جزئيًا</span>' :
+                           '<span class="status-unpaid">غير مدفوع</span>';
+
         const tr = document.createElement("tr");
         tr.innerHTML = `
-            <td>${r.id}</td>
-            <td>${r.name}</td>
-            <td>${r.phone}</td>
-            <td>$${r.total}</td>
-            <td>$${r.amount}</td>
-            <td>$${r.remaining}</td>
-            <td>${r.month}</td>
-            <td>${statusText}</td>
-            <td>${r.date}</td>
-            <td><button class="print-btn" onclick="printReceipt(${r.id})">طباعة</button></td>
+            <td>${sub.id}</td>
+            <td>${sub.name}</td>
+            <td>${sub.phone}</td>
+            <td>$${sub.price}</td>
+            <td>$${paidAmount}</td>
+            <td>$${sub.remaining}</td>
+            <td>${statusHtml}</td>
+            <td>
+                <select id="month-${sub.id}">
+                    ${[...Array(12)].map((_,i)=>`<option value="${i+1}">${i+1}</option>`).join("")}
+                </select>
+            </td>
+            <td>
+                <input type="number" id="pay-${sub.id}" min="0.01" max="${sub.remaining}" step="0.01" ${sub.remaining===0?"disabled":""}>
+                <button class="pay-btn" onclick="pay(${sub.id})" ${sub.remaining===0?"disabled":""}>دفع</button>
+            </td>
+            <td><button class="print-btn" onclick="printReceipt(${sub.id})">طباعة</button></td>
+            <td><button class="wa-btn" onclick="sendWhatsApp(${sub.id})">واتساب</button></td>
         `;
         tableBody.appendChild(tr);
     });
 }
 
-// دالة طباعة الإيصال
-function printReceipt(receiptId){
-    const receipt = receipts.find(r => r.id == receiptId);
+// ====== دالة الدفع ======
+function pay(id){
+    const sub = subscribers.find(s => s.id === id);
+    const amount = parseFloat(document.getElementById(`pay-${id}`).value);
+    const month = document.getElementById(`month-${id}`).value;
+
+    if(isNaN(amount) || amount <= 0 || amount > sub.remaining){
+        return alert("الرجاء إدخال مبلغ صالح.");
+    }
+
+    sub.remaining = +(sub.remaining - amount).toFixed(2);
+    sub.payments.push({ amount, month, date: new Date().toLocaleDateString(), remaining: sub.remaining });
+    localStorage.setItem("subscribers", JSON.stringify(subscribers));
+
+    // توليد رقم إيصال فريد
+    let lastNumber = parseInt(localStorage.getItem("lastReceiptNumber")) || 2000;
+    lastNumber++;
+    localStorage.setItem("lastReceiptNumber", lastNumber);
+
+    receipts.push({
+        id: lastNumber,
+        subscriberId: sub.id,
+        name: sub.name,
+        phone: sub.phone,
+        amount: amount,
+        remaining: sub.remaining,
+        total: sub.price,
+        month: month,
+        date: new Date().toLocaleDateString()
+    });
+    localStorage.setItem("receipts", JSON.stringify(receipts));
+
+    document.getElementById(`pay-${id}`).value = "";
+    renderTable();
+
+    sendWhatsApp(id, amount, month);
+}
+
+// ====== دالة طباعة الإيصال ======
+function printReceipt(subId){
+    const sub = subscribers.find(s => s.id === subId);
+    if(!sub || sub.payments.length === 0) return alert("لا توجد دفعات للطباعة");
+
+    // آخر دفعة
+    const lastPayment = sub.payments[sub.payments.length - 1];
+
+    // إيجاد الإيصال المرتبط بهذه الدفعة
+    const receipt = receipts.find(r => r.subscriberId === sub.id 
+                                       && r.amount === lastPayment.amount 
+                                       && r.date === lastPayment.date);
     if(!receipt) return alert("الإيصال غير موجود");
 
-    const status = receipt.remaining===0 ? 'مدفوع كليًا' : (receipt.remaining<receipt.total ? 'مدفوع جزئيًا':'غير مدفوع');
+    const status = receipt.remaining === 0 ? 'مدفوع كليًا' :
+                   (receipt.remaining < receipt.total ? 'مدفوع جزئيًا':'غير مدفوع');
 
     const win = window.open("", "PrintReceipt", "width=300,height=600");
     win.document.write(`
@@ -108,8 +183,8 @@ function printReceipt(receiptId){
         <hr>
         <table style="width:100%; border-collapse: collapse;">
             <tr><td><strong>رقم الإيصال:</strong></td><td>${receipt.id}</td></tr>
-            <tr><td><strong>المشترك:</strong></td><td>${receipt.name}</td></tr>
-            <tr><td><strong>رقم الهاتف:</strong></td><td>${receipt.phone}</td></tr>
+            <tr><td><strong>المشترك:</strong></td><td>${sub.name}</td></tr>
+            <tr><td><strong>رقم الهاتف:</strong></td><td>${sub.phone}</td></tr>
             <tr><td><strong>سعر الاشتراك:</strong></td><td>$${receipt.total}</td></tr>
             <tr><td><strong>المبلغ المدفوع:</strong></td><td>$${receipt.amount}</td></tr>
             <tr><td><strong>المتبقي:</strong></td><td>$${receipt.remaining}</td></tr>
@@ -124,7 +199,23 @@ function printReceipt(receiptId){
     win.print();
 }
 
-// تشغيل الصفحة
+// ====== دالة واتساب ======
+function sendWhatsApp(id, amount = null, month = null){
+    const sub = subscribers.find(s => s.id === id);
+    if(!sub) return alert("المشترك غير موجود");
+    let lastPayment = sub.payments[sub.payments.length - 1];
+    if(!lastPayment) return alert("لا توجد دفعات.");
+
+    amount = amount ?? lastPayment.amount;
+    month = month ?? lastPayment.month;
+
+    if(!/^\d+$/.test(sub.phone)) return alert("رقم الهاتف غير صالح للواتساب");
+
+    const msg = `📩 إشعار دفع FAST NET\n👤 المشترك: ${sub.name}\n💰 المبلغ المدفوع: $${amount}\n💵 المتبقي: $${sub.remaining}\n🗓️ الشهر: ${month}\n📅 التاريخ: ${lastPayment.date}`;
+    window.open(`https://wa.me/${sub.phone}?text=${encodeURIComponent(msg)}`, "_blank");
+}
+
+// ====== تشغيل الصفحة ======
 renderTable();
 </script>
 
