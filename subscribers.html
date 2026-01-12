@@ -66,8 +66,8 @@ th { background-color: #007bff; color: white; }
             <th>المدفوع ($)</th>
             <th>المتبقي ($)</th>
             <th>حالة الدفع</th>
-            <th>إجراءات</th>
             <th>تذكير</th>
+            <th>إجراءات</th>
         </tr>
     </thead>
     <tbody></tbody>
@@ -137,10 +137,10 @@ function renderTable(){
             <td>$${remaining}</td>
             <td class="${statusClass}">${statusText}</td>
             <td>
-                <button class="delete-btn" onclick="deleteSubscriber(${sub.id})">حذف</button>
+                ${remaining > 0 ? `<button class="reminder-btn" onclick="sendReminder(${sub.id})">تذكير واتساب</button>` : ''}
             </td>
             <td>
-                ${remaining > 0 ? `<button class="reminder-btn" onclick="sendReminder(${sub.id})">تذكير واتساب</button>` : ''}
+                <button class="delete-btn" onclick="deleteSubscriber(${sub.id})">حذف</button>
             </td>
         `;
         tableBody.appendChild(tr);
