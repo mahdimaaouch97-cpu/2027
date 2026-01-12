@@ -52,9 +52,7 @@
     function renderTable() {
         tableBody.innerHTML = "";
         if(subscribers.length === 0){
-            const tr = document.createElement("tr");
-            tr.innerHTML = `<td colspan="5">لا يوجد مشتركين حاليا.</td>`;
-            tableBody.appendChild(tr);
+            tableBody.innerHTML = `<tr><td colspan="5">لا يوجد مشتركين حاليا.</td></tr>`;
             return;
         }
         subscribers.forEach(sub => {
