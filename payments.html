@@ -107,14 +107,23 @@ function renderTable() {
 </td>
 <td><button class="print-btn" onclick="printReceipt(${sub.id})">طباعة</button></td>
 `;
-        // إضافة زر واتساب لكل صف
+        // زر واتساب لكل صف
         const waCell = document.createElement("td");
         const waBtn = document.createElement("button");
         waBtn.innerText = "أرسل واتساب";
         waBtn.className = "wa-btn";
         waBtn.addEventListener("click", () => {
             const paidAmount = sub.price - sub.remaining;
-            const message = `مرحباً ${sub.name}, تم استلام دفعة بقيمة $${paidAmount} من أصل $${sub.price}. المبلغ المتبقي: $${sub.remaining}.`;
+            const today = new Date().toLocaleDateString();
+            const message = `📩 إشعار دفع FAST NET
+
+👤 المشترك: ${sub.name}
+📞 الهاتف: ${sub.phone}
+💰 المبلغ المدفوع: $${paidAmount}
+💵 المبلغ المتبقي: $${sub.remaining}
+🗓️ التاريخ: ${today}
+
+شكراً لاستخدامكم خدماتنا! 🚀`;
             const url = `https://wa.me/${sub.phone}?text=${encodeURIComponent(message)}`;
             window.open(url, "_blank");
         });
@@ -151,7 +160,16 @@ function pay(id) {
     renderTable();
 
     // إرسال واتساب تلقائي بعد الدفع
-    const message = `مرحباً ${sub.name}, تم استلام دفعة بقيمة $${amount} من أصل $${sub.price}. المبلغ المتبقي: $${sub.remaining}.`;
+    const today = new Date().toLocaleDateString();
+    const message = `📩 إشعار دفع FAST NET
+
+👤 المشترك: ${sub.name}
+📞 الهاتف: ${sub.phone}
+💰 المبلغ المدفوع: $${amount}
+💵 المبلغ المتبقي: $${sub.remaining}
+🗓️ التاريخ: ${today}
+
+شكراً لاستخدامكم خدماتنا! 🚀`;
     const url = `https://wa.me/${sub.phone}?text=${encodeURIComponent(message)}`;
     window.open(url, "_blank");
 }
