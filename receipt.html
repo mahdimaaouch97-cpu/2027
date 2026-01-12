@@ -1,0 +1,12 @@
+
+<!DOCTYPE html><html><head><meta charset="UTF-8">
+<style>
+body{width:50mm;font-size:12px;text-align:center}
+</style></head><body>
+<h3>FAST NET</h3>
+<p>إيصال حراري</p>
+<script>
+let r=JSON.parse(localStorage.getItem("receipts")).slice(-1)[0];
+document.write(`<p>${r.name}</p><p>$${r.amount}</p><p>${r.date}</p>`);
+</script>
+</body></html>
