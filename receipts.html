@@ -8,52 +8,48 @@
 <style>
 body { font-family: Arial, sans-serif; background:#f5f5f5; padding:20px; }
 h1 { text-align:center; margin-bottom:20px; }
-#search { width:100%; max-width:400px; padding:8px; margin:10px auto; display:block; }
-table { width:100%; border-collapse:collapse; margin-top:20px; background:white; }
+#search { margin-bottom:15px; padding:8px; width:100%; max-width:400px; display:block; margin-left:auto; margin-right:auto; }
+table { width:100%; border-collapse:collapse; margin-top:10px; background:white; }
 th, td { padding:10px; border:1px solid #ddd; text-align:center; }
 th { background-color:#007bff; color:white; }
-button { padding:5px 10px; border:none; border-radius:4px; cursor:pointer; }
-.print-btn { background-color:#28a745; color:white; }
-.status-paid { background-color:#27ae60; color:white; padding:3px 6px; border-radius:4px; }
-.status-partial { background-color:#f39c12; color:white; padding:3px 6px; border-radius:4px; }
-.status-unpaid { background-color:#c0392b; color:white; padding:3px 6px; border-radius:4px; }
+button { padding:5px 10px; cursor:pointer; margin:2px; }
+.print-btn { background-color:#28a745; color:white; border:none; }
+.back-btn { background-color:#34495e; color:white; padding:5px 10px; border:none; cursor:pointer; margin-bottom:10px; border-radius:4px; }
 </style>
 </head>
 <body>
 
 <h1>الإيصالات</h1>
 
-<input type="text" id="search" placeholder="ابحث عن المشترك بالاسم أو رقم الهاتف..." onkeyup="renderTable()">
+<button class="back-btn" onclick="window.location.href='index.html'">العودة للرئيسية</button>
 
-<table id="receiptsTable">
+<input type="text" id="search" placeholder="ابحث بالإسم أو رقم الهاتف..." onkeyup="renderTable()">
+
+<table>
 <thead>
 <tr>
 <th>رقم الإيصال</th>
 <th>المشترك</th>
 <th>رقم الهاتف</th>
-<th>المبلغ المدفوع ($)</th>
-<th>المتبقي ($)</th>
-<th>حالة الدفع</th>
+<th>سعر الاشتراك</th>
+<th>المبلغ المدفوع</th>
+<th>المتبقي</th>
 <th>تاريخ الدفع</th>
-<th>طباعة الإيصال</th>
+<th>طباعة</th>
 </tr>
 </thead>
-<tbody></tbody>
+<tbody id="receiptsTableBody"></tbody>
 </table>
 
 <script>
-// جلب بيانات الإيصالات من LocalStorage
-function renderTable() {
-    const tableBody = document.querySelector("#receiptsTable tbody");
-    const searchFilter = document.getElementById("search").value.toLowerCase();
-    const receipts = JSON.parse(localStorage.getItem("receipts")) || [];
+let receipts = JSON.parse(localStorage.getItem("receipts")) || [];
 
-    let filtered = receipts.filter(r => 
-        r.name.toLowerCase().includes(searchFilter) ||
-        r.phone.toLowerCase().includes(searchFilter)
-    );
-
+function renderTable(){
+    const tableBody = document.getElementById("receiptsTableBody");
+    const search = document.getElementById("search").value.toLowerCase();
     tableBody.innerHTML = "";
+
+    let filtered = receipts.filter(r => r.name.toLowerCase().includes(search) || r.phone.toLowerCase().includes(search));
 
     if(filtered.length === 0){
         tableBody.innerHTML = `<tr><td colspan="8">لا توجد إيصالات.</td></tr>`;
@@ -61,19 +57,14 @@ function renderTable() {
     }
 
     filtered.forEach(r => {
-        let statusHtml = '';
-        if(r.remaining === 0) statusHtml = `<span class="status-paid">مدفوع كليًا</span>`;
-        else if(r.remaining < r.total) statusHtml = `<span class="status-partial">مدفوع جزئيًا</span>`;
-        else statusHtml = `<span class="status-unpaid">غير مدفوع</span>`;
-
         const tr = document.createElement("tr");
         tr.innerHTML = `
             <td>${r.id}</td>
             <td>${r.name}</td>
             <td>${r.phone}</td>
+            <td>$${r.total}</td>
             <td>$${r.amount}</td>
             <td>$${r.remaining}</td>
-            <td>${statusHtml}</td>
             <td>${r.date}</td>
             <td><button class="print-btn" onclick="printReceipt('${r.id}')">طباعة</button></td>
         `;
@@ -81,15 +72,13 @@ function renderTable() {
     });
 }
 
-// طباعة الإيصال بحجم 50mm مع اسم الشركة ورقم الهاتف
-function printReceipt(id) {
-    const receipts = JSON.parse(localStorage.getItem("receipts")) || [];
-    const r = receipts.find(x => x.id === id);
+function printReceipt(id){
+    const r = receipts.find(rec => rec.id === id);
     if(!r) return;
 
-    const statusText = r.remaining === 0 ? 'مدفوع كليًا' : (r.remaining < r.total ? 'مدفوع جزئيًا' : 'غير مدفوع');
-
     const win = window.open("", "PrintReceipt", "width=300,height=600");
+    const status = r.remaining === 0 ? 'مدفوع كليًا' : (r.remaining < r.total ? 'مدفوع جزئيًا':'غير مدفوع');
+
     win.document.write(`
     <div style="font-family:Arial; width:280px; padding:10px;">
         <h3 style="text-align:center;">FAST NET</h3>
@@ -101,16 +90,15 @@ function printReceipt(id) {
         <p><strong>سعر الاشتراك:</strong> $${r.total}</p>
         <p><strong>المبلغ المدفوع:</strong> $${r.amount}</p>
         <p><strong>المتبقي:</strong> $${r.remaining}</p>
-        <p><strong>حالة الدفع:</strong> ${statusText}</p>
+        <p><strong>حالة الدفع:</strong> ${status}</p>
         <p><strong>تاريخ الدفع:</strong> ${r.date}</p>
         <hr>
-        <p style="text-align:center;">شكراً لاستخدامكم خدماتنا!</p>
+        <p style="text-align:center;">شكراً لاستخدامكم FAST NET</p>
     </div>
     `);
     win.print();
 }
 
-// عرض الإيصالات عند تحميل الصفحة
 renderTable();
 </script>
 
