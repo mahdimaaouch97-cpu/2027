@@ -104,18 +104,18 @@ function renderTable() {
 <td>${statusText}</td>
 <td>
 <select id="month-${sub.id}">
-  <option value="يناير">يناير</option>
-  <option value="فبراير">فبراير</option>
-  <option value="مارس">مارس</option>
-  <option value="أبريل">أبريل</option>
-  <option value="مايو">مايو</option>
-  <option value="يونيو">يونيو</option>
-  <option value="يوليو">يوليو</option>
-  <option value="أغسطس">أغسطس</option>
-  <option value="سبتمبر">سبتمبر</option>
-  <option value="أكتوبر">أكتوبر</option>
-  <option value="نوفمبر">نوفمبر</option>
-  <option value="ديسمبر">ديسمبر</option>
+  <option value="1">1</option>
+  <option value="2">2</option>
+  <option value="3">3</option>
+  <option value="4">4</option>
+  <option value="5">5</option>
+  <option value="6">6</option>
+  <option value="7">7</option>
+  <option value="8">8</option>
+  <option value="9">9</option>
+  <option value="10">10</option>
+  <option value="11">11</option>
+  <option value="12">12</option>
 </select>
 <input type="number" id="pay-${sub.id}" placeholder="المبلغ" min="0.01" max="${sub.remaining}" step="0.01" ${sub.remaining===0?"disabled":""}>
 <button class="pay-btn" onclick="pay(${sub.id})" ${sub.remaining===0?"disabled":""}>دفع</button>
@@ -178,7 +178,7 @@ function pay(id) {
     input.value = "";
     renderTable();
 
-    // إرسال واتساب تلقائي بعد الدفع مع الشهر
+    // إرسال واتساب تلقائي بعد الدفع مع رقم الشهر
     const today = new Date().toLocaleDateString();
     const message = `📩 إشعار دفع FAST NET
 
@@ -203,7 +203,7 @@ function printReceipt(id) {
 
     let paymentsHtml="";
     sub.payments.forEach((p,i)=>{
-        paymentsHtml+=`<p>الدفعة ${i+1} (${p.month}): $${p.amount} (${p.date})</p>`;
+        paymentsHtml+=`<p>الدفعة ${i+1} (شهر ${p.month}): $${p.amount} (${p.date})</p>`;
     });
 
     receiptWindow.document.write(`
