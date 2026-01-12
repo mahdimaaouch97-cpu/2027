@@ -163,11 +163,17 @@ function printReceipt(subId){
     const sub = subscribers.find(s => s.id === subId);
     if(!sub || sub.payments.length === 0) return alert("لا توجد دفعات للطباعة");
 
+    // آخر دفعة
     const lastPayment = sub.payments[sub.payments.length - 1];
-    const receipt = receipts.find(r => r.subscriberId === sub.id && r.amount === lastPayment.amount && r.date === lastPayment.date);
+
+    // إيجاد الإيصال المرتبط بهذه الدفعة
+    const receipt = receipts.find(r => r.subscriberId === sub.id 
+                                       && r.amount === lastPayment.amount 
+                                       && r.date === lastPayment.date);
     if(!receipt) return alert("الإيصال غير موجود");
 
-    const status = receipt.remaining===0 ? 'مدفوع كليًا' : (receipt.remaining<receipt.total ? 'مدفوع جزئيًا':'غير مدفوع');
+    const status = receipt.remaining === 0 ? 'مدفوع كليًا' :
+                   (receipt.remaining < receipt.total ? 'مدفوع جزئيًا':'غير مدفوع');
 
     const win = window.open("", "PrintReceipt", "width=300,height=600");
     win.document.write(`
