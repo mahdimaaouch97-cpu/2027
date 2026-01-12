@@ -83,20 +83,25 @@
     function pay(id) {
         const sub = subscribers.find(s => s.id === id);
         const input = document.getElementById(`pay-${id}`);
-        const amount = parseFloat(input.value);
+        let amount = parseFloat(input.value);
+
         if(isNaN(amount) || amount <= 0) {
-            alert("الرجاء إدخال مبلغ صالح.");
+            alert("الرجاء إدخال مبلغ صالح أكبر من صفر.");
             return;
         }
+
         if(amount > sub.remaining) {
-            alert("المبلغ المدفوع أكبر من المبلغ المتبقي.");
+            alert(`المبلغ المدفوع أكبر من المبلغ المتبقي ($${sub.remaining}).`);
             return;
         }
-        sub.remaining -= amount;
-        localStorage.setItem("subscribers", JSON.stringify(subscribers));
+
+        sub.remaining -= amount; // خصم المبلغ المدفوع
+        localStorage.setItem("subscribers", JSON.stringify(subscribers)); // حفظ التغيير
+
         alert(`تم دفع $${amount} للمشترك ${sub.name}. المبلغ المتبقي: $${sub.remaining}`);
-        input.value = "";
-        renderTable();
+
+        input.value = ""; // مسح الحقل
+        renderTable(); // تحديث الجدول
     }
 
     function printReceipt(id) {
