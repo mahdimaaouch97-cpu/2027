@@ -44,6 +44,19 @@ th { background-color: #007bff; color: white; }
 <script>
 let subscribers = JSON.parse(localStorage.getItem("subscribers")) || [];
 
+// ✅ تصحيح أي بيانات قديمة أو ناقصة
+subscribers = subscribers.map((sub, index) => {
+    return {
+        id: sub.id !== undefined ? sub.id : index + 1,
+        name: sub.name || "بدون اسم",
+        phone: sub.phone || "غير محدد",
+        price: sub.price !== undefined ? sub.price : 0,
+        remaining: sub.remaining !== undefined ? sub.remaining : (sub.price || 0),
+        payments: Array.isArray(sub.payments) ? sub.payments : []
+    };
+});
+localStorage.setItem("subscribers", JSON.stringify(subscribers));
+
 const form = document.getElementById("addSubscriberForm");
 const tableBody = document.querySelector("#subscribersTable tbody");
 
@@ -75,7 +88,6 @@ form.addEventListener("submit", (e) => {
 
     const newId = subscribers.length > 0 ? subscribers[subscribers.length-1].id + 1 : 1;
 
-    // ✅ مهم: إنشاء الحقول الصحيحة للمشترك الجديد
     subscribers.push({
         id: newId,
         name,
@@ -97,7 +109,6 @@ function deleteSubscriber(id){
     renderTable();
 }
 
-// عرض الجدول عند تحميل الصفحة
 renderTable();
 </script>
 
