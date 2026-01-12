@@ -4,22 +4,21 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>الإيصالات - FAST NET</title>
-<link rel="stylesheet" href="assets/css/style.css">
 <style>
 body { font-family: Arial, sans-serif; background:#f5f5f5; padding:20px; }
 h1 { text-align:center; margin-bottom:20px; }
-#search, #filterStatus { margin-bottom:15px; padding:8px; width:100%; max-width:400px; display:block; margin-left:auto; margin-right:auto; }
+#search, #filterStatus { padding:8px; width:100%; max-width:400px; display:block; margin:10px auto; }
 table { width:100%; border-collapse:collapse; margin-top:10px; background:white; }
 th, td { padding:10px; border:1px solid #ddd; text-align:center; }
 th { background-color:#007bff; color:white; }
 button { padding:5px 10px; cursor:pointer; margin:2px; }
 .print-btn { background-color:#28a745; color:white; border:none; }
-.back-btn { background-color:#34495e; color:white; padding:5px 10px; border:none; cursor:pointer; margin-bottom:10px; border-radius:4px; }
+.back-btn { background-color:#34495e; color:white; border:none; padding:5px 10px; margin-bottom:10px; border-radius:4px; }
 </style>
 </head>
 <body>
 
-<h1>الإيصالات</h1>
+<h1>الإيصالات - FAST NET</h1>
 
 <button class="back-btn" onclick="window.location.href='index.html'">العودة للرئيسية</button>
 
@@ -51,51 +50,22 @@ button { padding:5px 10px; cursor:pointer; margin:2px; }
 </table>
 
 <script>
-let subscribers = JSON.parse(localStorage.getItem("subscribers")) || [];
+// جلب الإيصالات من LocalStorage
+let receipts = JSON.parse(localStorage.getItem("receipts")) || [];
 
+// عرض جدول الإيصالات
 function renderTable(){
     const tableBody = document.getElementById("receiptsTableBody");
     const search = document.getElementById("search").value.toLowerCase();
     const statusFilter = document.getElementById("filterStatus").value;
     tableBody.innerHTML = "";
 
-    let rows = [];
-
-    subscribers.forEach(sub => {
-        if(sub.payments && sub.payments.length > 0){
-            sub.payments.forEach((p, i) => {
-                const remaining = sub.remaining;
-                const status = remaining === 0 ? 'full' : (remaining < sub.price ? 'partial' : 'unpaid');
-                rows.push({
-                    id: `${sub.id}-${i+1}`,
-                    name: sub.name,
-                    phone: sub.phone,
-                    total: sub.price,
-                    amount: Number(p.amount),
-                    remaining: remaining,
-                    month: p.month,
-                    date: p.date,
-                    status: status
-                });
-            });
-        } else {
-            rows.push({
-                id: `${sub.id}-0`,
-                name: sub.name,
-                phone: sub.phone,
-                total: sub.price,
-                amount: 0,
-                remaining: sub.price,
-                month: "-",
-                date: "-",
-                status: "unpaid"
-            });
-        }
-    });
-
-    let filtered = rows.filter(r => {
+    let filtered = receipts.filter(r => {
         const matchesSearch = r.name.toLowerCase().includes(search) || r.phone.toLowerCase().includes(search);
-        const matchesStatus = statusFilter === "all" || r.status === statusFilter;
+        let matchesStatus = statusFilter === "all";
+        if(statusFilter === "full") matchesStatus = r.remaining === 0;
+        if(statusFilter === "partial") matchesStatus = r.remaining < r.total && r.remaining > 0;
+        if(statusFilter === "unpaid") matchesStatus = r.remaining === r.total;
         return matchesSearch && matchesStatus;
     });
 
@@ -105,7 +75,7 @@ function renderTable(){
     }
 
     filtered.forEach(r => {
-        const statusText = r.status === 'full' ? 'مدفوع كليًا' : (r.status === 'partial' ? 'مدفوع جزئيًا' : 'غير مدفوع');
+        const statusText = r.remaining === 0 ? 'مدفوع كليًا' : (r.remaining < r.total ? 'مدفوع جزئيًا' : 'غير مدفوع');
         const tr = document.createElement("tr");
         tr.innerHTML = `
             <td>${r.id}</td>
@@ -117,22 +87,18 @@ function renderTable(){
             <td>${r.month}</td>
             <td>${statusText}</td>
             <td>${r.date}</td>
-            <td><button class="print-btn" onclick="printReceipt('${r.id}')">طباعة</button></td>
+            <td><button class="print-btn" onclick="printReceipt(${r.id})">طباعة</button></td>
         `;
         tableBody.appendChild(tr);
     });
 }
 
-function printReceipt(id){
-    const subId = id.split("-")[0];
-    const paymentIndex = parseInt(id.split("-")[1]) - 1;
+// دالة طباعة الإيصال
+function printReceipt(receiptId){
+    const receipt = receipts.find(r => r.id == receiptId);
+    if(!receipt) return alert("الإيصال غير موجود");
 
-    const sub = subscribers.find(s => s.id == subId);
-    if(!sub) return;
-
-    let payment = sub.payments && sub.payments[paymentIndex] ? sub.payments[paymentIndex] : {amount: 0, month: "-", date: "-"};
-    const remaining = sub.remaining;
-    const status = remaining === 0 ? 'مدفوع كليًا' : (remaining < sub.price ? 'مدفوع جزئيًا' : 'غير مدفوع');
+    const status = receipt.remaining===0 ? 'مدفوع كليًا' : (receipt.remaining<receipt.total ? 'مدفوع جزئيًا':'غير مدفوع');
 
     const win = window.open("", "PrintReceipt", "width=300,height=600");
     win.document.write(`
@@ -141,15 +107,15 @@ function printReceipt(id){
         <p style="text-align:center;">هاتف الشركة: 71346411 / 71338640</p>
         <hr>
         <table style="width:100%; border-collapse: collapse;">
-            <tr><td><strong>رقم الإيصال:</strong></td><td>${id}</td></tr>
-            <tr><td><strong>المشترك:</strong></td><td>${sub.name}</td></tr>
-            <tr><td><strong>رقم الهاتف:</strong></td><td>${sub.phone}</td></tr>
-            <tr><td><strong>سعر الاشتراك:</strong></td><td>$${sub.price}</td></tr>
-            <tr><td><strong>المبلغ المدفوع:</strong></td><td>$${payment.amount}</td></tr>
-            <tr><td><strong>المتبقي:</strong></td><td>$${remaining}</td></tr>
-            <tr><td><strong>الشهر:</strong></td><td>${payment.month}</td></tr>
+            <tr><td><strong>رقم الإيصال:</strong></td><td>${receipt.id}</td></tr>
+            <tr><td><strong>المشترك:</strong></td><td>${receipt.name}</td></tr>
+            <tr><td><strong>رقم الهاتف:</strong></td><td>${receipt.phone}</td></tr>
+            <tr><td><strong>سعر الاشتراك:</strong></td><td>$${receipt.total}</td></tr>
+            <tr><td><strong>المبلغ المدفوع:</strong></td><td>$${receipt.amount}</td></tr>
+            <tr><td><strong>المتبقي:</strong></td><td>$${receipt.remaining}</td></tr>
+            <tr><td><strong>الشهر:</strong></td><td>${receipt.month}</td></tr>
             <tr><td><strong>حالة الدفع:</strong></td><td>${status}</td></tr>
-            <tr><td><strong>تاريخ الدفع:</strong></td><td>${payment.date}</td></tr>
+            <tr><td><strong>تاريخ الدفع:</strong></td><td>${receipt.date}</td></tr>
         </table>
         <hr>
         <p style="text-align:center;">شكراً لاستخدامكم FAST NET</p>
@@ -158,6 +124,7 @@ function printReceipt(id){
     win.print();
 }
 
+// تشغيل الصفحة
 renderTable();
 </script>
 
