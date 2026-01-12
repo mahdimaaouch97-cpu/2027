@@ -195,12 +195,13 @@ function importCSV(event){
         localStorage.setItem("subscribers", JSON.stringify(subscribers));
         renderTable();
     };
-    reader.readAsText(file);
+    reader.readAsText(file, "UTF-8");
 }
 
-// تصدير CSV
+// تصدير CSV مع دعم العربية
 function exportCSV(){
     if(subscribers.length === 0) return alert("لا يوجد مشتركين للتصدير");
+
     const headers = ["ID","اسم المشترك","رقم الهاتف","سعر الاشتراك","المدفوع","المتبقي","حالة الدفع"];
     const rows = subscribers.map(sub => {
         const paid = sub.payments.reduce((sum,p)=>sum+Number(p.amount),0).toFixed(2);
@@ -210,7 +211,8 @@ function exportCSV(){
         else if(remaining < sub.price) status = "مدفوع جزئيًا";
         return [sub.id, sub.name, sub.phone, sub.price, paid, remaining, status].join(",");
     });
-    const csvContent = [headers.join(","), ...rows].join("\n");
+
+    const csvContent = "\uFEFF" + [headers.join(","), ...rows].join("\n"); // BOM للغة العربية
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
@@ -218,7 +220,7 @@ function exportCSV(){
     link.click();
 }
 
-// تحديث تلقائي عند أي تغيير في LocalStorage (مثل الدفع في payments.html)
+// تحديث تلقائي عند أي تغيير في LocalStorage
 window.addEventListener("storage", function(event){
     if(event.key === "subscribers"){
         subscribers = JSON.parse(localStorage.getItem("subscribers")) || [];
@@ -226,7 +228,6 @@ window.addEventListener("storage", function(event){
     }
 });
 
-// عرض الجدول عند تحميل الصفحة
 renderTable();
 </script>
 
