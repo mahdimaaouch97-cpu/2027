@@ -70,6 +70,7 @@ subscribers = subscribers.map((sub, index) => ({
     remaining: sub.remaining !== undefined ? Number(sub.remaining) : Number(sub.price) || 0,
     payments: Array.isArray(sub.payments) ? sub.payments : []
 }));
+
 localStorage.setItem("subscribers", JSON.stringify(subscribers));
 
 function renderTable() {
@@ -133,6 +134,7 @@ function pay(id) {
     sub.payments.push({ amount, month, date: new Date().toLocaleDateString() });
     localStorage.setItem("subscribers", JSON.stringify(subscribers));
 
+    // إضافة إيصال جديد
     receipts.push({
         id: `${sub.id}-${sub.payments.length}`,
         subscriberId: sub.id,
@@ -149,6 +151,7 @@ function pay(id) {
     document.getElementById(`pay-${id}`).value = "";
     renderTable();
 
+    // إرسال رسالة واتساب
     const msg = `📩 إشعار دفع FAST NET\n👤 المشترك: ${sub.name}\n💰 المبلغ المدفوع: $${amount}\n💵 المبلغ المتبقي: $${sub.remaining}\n🗓️ الشهر: ${month}\n📅 التاريخ: ${new Date().toLocaleDateString()}`;
     window.open(`https://wa.me/${sub.phone}?text=${encodeURIComponent(msg)}`, "_blank");
 }
@@ -170,9 +173,9 @@ function printReceipt(id){
 
     const win = window.open("", "PrintReceipt", "width=300,height=600");
     win.document.write(`
-    <div style="font-family:Arial, sans-serif; width:280px; padding:10px; line-height:1.4;">
-        <h2 style="text-align:center; margin:5px 0;">FAST NET</h2>
-        <p style="text-align:center; margin:2px 0;"> 71346411 / 71338640</p>
+    <div style="font-family:Arial, sans-serif; width:280px; padding:10px; line-height:1.5; font-size:14px;">
+        <h2 style="text-align:center; margin:0;">FAST NET</h2>
+        <p style="text-align:center; margin:2px 0;">71346411 / 71338640</p>
         <hr style="margin:5px 0;">
         <table style="width:100%; border-collapse:collapse;">
             <tr><td><strong>المشترك:</strong></td><td>${sub.name}</td></tr>
@@ -185,7 +188,7 @@ function printReceipt(id){
             <tr><td><strong>تاريخ الدفع:</strong></td><td>${receipt.date}</td></tr>
         </table>
         <hr style="margin:5px 0;">
-       
+        <p style="text-align:center; margin:5px 0;">📩 شكراً لاستخدامكم خدماتنا! 🚀</p>
     </div>
     `);
     win.print();
