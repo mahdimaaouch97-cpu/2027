@@ -2,41 +2,116 @@
 <html lang="ar">
 <head>
 <meta charset="UTF-8">
-<title>أرشيف الإيصالات</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>الإيصالات - FAST NET</title>
 <link rel="stylesheet" href="assets/css/style.css">
-<script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+<style>
+body { font-family: Arial, sans-serif; background:#f5f5f5; padding:20px; }
+h1 { text-align:center; margin-bottom:20px; }
+#search { width:100%; max-width:400px; padding:8px; margin:10px auto; display:block; }
+table { width:100%; border-collapse:collapse; margin-top:20px; background:white; }
+th, td { padding:10px; border:1px solid #ddd; text-align:center; }
+th { background-color:#007bff; color:white; }
+button { padding:5px 10px; border:none; border-radius:4px; cursor:pointer; }
+.print-btn { background-color:#28a745; color:white; }
+.status-paid { background-color:#2ecc71; color:white; padding:3px 6px; border-radius:4px; }
+.status-partial { background-color:#f1c40f; color:white; padding:3px 6px; border-radius:4px; }
+.status-unpaid { background-color:#e74c3c; color:white; padding:3px 6px; border-radius:4px; }
+</style>
 </head>
 <body>
 
-<header>
-<h1>أرشيف الإيصالات</h1>
-</header>
+<h1>الإيصالات</h1>
 
-<main>
-
-<div style="margin-bottom:15px;">
-<button onclick="exportReceiptsExcel()">تصدير Excel</button>
-<button onclick="exportReceiptsPDF()">تصدير PDF</button>
-</div>
+<input type="text" id="search" placeholder="ابحث عن المشترك بالاسم أو رقم الهاتف..." onkeyup="renderTable()">
 
 <table id="receiptsTable">
 <thead>
 <tr>
-<th>#</th>
 <th>رقم الإيصال</th>
-<th>الاسم</th>
-<th>الباقة</th>
-<th>المدفوع ($)</th>
-<th>التاريخ</th>
-<th>الحالة</th>
-<th>طباعة</th>
+<th>المشترك</th>
+<th>رقم الهاتف</th>
+<th>المبلغ المدفوع ($)</th>
+<th>المتبقي ($)</th>
+<th>حالة الدفع</th>
+<th>تاريخ الدفع</th>
+<th>طباعة الإيصال</th>
 </tr>
 </thead>
 <tbody></tbody>
 </table>
 
-</main>
+<script>
+// جلب بيانات الإيصالات من LocalStorage
+function renderTable() {
+    const tableBody = document.querySelector("#receiptsTable tbody");
+    const searchFilter = document.getElementById("search").value.toLowerCase();
+    const receipts = JSON.parse(localStorage.getItem("receipts")) || [];
 
-<script src="assets/js/receipts.js"></script>
+    let filtered = receipts.filter(r => 
+        r.name.toLowerCase().includes(searchFilter) ||
+        r.phone.toLowerCase().includes(searchFilter)
+    );
+
+    tableBody.innerHTML = "";
+
+    if(filtered.length === 0){
+        tableBody.innerHTML = `<tr><td colspan="8">لا توجد إيصالات.</td></tr>`;
+        return;
+    }
+
+    filtered.forEach(r => {
+        let statusText = '';
+        if(r.remaining === 0) statusText = `<span class="status-paid">مدفوع كليًا</span>`;
+        else if(r.remaining < (r.amount + r.remaining)) statusText = `<span class="status-partial">مدفوع جزئيًا</span>`;
+        else statusText = `<span class="status-unpaid">غير مدفوع</span>`;
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td>${r.id}</td>
+            <td>${r.name}</td>
+            <td>${r.phone}</td>
+            <td>$${r.amount}</td>
+            <td>$${r.remaining}</td>
+            <td>${statusText}</td>
+            <td>${r.date}</td>
+            <td><button class="print-btn" onclick="printReceipt('${r.id}')">طباعة</button></td>
+        `;
+        tableBody.appendChild(tr);
+    });
+}
+
+// طباعة الإيصال بحجم 50mm مع اسم الشركة ورقم الهاتف
+function printReceipt(id) {
+    const receipts = JSON.parse(localStorage.getItem("receipts")) || [];
+    const receipt = receipts.find(r => r.id === id);
+    if(!receipt) return;
+
+    const statusText = receipt.remaining === 0 ? 'مدفوع كليًا' : (receipt.remaining < (receipt.amount + receipt.remaining) ? 'مدفوع جزئيًا' : 'غير مدفوع');
+
+    const win = window.open("", "PrintReceipt", "width=300,height=600");
+    win.document.write(`
+    <div style="font-family:Arial; width:280px; padding:10px;">
+        <h3 style="text-align:center;">FAST NET</h3>
+        <p style="text-align:center;">هاتف الشركة: 71346411 / 71338640</p>
+        <hr>
+        <p><strong>رقم الإيصال:</strong> ${receipt.id}</p>
+        <p><strong>المشترك:</strong> ${receipt.name}</p>
+        <p><strong>رقم الهاتف:</strong> ${receipt.phone}</p>
+        <p><strong>المبلغ المدفوع:</strong> $${receipt.amount}</p>
+        <p><strong>المتبقي:</strong> $${receipt.remaining}</p>
+        <p><strong>حالة الدفع:</strong> ${statusText}</p>
+        <p><strong>تاريخ الدفع:</strong> ${receipt.date}</p>
+        <hr>
+        <p style="text-align:center;">شكراً لاستخدامكم خدماتنا!</p>
+    </div>
+    `);
+    win.print();
+}
+
+// عرض الإيصالات عند تحميل الصفحة
+renderTable();
+</script>
+
 </body>
 </html>
