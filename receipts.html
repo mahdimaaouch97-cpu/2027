@@ -74,43 +74,63 @@ th {
 }
 .print-btn:hover { background: #0056b3; }
 td, th { vertical-align: middle; }
+.back-btn {
+    padding: 8px 12px; 
+    font-size: 14px; 
+    margin-bottom: 15px; 
+    border:none; 
+    border-radius:5px; 
+    background:#007bff; 
+    color:#fff; 
+    cursor:pointer;
+}
+.back-btn:hover { background:#0056b3; }
 </style>
 </head>
 <body>
 
 <div class="container">
-<h1>قائمة الإيصالات</h1>
+    <!-- زر الرجوع -->
+    <button class="back-btn" onclick="goHome()">← الرجوع إلى الصفحة الرئيسية</button>
 
-<div class="controls">
-    <input type="text" id="search" placeholder="بحث بالاسم...">
-    <select id="filterStatus">
-        <option value="">الكل</option>
-        <option value="full">مدفوع كليًا</option>
-        <option value="partial">مدفوع جزئيًا</option>
-    </select>
-</div>
+    <h1>قائمة الإيصالات</h1>
 
-<table>
-<thead>
-<tr>
-<th>رقم الإيصال</th>
-<th>المشترك</th>
-<th>السعر</th>
-<th>المدفوع</th>
-<th>المتبقي</th>
-<th>الشهر</th>
-<th>الحالة</th>
-<th>تاريخ الدفع</th>
-<th>طباعة</th>
-</tr>
-</thead>
-<tbody id="receiptsTableBody">
-<!-- سيتم تعبئتها بالجافاسكربت -->
-</tbody>
-</table>
+    <div class="controls">
+        <input type="text" id="search" placeholder="بحث بالاسم...">
+        <select id="filterStatus">
+            <option value="">الكل</option>
+            <option value="full">مدفوع كليًا</option>
+            <option value="partial">مدفوع جزئيًا</option>
+        </select>
+    </div>
+
+    <table>
+    <thead>
+    <tr>
+        <th>رقم الإيصال</th>
+        <th>المشترك</th>
+        <th>السعر</th>
+        <th>المدفوع</th>
+        <th>المتبقي</th>
+        <th>الشهر</th>
+        <th>الحالة</th>
+        <th>تاريخ الدفع</th>
+        <th>طباعة</th>
+    </tr>
+    </thead>
+    <tbody id="receiptsTableBody">
+    <!-- سيتم تعبئتها بالجافاسكربت -->
+    </tbody>
+    </table>
 </div>
 
 <script>
+// وظيفة الرجوع للصفحة الرئيسية
+function goHome() {
+    // استبدل "index.html" برابط الصفحة الرئيسية الفعلي
+    window.location.href = "index.html";
+}
+
 // تحميل البيانات
 let receipts = JSON.parse(localStorage.getItem("receipts")) || [];
 let subscribers = JSON.parse(localStorage.getItem("subscribers")) || [];
