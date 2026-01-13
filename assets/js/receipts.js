@@ -1,7 +1,7 @@
-// تحميل الإيصالات من LocalStorage
+// تحميل البيانات
 let receipts = JSON.parse(localStorage.getItem("receipts")) || [];
+let subscribers = JSON.parse(localStorage.getItem("subscribers")) || [];
 
-// عرض جدول الإيصالات
 function renderTable() {
     const tableBody = document.getElementById("receiptsTableBody");
     const search = document.getElementById("search").value.toLowerCase();
@@ -9,7 +9,28 @@ function renderTable() {
 
     tableBody.innerHTML = "";
 
-    let filtered = receipts.filter(r => {
+    if (receipts.length === 0) {
+        tableBody.innerHTML =
+            `<tr><td colspan="9">لا توجد إيصالات</td></tr>`;
+        return;
+    }
+
+    let rows = receipts.map(r => {
+        const sub = subscribers.find(s => s.id === r.subscriberId) || {};
+
+        return {
+            id: r.id,
+            name: sub.name || "غير معروف",
+            address: sub.address || "غير محدد",
+            total: sub.price || 0,
+            amount: r.amount || 0,
+            remaining: r.remaining ?? (sub.remaining ?? 0),
+            month: r.month || "-",
+            date: r.date || "-"
+        };
+    });
+
+    let filtered = rows.filter(r => {
         const matchesSearch = r.name.toLowerCase().includes(search);
 
         let matchesStatus = true;
@@ -25,7 +46,7 @@ function renderTable() {
 
     if (filtered.length === 0) {
         tableBody.innerHTML =
-            `<tr><td colspan="9">لا توجد إيصالات</td></tr>`;
+            `<tr><td colspan="9">لا توجد نتائج</td></tr>`;
         return;
     }
 
@@ -53,13 +74,17 @@ function renderTable() {
     });
 }
 
-// طباعة إيصال
 function printReceipt(id) {
     const r = receipts.find(x => x.id == id);
     if (!r) return alert("الإيصال غير موجود");
 
+    const sub = subscribers.find(s => s.id === r.subscriberId) || {};
+
+    const total = sub.price || 0;
+    const remaining = r.remaining ?? sub.remaining ?? 0;
+
     const status =
-        r.remaining === 0 ? "مدفوع كليًا" : "مدفوع جزئيًا";
+        remaining === 0 ? "مدفوع كليًا" : "مدفوع جزئيًا";
 
     const win = window.open("", "", "width=220,height=500");
 
@@ -69,11 +94,11 @@ function printReceipt(id) {
             <p style="text-align:center;margin:2px 0">71346411</p>
             <hr>
             <p>رقم الإيصال: ${r.id}</p>
-            <p>المشترك: ${r.name}</p>
-            <p>العنوان: ${r.address || "غير محدد"}</p>
-            <p>سعر الاشتراك: $${r.total}</p>
+            <p>المشترك: ${sub.name || "غير معروف"}</p>
+            <p>العنوان: ${sub.address || "غير محدد"}</p>
+            <p>سعر الاشتراك: $${total}</p>
             <p>المدفوع: $${r.amount}</p>
-            <p>المتبقي: $${r.remaining}</p>
+            <p>المتبقي: $${remaining}</p>
             <p>الشهر: ${r.month}</p>
             <p>الحالة: ${status}</p>
             <p>التاريخ: ${r.date}</p>
@@ -87,5 +112,4 @@ function printReceipt(id) {
     win.print();
 }
 
-// تشغيل الصفحة
 document.addEventListener("DOMContentLoaded", renderTable);
