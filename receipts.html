@@ -1,151 +1,122 @@
-<!DOCTYPE html>
-<html lang="ar">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>الإيصالات - FAST NET</title>
+// تحميل البيانات
+let receipts = JSON.parse(localStorage.getItem("receipts")) || [];
+let subscribers = JSON.parse(localStorage.getItem("subscribers")) || [];
 
-<style>
-body {
-    font-family: Arial, sans-serif;
-    background: #f5f5f5;
-    padding: 20px;
-    direction: rtl;
-    margin: 0;
-}
+function renderTable() {
+    const tableBody = document.getElementById("receiptsTableBody");
+    const search = document.getElementById("search").value.toLowerCase();
+    const statusFilter = document.getElementById("filterStatus").value;
 
-h1 {
-    text-align: center;
-    margin-bottom: 20px;
-    color: #007bff;
-}
+    tableBody.innerHTML = "";
 
-.controls {
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-bottom: 15px;
-}
-
-#search, #filterStatus {
-    padding: 8px;
-    width: 200px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-}
-
-table {
-    width: 100%;
-    border-collapse: collapse;
-    background: white;
-    margin-top: 10px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-}
-
-th, td {
-    border: 1px solid #ddd;
-    padding: 10px;
-    text-align: center;
-}
-
-th {
-    background: #007bff;
-    color: white;
-    font-weight: bold;
-}
-
-tr:nth-child(even) {
-    background-color: #f9f9f9;
-}
-
-tr:hover {
-    background-color: #f1f1f1;
-}
-
-button {
-    padding: 5px 12px;
-    cursor: pointer;
-    border-radius: 4px;
-    border: none;
-    font-size: 13px;
-}
-
-.print-btn {
-    background: #28a745;
-    color: white;
-}
-
-.back-btn {
-    background: #34495e;
-    color: white;
-    padding: 7px 20px;
-    margin-bottom: 20px;
-    display: block;
-    margin-left: auto;
-    margin-right: auto;
-}
-
-.status-label {
-    display: inline-block;
-    width: 100%;
-    padding: 4px 0;
-    color: white;
-    font-weight: bold;
-    border-radius: 4px;
-}
-
-.status-full { background-color: #28a745; } /* مدفوع كليًا */
-.status-partial { background-color: #FFA500; } /* مدفوع جزئيًا */
-
-@media (max-width: 600px) {
-    .controls {
-        flex-direction: column;
-        align-items: center;
+    if (receipts.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="9">لا توجد إيصالات</td></tr>`;
+        return;
     }
-    #search, #filterStatus {
-        width: 90%;
+
+    // ربط الإيصالات بالمشتركين
+    let rows = receipts.map(r => {
+        const sub = subscribers.find(s => Number(s.id) === Number(r.subscriberId));
+        let remaining = r.remaining ?? (sub ? sub.remaining : 0);
+
+        return {
+            id: r.id,
+            name: sub ? sub.name : "غير معروف",
+            address: sub ? sub.address : "غير محدد",
+            total: sub ? sub.price : 0,
+            amount: r.amount || 0,
+            remaining: remaining,
+            month: r.month || "-",
+            date: r.date || "-"
+        };
+    });
+
+    // فلترة النتائج: البحث + حالة الدفع + تجاهل الغير مدفوعين بالكامل
+    let filtered = rows.filter(r => {
+        const matchesSearch = r.name.toLowerCase().includes(search);
+        if (r.remaining === r.total) return false; // تجاهل الغير مدفوعين
+        let matchesStatus = true;
+        if (statusFilter === "full") matchesStatus = r.remaining === 0;
+        if (statusFilter === "partial") matchesStatus = r.remaining > 0 && r.remaining < r.total;
+        return matchesSearch && matchesStatus;
+    });
+
+    if (filtered.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="9">لا توجد نتائج</td></tr>`;
+        return;
     }
+
+    // عرض الصفوف مع تلوين الحالة
+    filtered.forEach(r => {
+        let statusClass = "";
+        let statusText = "";
+
+        if (r.remaining === 0) {
+            statusClass = "status-full";
+            statusText = "مدفوع كليًا";
+        } else if (r.remaining > 0 && r.remaining < r.total) {
+            statusClass = "status-partial";
+            statusText = "مدفوع جزئيًا";
+        }
+
+        tableBody.innerHTML += `
+        <tr>
+            <td>${r.id}</td>
+            <td>${r.name}</td>
+            <td>$${r.total}</td>
+            <td>$${r.amount}</td>
+            <td>$${r.remaining}</td>
+            <td>${r.month}</td>
+            <td>
+                <span class="status-label ${statusClass}">${statusText}</span>
+            </td>
+            <td>${r.date}</td>
+            <td>
+                <button class="print-btn" onclick="printReceipt(${r.id})">طباعة</button>
+            </td>
+        </tr>
+        `;
+    });
 }
-</style>
-</head>
 
-<body>
+// === طباعة الإيصال مثل صفحة الدفع ===
+function printReceipt(id) {
+    const r = receipts.find(x => x.id == id);
+    if (!r) return alert("الإيصال غير موجود");
 
-<h1>الإيصالات - FAST NET</h1>
+    const sub = subscribers.find(s => Number(s.id) === Number(r.subscriberId));
+    const total = sub ? sub.price : 0;
+    const remaining = r.remaining ?? (sub ? sub.remaining : 0);
 
-<button class="back-btn" onclick="window.location.href='index.html'">
-العودة إلى الرئيسية
-</button>
+    if (remaining === total) return alert("لا يمكن طباعة إيصال غير مدفوع");
 
-<div class="controls">
-    <input type="text" id="search" placeholder="ابحث باسم المشترك..." onkeyup="renderTable()">
-    <select id="filterStatus" onchange="renderTable()">
-        <option value="all">الكل</option>
-        <option value="full">مدفوع كليًا</option>
-        <option value="partial">مدفوع جزئيًا</option>
-    </select>
-</div>
+    const status = remaining === 0 ? "مدفوع كليًا" : "مدفوع جزئيًا";
 
-<table>
-<thead>
-<tr>
-    <th>رقم الإيصال</th>
-    <th>المشترك</th>
-    <th>سعر الاشتراك</th>
-    <th>المدفوع</th>
-    <th>المتبقي</th>
-    <th>الشهر</th>
-    <th>الحالة</th>
-    <th>التاريخ</th>
-    <th>طباعة</th>
-</tr>
-</thead>
-<tbody id="receiptsTableBody"></tbody>
-</table>
+    const win = window.open("", "PrintReceipt", "width=220,height=500");
 
-<!-- ربط ملف JS الخارجي -->
-<script src="assets/js/receipts.js"></script>
+    win.document.write(`
+    <div style="font-family:Arial, sans-serif; direction:rtl; width:200px; padding:5px; text-align:right; font-size:12px;">
+        <h3 style="text-align:center; margin:0;">FAST NET</h3>
+        <p style="text-align:center; margin:2px 0; font-size:12px;">71346411 / 71338640</p>
+        <hr>
+        <table style="width:100%; border-collapse:collapse; font-size:12px; direction:rtl;">
+            <tr><td style="font-weight:bold;">رقم الإيصال:</td><td>${r.id}</td></tr>
+            <tr><td style="font-weight:bold;">المشترك:</td><td>${sub ? sub.name : "غير معروف"}</td></tr>
+            <tr><td style="font-weight:bold;">العنوان:</td><td>${sub ? sub.address : "غير محدد"}</td></tr>
+            <tr><td style="font-weight:bold;">سعر الاشتراك:</td><td>$${total}</td></tr>
+            <tr><td style="font-weight:bold;">المدفوع:</td><td>$${r.amount}</td></tr>
+            <tr><td style="font-weight:bold;">المتبقي:</td><td>$${remaining}</td></tr>
+            <tr><td style="font-weight:bold;">الشهر:</td><td>${r.month}</td></tr>
+            <tr><td style="font-weight:bold;">حالة الدفع:</td><td>${status}</td></tr>
+            <tr><td style="font-weight:bold;">تاريخ الدفع:</td><td>${r.date}</td></tr>
+        </table>
+        <hr>
+        <p style="text-align:center; font-weight:bold; font-size:12px;">شكراً لاستخدامكم FAST NET</p>
+    </div>
+    `);
 
-</body>
-</html>
+    win.print();
+}
+
+// تشغيل الصفحة عند التحميل
+document.addEventListener("DOMContentLoaded", renderTable);
