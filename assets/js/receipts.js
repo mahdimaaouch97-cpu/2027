@@ -1,4 +1,4 @@
-// جلب الإيصالات والمشتركين من localStorage
+// جلب الإيصالات والمشتركين
 let receipts = JSON.parse(localStorage.getItem("receipts")) || [];
 let subscribers = JSON.parse(localStorage.getItem("subscribers")) || [];
 
@@ -17,11 +17,7 @@ function renderTable() {
 
     // ربط الإيصالات بالمشتركين
     let rows = receipts.map(r => {
-        const sub = subscribers.find(
-            s => Number(s.id) === Number(r.subscriberId)
-        );
-
-        // حساب الباقي بشكل دقيق
+        const sub = subscribers.find(s => Number(s.id) === Number(r.subscriberId));
         let remaining = r.remaining ?? (sub ? sub.remaining : 0);
 
         return {
@@ -39,11 +35,9 @@ function renderTable() {
     // تطبيق البحث والتصفية
     let filtered = rows.filter(r => {
         const matchesSearch = r.name.toLowerCase().includes(search);
-
         let matchesStatus = true;
         if (statusFilter === "full") matchesStatus = r.remaining === 0;
         if (statusFilter === "partial") matchesStatus = r.remaining > 0 && r.remaining < r.total;
-
         return matchesSearch && matchesStatus;
     });
 
@@ -52,21 +46,20 @@ function renderTable() {
         return;
     }
 
-    // إنشاء الصفوف في الجدول
+    // إنشاء الصفوف
     filtered.forEach(r => {
-        // تحديد النص واللون حسب الحالة
         let statusText = "";
         let statusColor = "";
 
         if (r.remaining === 0) {
             statusText = "مدفوع كليًا";
-            statusColor = "green";
+            statusColor = "#28a745"; // أخضر
         } else if (r.remaining > 0 && r.remaining < r.total) {
             statusText = "مدفوع جزئيًا";
-            statusColor = "orange";
+            statusColor = "#FFA500"; // برتقالي
         } else {
             statusText = "غير مدفوع";
-            statusColor = "red";
+            statusColor = "#FF0000"; // أحمر
         }
 
         tableBody.innerHTML += `
@@ -92,12 +85,10 @@ function printReceipt(id) {
     const r = receipts.find(x => x.id == id);
     if (!r) return alert("الإيصال غير موجود");
 
-    const sub = subscribers.find(
-        s => Number(s.id) === Number(r.subscriberId)
-    );
-
+    const sub = subscribers.find(s => Number(s.id) === Number(r.subscriberId));
     const total = sub ? sub.price : 0;
     const remaining = r.remaining ?? (sub ? sub.remaining : 0);
+
     let status = "";
     if (remaining === 0) status = "مدفوع كليًا";
     else if (remaining > 0 && remaining < total) status = "مدفوع جزئيًا";
