@@ -70,8 +70,18 @@ function renderTable() {
             <td>$${r.amount}</td>
             <td>$${r.remaining}</td>
             <td>${r.month}</td>
-            <td style="background-color:${statusColor}; color:white; font-weight:bold; border-radius:4px">
-                ${statusText}
+            <td style="padding:5px 0; border-radius:4px;">
+                <span style="
+                    display:inline-block;
+                    width:100%;
+                    background-color:${statusColor};
+                    color:white;
+                    font-weight:bold;
+                    border-radius:4px;
+                    text-align:center;
+                ">
+                    ${statusText}
+                </span>
             </td>
             <td>${r.date}</td>
             <td>
