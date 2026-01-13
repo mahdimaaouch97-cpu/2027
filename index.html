@@ -26,6 +26,13 @@ footer { text-align:center; padding:15px; background:#f1f1f1; margin-top:30px; }
 </head>
 <body>
 
+<!-- حماية الصفحة بكلمة المرور -->
+<script>
+if(localStorage.getItem("auth")!=="1"){
+    location.href="login.html"; // إعادة التوجيه لصفحة تسجيل الدخول
+}
+</script>
+
 <header>
 <h1>لوحة التحكم - FAST NET</h1>
 <nav>
@@ -56,9 +63,10 @@ footer { text-align:center; padding:15px; background:#f1f1f1; margin-top:30px; }
 
 <section class="quick-links">
 <!-- زر حذف جميع البيانات -->
-<button id="deleteAllBtn" class="delete-all-btn">
-حذف جميع البيانات
-</button>
+<button id="deleteAllBtn" class="delete-all-btn">حذف جميع البيانات</button>
+
+<!-- زر تسجيل خروج -->
+<button onclick="logout()" class="delete-all-btn" style="background:#555;">تسجيل خروج</button>
 </section>
 </main>
 
@@ -67,6 +75,12 @@ footer { text-align:center; padding:15px; background:#f1f1f1; margin-top:30px; }
 </footer>
 
 <script>
+// تسجيل الخروج
+function logout(){
+    localStorage.removeItem("auth");
+    location.href="login.html";
+}
+
 // تحميل البيانات من LocalStorage
 let subscribers = JSON.parse(localStorage.getItem("subscribers")) || [];
 let receipts = JSON.parse(localStorage.getItem("receipts")) || [];
@@ -90,7 +104,7 @@ document.getElementById("deleteAllBtn").addEventListener("click", function() {
         localStorage.removeItem("receipts");
         localStorage.removeItem("lastReceiptNumber");
         alert("تم حذف جميع البيانات بنجاح!");
-        location.reload(); // إعادة تحميل الصفحة لتحديث العرض
+        location.reload();
     }
 });
 </script>
