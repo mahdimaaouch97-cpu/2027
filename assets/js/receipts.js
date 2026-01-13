@@ -1,3 +1,4 @@
+// تحميل البيانات من localStorage
 let receipts = JSON.parse(localStorage.getItem("receipts")) || [];
 let subscribers = JSON.parse(localStorage.getItem("subscribers")) || [];
 
@@ -30,17 +31,13 @@ function renderTable() {
         };
     });
 
-    // تطبيق البحث والفلترة
+    // فلترة النتائج: البحث + حالة الدفع + تجاهل الغير مدفوعين بالكامل
     let filtered = rows.filter(r => {
         const matchesSearch = r.name.toLowerCase().includes(search);
-
-        // تجاهل الإيصالات الغير مدفوعة بالكامل
-        if (r.remaining === r.total) return false;
-
+        if (r.remaining === r.total) return false; // تجاهل الغير مدفوعين
         let matchesStatus = true;
         if (statusFilter === "full") matchesStatus = r.remaining === 0;
         if (statusFilter === "partial") matchesStatus = r.remaining > 0 && r.remaining < r.total;
-
         return matchesSearch && matchesStatus;
     });
 
@@ -51,15 +48,15 @@ function renderTable() {
 
     // عرض الصفوف مع تلوين الحالة
     filtered.forEach(r => {
+        let statusClass = "";
         let statusText = "";
-        let statusColor = "";
 
         if (r.remaining === 0) {
+            statusClass = "status-full";
             statusText = "مدفوع كليًا";
-            statusColor = "#28a745"; // أخضر
         } else if (r.remaining > 0 && r.remaining < r.total) {
+            statusClass = "status-partial";
             statusText = "مدفوع جزئيًا";
-            statusColor = "#FFA500"; // برتقالي
         }
 
         tableBody.innerHTML += `
@@ -70,19 +67,8 @@ function renderTable() {
             <td>$${r.amount}</td>
             <td>$${r.remaining}</td>
             <td>${r.month}</td>
-            <td style="padding:5px 0;">
-                <span style="
-                    display:inline-block;
-                    width:100%;
-                    background-color:${statusColor};
-                    color:white;
-                    font-weight:bold;
-                    border-radius:4px;
-                    text-align:center;
-                    padding:4px 0;
-                ">
-                    ${statusText}
-                </span>
+            <td>
+                <span class="status-label ${statusClass}">${statusText}</span>
             </td>
             <td>${r.date}</td>
             <td>
@@ -101,7 +87,6 @@ function printReceipt(id) {
     const total = sub ? sub.price : 0;
     const remaining = r.remaining ?? (sub ? sub.remaining : 0);
 
-    // تجاهل الإيصالات غير المدفوعة عند الطباعة
     if (remaining === total) return alert("لا يمكن طباعة إيصال غير مدفوع");
 
     let status = remaining === 0 ? "مدفوع كليًا" : "مدفوع جزئيًا";
@@ -132,4 +117,5 @@ function printReceipt(id) {
     win.print();
 }
 
+// تنفيذ عند تحميل الصفحة
 document.addEventListener("DOMContentLoaded", renderTable);
