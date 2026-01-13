@@ -1,3 +1,52 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>الإيصالات - FAST NET</title>
+<style>
+body { font-family: Arial, sans-serif; background:#f5f5f5; padding:20px; direction:rtl; }
+h1 { text-align:center; margin-bottom:20px; }
+table { width:100%; border-collapse:collapse; margin-top:10px; }
+th, td { border:1px solid #ccc; padding:5px; text-align:right; font-size:12px; }
+.status-label { padding:2px 5px; border-radius:3px; color:#fff; font-size:11px; }
+.status-full { background:green; }
+.status-partial { background:orange; }
+.print-btn { padding:2px 5px; font-size:12px; cursor:pointer; }
+input, select { padding:5px; margin:5px 0; }
+</style>
+</head>
+<body>
+
+<h1>قائمة الإيصالات</h1>
+
+<input type="text" id="search" placeholder="بحث بالاسم...">
+<select id="filterStatus">
+    <option value="">الكل</option>
+    <option value="full">مدفوع كليًا</option>
+    <option value="partial">مدفوع جزئيًا</option>
+</select>
+
+<table>
+<thead>
+<tr>
+<th>رقم الإيصال</th>
+<th>المشترك</th>
+<th>السعر</th>
+<th>المدفوع</th>
+<th>المتبقي</th>
+<th>الشهر</th>
+<th>الحالة</th>
+<th>تاريخ الدفع</th>
+<th>طباعة</th>
+</tr>
+</thead>
+<tbody id="receiptsTableBody">
+<!-- سيتم تعبئتها بالجافاسكربت -->
+</tbody>
+</table>
+
+<script>
 // تحميل البيانات
 let receipts = JSON.parse(localStorage.getItem("receipts")) || [];
 let subscribers = JSON.parse(localStorage.getItem("subscribers")) || [];
@@ -17,24 +66,24 @@ function renderTable() {
     // ربط الإيصالات بالمشتركين
     let rows = receipts.map(r => {
         const sub = subscribers.find(s => Number(s.id) === Number(r.subscriberId));
-        let remaining = r.remaining ?? (sub ? sub.remaining : 0);
+        let total = sub ? sub.price : 0;
+        let remaining = (r.remaining !== undefined) ? r.remaining : total;
 
         return {
             id: r.id,
             name: sub ? sub.name : "غير معروف",
             address: sub ? sub.address : "غير محدد",
-            total: sub ? sub.price : 0,
+            total: total,
             amount: r.amount || 0,
             remaining: remaining,
             month: r.month || "-",
-            date: r.date || "-"
+            date: r.date || "-",
         };
     });
 
-    // فلترة النتائج: البحث + حالة الدفع + تجاهل الغير مدفوعين بالكامل
+    // فلترة حسب البحث والحالة
     let filtered = rows.filter(r => {
         const matchesSearch = r.name.toLowerCase().includes(search);
-        if (r.remaining === r.total) return false; // تجاهل الغير مدفوعين
         let matchesStatus = true;
         if (statusFilter === "full") matchesStatus = r.remaining === 0;
         if (statusFilter === "partial") matchesStatus = r.remaining > 0 && r.remaining < r.total;
@@ -46,7 +95,7 @@ function renderTable() {
         return;
     }
 
-    // عرض الصفوف مع تلوين الحالة
+    // عرض الصفوف
     filtered.forEach(r => {
         let statusClass = "";
         let statusText = "";
@@ -57,6 +106,8 @@ function renderTable() {
         } else if (r.remaining > 0 && r.remaining < r.total) {
             statusClass = "status-partial";
             statusText = "مدفوع جزئيًا";
+        } else {
+            statusText = "غير مدفوع";
         }
 
         tableBody.innerHTML += `
@@ -67,26 +118,22 @@ function renderTable() {
             <td>$${r.amount}</td>
             <td>$${r.remaining}</td>
             <td>${r.month}</td>
-            <td>
-                <span class="status-label ${statusClass}">${statusText}</span>
-            </td>
+            <td><span class="status-label ${statusClass}">${statusText}</span></td>
             <td>${r.date}</td>
-            <td>
-                <button class="print-btn" onclick="printReceipt(${r.id})">طباعة</button>
-            </td>
+            <td><button class="print-btn" onclick="printReceipt(${r.id})">طباعة</button></td>
         </tr>
         `;
     });
 }
 
-// === طباعة الإيصال مثل صفحة الدفع ===
+// طباعة الإيصال
 function printReceipt(id) {
     const r = receipts.find(x => x.id == id);
     if (!r) return alert("الإيصال غير موجود");
 
     const sub = subscribers.find(s => Number(s.id) === Number(r.subscriberId));
     const total = sub ? sub.price : 0;
-    const remaining = r.remaining ?? (sub ? sub.remaining : 0);
+    const remaining = (r.remaining !== undefined) ? r.remaining : total;
 
     if (remaining === total) return alert("لا يمكن طباعة إيصال غير مدفوع");
 
@@ -120,3 +167,7 @@ function printReceipt(id) {
 
 // تشغيل الصفحة عند التحميل
 document.addEventListener("DOMContentLoaded", renderTable);
+</script>
+
+</body>
+</html>
