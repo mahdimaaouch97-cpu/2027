@@ -56,7 +56,6 @@ button { padding:5px 10px; cursor:pointer; margin:2px; }
 </table>
 
 <script>
-// ====== تحميل البيانات ======
 let subscribers = JSON.parse(localStorage.getItem("subscribers")) || [];
 let receipts = JSON.parse(localStorage.getItem("receipts")) || [];
 
@@ -69,10 +68,8 @@ subscribers = subscribers.map((sub, index) => ({
     remaining: sub.remaining !== undefined ? Number(sub.remaining) : Number(sub.price) || 0,
     payments: Array.isArray(sub.payments) ? sub.payments : []
 }));
-
 localStorage.setItem("subscribers", JSON.stringify(subscribers));
 
-// ====== عرض الجدول ======
 function renderTable(){
     const tableBody = document.getElementById("subscribersTable");
     const searchFilter = document.getElementById("search").value.toLowerCase();
@@ -126,15 +123,12 @@ function renderTable(){
     });
 }
 
-// ====== الدفع ======
 function pay(id){
     const sub = subscribers.find(s => s.id === id);
     const amount = parseFloat(document.getElementById(`pay-${id}`).value);
     const month = document.getElementById(`month-${id}`).value;
 
-    if(isNaN(amount) || amount <= 0 || amount > sub.remaining){
-        return alert("الرجاء إدخال مبلغ صالح.");
-    }
+    if(isNaN(amount) || amount <= 0 || amount > sub.remaining) return alert("الرجاء إدخال مبلغ صالح.");
 
     sub.remaining = +(sub.remaining - amount).toFixed(2);
     sub.payments.push({ amount, month, date: new Date().toLocaleDateString() });
@@ -162,7 +156,6 @@ function pay(id){
     sendWhatsApp(id, amount, month);
 }
 
-// ====== طباعة ======
 function printReceipt(subId){
     const sub = subscribers.find(s => s.id === subId);
     if(!sub || sub.payments.length === 0) return alert("لا توجد دفعات");
@@ -190,15 +183,13 @@ function printReceipt(subId){
     win.print();
 }
 
-// ====== واتساب ======
 function sendWhatsApp(id, amount=null, month=null){
     const sub = subscribers.find(s => s.id === id);
     const last = sub.payments[sub.payments.length - 1];
     amount = amount ?? last.amount;
     month = month ?? last.month;
 
-    const msg =
-`📩 إشعار دفع FAST NET
+    const msg=`📩 إشعار دفع FAST NET
 👤 الاسم: ${sub.name}
 📍 العنوان: ${sub.address}
 💰 المدفوع: $${amount}
@@ -206,7 +197,7 @@ function sendWhatsApp(id, amount=null, month=null){
 🗓️ الشهر: ${month}
 📅 التاريخ: ${last.date}`;
 
-    window.open(`https://wa.me/${sub.phone}?text=${encodeURIComponent(msg)}`, "_blank");
+    window.open(`https://wa.me/${sub.phone}?text=${encodeURIComponent(msg)}`,"_blank");
 }
 
 renderTable();
