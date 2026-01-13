@@ -46,7 +46,7 @@ function renderTable() {
         return;
     }
 
-    // إنشاء الصفوف
+    // إنشاء الصفوف مع تلوين المربع بالكامل
     filtered.forEach(r => {
         let statusText = "";
         let statusColor = "";
@@ -70,7 +70,9 @@ function renderTable() {
             <td>$${r.amount}</td>
             <td>$${r.remaining}</td>
             <td>${r.month}</td>
-            <td style="color:${statusColor}; font-weight:bold">${statusText}</td>
+            <td style="background-color:${statusColor}; color:white; font-weight:bold; border-radius:4px">
+                ${statusText}
+            </td>
             <td>${r.date}</td>
             <td>
                 <button class="print-btn" onclick="printReceipt(${r.id})">طباعة</button>
