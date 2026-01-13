@@ -96,7 +96,7 @@ function printReceipt(id) {
     win.document.write(`
         <div style="direction:rtl;font-family:Arial;font-size:12px">
             <h3 style="text-align:center;margin:0">FAST NET</h3>
-            <p style="text-align:center;margin:2px 0">71346411</p>
+             <p style="text-align:center; margin:2px 0; font-size:12px;">71346411 / 71338640</p>
             <hr>
             <p>رقم الإيصال: ${r.id}</p>
             <p>المشترك: ${sub ? sub.name : "غير معروف"}</p>
