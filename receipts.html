@@ -5,27 +5,90 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>الإيصالات - FAST NET</title>
 <style>
-body { font-family: Arial, sans-serif; background:#f5f5f5; padding:20px; direction:rtl; }
-h1 { text-align:center; margin-bottom:20px; }
-table { width:100%; border-collapse:collapse; margin-top:10px; }
-th, td { border:1px solid #ccc; padding:5px; text-align:right; font-size:12px; }
-.status-label { padding:2px 5px; border-radius:3px; color:#fff; font-size:11px; }
-.status-full { background:green; }
-.status-partial { background:orange; }
-.print-btn { padding:2px 5px; font-size:12px; cursor:pointer; }
-input, select { padding:5px; margin:5px 0; }
+body {
+    font-family: Arial, sans-serif;
+    background: #f5f5f5;
+    direction: rtl;
+    margin: 0;
+    padding: 20px;
+}
+.container {
+    max-width: 1000px;
+    margin: auto;
+    background: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+h1 {
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 24px;
+}
+.controls {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    margin-bottom: 15px;
+}
+.controls input, .controls select {
+    padding: 8px 10px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    margin: 5px 0;
+    flex: 1;
+    min-width: 150px;
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+th, td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: right;
+}
+th {
+    background: #f0f0f0;
+}
+.status-label {
+    padding: 3px 7px;
+    border-radius: 4px;
+    color: #fff;
+    font-size: 12px;
+    display: inline-block;
+}
+.status-full { background: #28a745; }
+.status-partial { background: #ffc107; color: #000; }
+.status-none { background: #dc3545; }
+.print-btn {
+    padding: 5px 10px;
+    font-size: 12px;
+    cursor: pointer;
+    border: none;
+    background: #007bff;
+    color: #fff;
+    border-radius: 4px;
+}
+.print-btn:hover { background: #0056b3; }
+td, th { vertical-align: middle; }
 </style>
 </head>
 <body>
 
+<div class="container">
 <h1>قائمة الإيصالات</h1>
 
-<input type="text" id="search" placeholder="بحث بالاسم...">
-<select id="filterStatus">
-    <option value="">الكل</option>
-    <option value="full">مدفوع كليًا</option>
-    <option value="partial">مدفوع جزئيًا</option>
-</select>
+<div class="controls">
+    <input type="text" id="search" placeholder="بحث بالاسم...">
+    <select id="filterStatus">
+        <option value="">الكل</option>
+        <option value="full">مدفوع كليًا</option>
+        <option value="partial">مدفوع جزئيًا</option>
+    </select>
+</div>
 
 <table>
 <thead>
@@ -45,6 +108,7 @@ input, select { padding:5px; margin:5px 0; }
 <!-- سيتم تعبئتها بالجافاسكربت -->
 </tbody>
 </table>
+</div>
 
 <script>
 // تحميل البيانات
@@ -59,7 +123,7 @@ function renderTable() {
     tableBody.innerHTML = "";
 
     if (receipts.length === 0) {
-        tableBody.innerHTML = `<tr><td colspan="9">لا توجد إيصالات</td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="9" style="text-align:center;">لا توجد إيصالات</td></tr>`;
         return;
     }
 
@@ -68,7 +132,6 @@ function renderTable() {
         const sub = subscribers.find(s => Number(s.id) === Number(r.subscriberId));
         let total = sub ? sub.price : 0;
         let remaining = (r.remaining !== undefined) ? r.remaining : total;
-
         return {
             id: r.id,
             name: sub ? sub.name : "غير معروف",
@@ -91,14 +154,14 @@ function renderTable() {
     });
 
     if (filtered.length === 0) {
-        tableBody.innerHTML = `<tr><td colspan="9">لا توجد نتائج</td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="9" style="text-align:center;">لا توجد نتائج</td></tr>`;
         return;
     }
 
     // عرض الصفوف
     filtered.forEach(r => {
-        let statusClass = "";
-        let statusText = "";
+        let statusClass = "status-none";
+        let statusText = "غير مدفوع";
 
         if (r.remaining === 0) {
             statusClass = "status-full";
@@ -106,8 +169,6 @@ function renderTable() {
         } else if (r.remaining > 0 && r.remaining < r.total) {
             statusClass = "status-partial";
             statusText = "مدفوع جزئيًا";
-        } else {
-            statusText = "غير مدفوع";
         }
 
         tableBody.innerHTML += `
@@ -167,6 +228,10 @@ function printReceipt(id) {
 
 // تشغيل الصفحة عند التحميل
 document.addEventListener("DOMContentLoaded", renderTable);
+
+// تحديث الجدول عند البحث أو الفلتر
+document.getElementById("search").addEventListener("input", renderTable);
+document.getElementById("filterStatus").addEventListener("change", renderTable);
 </script>
 
 </body>
