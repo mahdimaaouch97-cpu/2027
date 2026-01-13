@@ -1,8 +1,6 @@
-// جلب الإيصالات والمشتركين
 let receipts = JSON.parse(localStorage.getItem("receipts")) || [];
 let subscribers = JSON.parse(localStorage.getItem("subscribers")) || [];
 
-// عرض جدول الإيصالات
 function renderTable() {
     const tableBody = document.getElementById("receiptsTableBody");
     const search = document.getElementById("search").value.toLowerCase();
@@ -32,12 +30,17 @@ function renderTable() {
         };
     });
 
-    // تطبيق البحث والتصفية
+    // تطبيق البحث والفلترة
     let filtered = rows.filter(r => {
         const matchesSearch = r.name.toLowerCase().includes(search);
+
+        // تجاهل الإيصالات الغير مدفوعة بالكامل
+        if (r.remaining === r.total) return false;
+
         let matchesStatus = true;
         if (statusFilter === "full") matchesStatus = r.remaining === 0;
         if (statusFilter === "partial") matchesStatus = r.remaining > 0 && r.remaining < r.total;
+
         return matchesSearch && matchesStatus;
     });
 
@@ -46,7 +49,7 @@ function renderTable() {
         return;
     }
 
-    // إنشاء الصفوف مع تلوين الحالة تمامًا مثل جدول المشتركين
+    // عرض الصفوف مع تلوين الحالة
     filtered.forEach(r => {
         let statusText = "";
         let statusColor = "";
@@ -57,9 +60,6 @@ function renderTable() {
         } else if (r.remaining > 0 && r.remaining < r.total) {
             statusText = "مدفوع جزئيًا";
             statusColor = "#FFA500"; // برتقالي
-        } else {
-            statusText = "غير مدفوع";
-            statusColor = "#dc3545"; // أحمر مثل جدول المشتركين
         }
 
         tableBody.innerHTML += `
@@ -93,7 +93,6 @@ function renderTable() {
     });
 }
 
-// طباعة الإيصال
 function printReceipt(id) {
     const r = receipts.find(x => x.id == id);
     if (!r) return alert("الإيصال غير موجود");
@@ -102,10 +101,10 @@ function printReceipt(id) {
     const total = sub ? sub.price : 0;
     const remaining = r.remaining ?? (sub ? sub.remaining : 0);
 
-    let status = "";
-    if (remaining === 0) status = "مدفوع كليًا";
-    else if (remaining > 0 && remaining < total) status = "مدفوع جزئيًا";
-    else status = "غير مدفوع";
+    // تجاهل الإيصالات غير المدفوعة عند الطباعة
+    if (remaining === total) return alert("لا يمكن طباعة إيصال غير مدفوع");
+
+    let status = remaining === 0 ? "مدفوع كليًا" : "مدفوع جزئيًا";
 
     const win = window.open("", "", "width=220,height=500");
 
@@ -133,5 +132,4 @@ function printReceipt(id) {
     win.print();
 }
 
-// تشغيل الصفحة عند التحميل
 document.addEventListener("DOMContentLoaded", renderTable);
