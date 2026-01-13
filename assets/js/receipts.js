@@ -46,7 +46,7 @@ function renderTable() {
         return;
     }
 
-    // إنشاء الصفوف مع تلوين المربع بالكامل
+    // إنشاء الصفوف مع تلوين الحالة تمامًا مثل جدول المشتركين
     filtered.forEach(r => {
         let statusText = "";
         let statusColor = "";
@@ -59,7 +59,7 @@ function renderTable() {
             statusColor = "#FFA500"; // برتقالي
         } else {
             statusText = "غير مدفوع";
-            statusColor = "#FF0000"; // أحمر
+            statusColor = "#dc3545"; // أحمر مثل جدول المشتركين
         }
 
         tableBody.innerHTML += `
@@ -70,7 +70,7 @@ function renderTable() {
             <td>$${r.amount}</td>
             <td>$${r.remaining}</td>
             <td>${r.month}</td>
-            <td style="padding:5px 0; border-radius:4px;">
+            <td style="padding:5px 0;">
                 <span style="
                     display:inline-block;
                     width:100%;
@@ -79,6 +79,7 @@ function renderTable() {
                     font-weight:bold;
                     border-radius:4px;
                     text-align:center;
+                    padding:4px 0;
                 ">
                     ${statusText}
                 </span>
