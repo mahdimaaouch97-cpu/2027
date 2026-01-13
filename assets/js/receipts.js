@@ -1,47 +1,91 @@
+// تحميل الإيصالات من LocalStorage
 let receipts = JSON.parse(localStorage.getItem("receipts")) || [];
 
-function renderReceipts(){
-    const tbody = document.querySelector("#receiptsTable tbody");
-    tbody.innerHTML = "";
+// عرض جدول الإيصالات
+function renderTable() {
+    const tableBody = document.getElementById("receiptsTableBody");
+    const search = document.getElementById("search").value.toLowerCase();
+    const statusFilter = document.getElementById("filterStatus").value;
 
-    receipts.forEach((r, i) => {
-        const row = document.createElement("tr");
-        row.innerHTML = `
-            <td>${i+1}</td>
-            <td>${r.receiptNo}</td>
-            <td>${r.name}</td>
-            <td>${r.package}</td>
-            <td>$${r.paid}</td>
-            <td>${r.date}</td>
-            <td>${r.status}</td>
-            <td><button onclick="printReceipt(${i})">طباعة</button></td>
+    tableBody.innerHTML = "";
+
+    let filtered = receipts.filter(r => {
+        const matchesSearch = r.name.toLowerCase().includes(search);
+
+        let matchesStatus = true;
+        if (statusFilter === "full") {
+            matchesStatus = r.remaining === 0;
+        }
+        if (statusFilter === "partial") {
+            matchesStatus = r.remaining > 0 && r.remaining < r.total;
+        }
+
+        return matchesSearch && matchesStatus;
+    });
+
+    if (filtered.length === 0) {
+        tableBody.innerHTML =
+            `<tr><td colspan="9">لا توجد إيصالات</td></tr>`;
+        return;
+    }
+
+    filtered.forEach(r => {
+        const statusText =
+            r.remaining === 0 ? "مدفوع كليًا" : "مدفوع جزئيًا";
+
+        tableBody.innerHTML += `
+            <tr>
+                <td>${r.id}</td>
+                <td>${r.name}</td>
+                <td>$${r.total}</td>
+                <td>$${r.amount}</td>
+                <td>$${r.remaining}</td>
+                <td>${r.month}</td>
+                <td>${statusText}</td>
+                <td>${r.date}</td>
+                <td>
+                    <button class="print-btn" onclick="printReceipt(${r.id})">
+                        طباعة
+                    </button>
+                </td>
+            </tr>
         `;
-        tbody.appendChild(row);
     });
 }
 
-function printReceipt(index){
-    localStorage.setItem("lastReceipt", JSON.stringify(receipts[index]));
-    window.open("receipt.html","_blank");
+// طباعة إيصال
+function printReceipt(id) {
+    const r = receipts.find(x => x.id == id);
+    if (!r) return alert("الإيصال غير موجود");
+
+    const status =
+        r.remaining === 0 ? "مدفوع كليًا" : "مدفوع جزئيًا";
+
+    const win = window.open("", "", "width=220,height=500");
+
+    win.document.write(`
+        <div style="direction:rtl;font-family:Arial;font-size:12px">
+            <h3 style="text-align:center;margin:0">FAST NET</h3>
+            <p style="text-align:center;margin:2px 0">71346411</p>
+            <hr>
+            <p>رقم الإيصال: ${r.id}</p>
+            <p>المشترك: ${r.name}</p>
+            <p>العنوان: ${r.address || "غير محدد"}</p>
+            <p>سعر الاشتراك: $${r.total}</p>
+            <p>المدفوع: $${r.amount}</p>
+            <p>المتبقي: $${r.remaining}</p>
+            <p>الشهر: ${r.month}</p>
+            <p>الحالة: ${status}</p>
+            <p>التاريخ: ${r.date}</p>
+            <hr>
+            <p style="text-align:center;font-weight:bold">
+                شكراً لاستخدامكم FAST NET
+            </p>
+        </div>
+    `);
+
+    win.print();
 }
 
-/* ===== Excel ===== */
-function exportReceiptsExcel(){
-    const ws = XLSX.utils.json_to_sheet(receipts);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Receipts");
-    XLSX.writeFile(wb, "receipts.xlsx");
-}
-
-/* ===== PDF بسيط ===== */
-function exportReceiptsPDF(){
-    let text = "FAST NET - Receipts\n\n";
-    receipts.forEach(r=>{
-        text += `${r.receiptNo} | ${r.name} | $${r.paid} | ${r.date}\n`;
-    });
-    const blob = new Blob([text], {type:"application/pdf"});
-    const url = URL.createObjectURL(blob);
-    window.open(url);
-}
-
-document.addEventListener("DOMContentLoaded", renderReceipts);
+// تشغيل الصفحة
+document.addEventListener("DOMContentLoaded", renderTable);
