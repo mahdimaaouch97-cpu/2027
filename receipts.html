@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>الإيصالات - FAST NET</title>
 <style>
-body { font-family: Arial, sans-serif; background:#f5f5f5; padding:20px; }
+body { font-family: Arial, sans-serif; background:#f5f5f5; padding:20px; direction:rtl; }
 h1 { text-align:center; margin-bottom:20px; }
 #search, #filterStatus { padding:8px; width:100%; max-width:400px; display:block; margin:10px auto; }
 table { width:100%; border-collapse:collapse; margin-top:10px; background:white; }
@@ -49,11 +49,14 @@ button { padding:5px 10px; cursor:pointer; margin:2px; }
 </table>
 
 <script>
-// جلب البيانات من LocalStorage
+// ====== تحميل البيانات ======
 let subscribers = JSON.parse(localStorage.getItem("subscribers")) || [];
 let receipts = JSON.parse(localStorage.getItem("receipts")) || [];
 
-// عرض جدول الإيصالات
+// رقم إيصال تلقائي
+let lastReceiptNumber = parseInt(localStorage.getItem("lastReceiptNumber")) || 2000;
+
+// ====== عرض جدول الإيصالات ======
 function renderTable(){
     const tableBody = document.getElementById("receiptsTableBody");
     const search = document.getElementById("search").value.toLowerCase();
@@ -62,25 +65,32 @@ function renderTable(){
 
     let rows = [];
 
-    // لكل مشترك، لكل دفعة، نربطها بالإيصال الصحيح
     subscribers.forEach(sub => {
         sub.payments.forEach(payment => {
-            const receipt = receipts.find(r => r.subscriberId === sub.id && r.amount === payment.amount && r.date === payment.date);
-            if(receipt){
-                rows.push({
-                    id: receipt.id,
+            let receipt = receipts.find(r => r.subscriberId === sub.id && r.amount === payment.amount && r.date === payment.date);
+            if(!receipt){
+                // إنشاء إيصال تلقائي إذا لم يوجد
+                lastReceiptNumber++;
+                receipt = {
+                    id: lastReceiptNumber,
+                    subscriberId: sub.id,
                     name: sub.name,
-                    total: receipt.total,
-                    amount: receipt.amount,
-                    remaining: receipt.remaining,
-                    month: receipt.month,
-                    date: receipt.date
-                });
+                    phone: sub.phone,
+                    address: sub.address || "غير محدد",
+                    total: sub.price,
+                    amount: payment.amount,
+                    remaining: sub.remaining,
+                    month: payment.month,
+                    date: payment.date
+                };
+                receipts.push(receipt);
+                localStorage.setItem("receipts", JSON.stringify(receipts));
+                localStorage.setItem("lastReceiptNumber", lastReceiptNumber);
             }
+            rows.push(receipt);
         });
     });
 
-    // فلترة البحث والحالة
     let filtered = rows.filter(r => {
         const matchesSearch = r.name.toLowerCase().includes(search);
         let matchesStatus = statusFilter === "all";
@@ -113,37 +123,38 @@ function renderTable(){
     });
 }
 
-// دالة طباعة الإيصال بدون رقم الهاتف
+// ====== طباعة الإيصال RTL ======
 function printReceipt(receiptId){
     const receipt = receipts.find(r => r.id == receiptId);
     if(!receipt) return alert("الإيصال غير موجود");
 
     const status = receipt.remaining===0 ? 'مدفوع كليًا' : (receipt.remaining<receipt.total ? 'مدفوع جزئيًا':'غير مدفوع');
 
-    const win = window.open("", "PrintReceipt", "width=300,height=600");
+    const win = window.open("", "PrintReceipt", "width=220,height=500");
     win.document.write(`
-    <div style="font-family:Arial; width:280px; padding:10px;">
-        <h3 style="text-align:center;">FAST NET</h3>
-        <p style="text-align:center;"> 71346411 / 71338640</p>
+    <div style="font-family:Arial, sans-serif; width:200px; padding:5px; direction:rtl; text-align:right; font-size:12px;">
+        <h3 style="text-align:center; margin:0;">FAST NET</h3>
+        <p style="text-align:center; margin:2px 0; font-size:12px;">71346411 / 71338640</p>
         <hr>
-        <table style="width:100%; border-collapse: collapse;">
-            <tr><td><strong>رقم الإيصال:</strong></td><td>${receipt.id}</td></tr>
-            <tr><td><strong>المشترك:</strong></td><td>${receipt.name}</td></tr>
-            <tr><td><strong>سعر الاشتراك:</strong></td><td>$${receipt.total}</td></tr>
-            <tr><td><strong>المبلغ المدفوع:</strong></td><td>$${receipt.amount}</td></tr>
-            <tr><td><strong>المتبقي:</strong></td><td>$${receipt.remaining}</td></tr>
-            <tr><td><strong>الشهر:</strong></td><td>${receipt.month}</td></tr>
-            <tr><td><strong>حالة الدفع:</strong></td><td>${status}</td></tr>
-            <tr><td><strong>تاريخ الدفع:</strong></td><td>${receipt.date}</td></tr>
+        <table style="width:100%; border-collapse:collapse; direction:rtl; text-align:right; font-size:12px;">
+            <tr><td style="font-weight:bold;">رقم الإيصال:</td><td>${receipt.id}</td></tr>
+            <tr><td style="font-weight:bold;">المشترك:</td><td>${receipt.name}</td></tr>
+            <tr><td style="font-weight:bold;">العنوان:</td><td>${receipt.address}</td></tr>
+            <tr><td style="font-weight:bold;">سعر الاشتراك:</td><td>$${receipt.total}</td></tr>
+            <tr><td style="font-weight:bold;">المبلغ المدفوع:</td><td>$${receipt.amount}</td></tr>
+            <tr><td style="font-weight:bold;">المتبقي:</td><td>$${receipt.remaining}</td></tr>
+            <tr><td style="font-weight:bold;">الشهر:</td><td>${receipt.month}</td></tr>
+            <tr><td style="font-weight:bold;">حالة الدفع:</td><td>${status}</td></tr>
+            <tr><td style="font-weight:bold;">تاريخ الدفع:</td><td>${receipt.date}</td></tr>
         </table>
         <hr>
-        <p style="text-align:center;">شكراً لاستخدامكم FAST NET</p>
+        <p style="text-align:center; font-weight:bold; font-size:12px;">شكراً لاستخدامكم FAST NET</p>
     </div>
     `);
     win.print();
 }
 
-// تشغيل الصفحة
+// ====== تشغيل الصفحة ======
 renderTable();
 </script>
 
