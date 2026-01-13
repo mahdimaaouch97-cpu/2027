@@ -1,4 +1,3 @@
-// تحميل البيانات
 let receipts = JSON.parse(localStorage.getItem("receipts")) || [];
 let subscribers = JSON.parse(localStorage.getItem("subscribers")) || [];
 
@@ -16,15 +15,23 @@ function renderTable() {
     }
 
     let rows = receipts.map(r => {
-        const sub = subscribers.find(s => s.id === r.subscriberId) || {};
+        // ✅ الحل هنا
+        const sub = subscribers.find(
+            s => Number(s.id) === Number(r.subscriberId)
+        ) || {};
+
+        const total = sub.price ?? 0;
+        const remaining =
+            r.remaining !== undefined ? r.remaining :
+            sub.remaining !== undefined ? sub.remaining : 0;
 
         return {
             id: r.id,
             name: sub.name || "غير معروف",
             address: sub.address || "غير محدد",
-            total: sub.price || 0,
+            total: total,
             amount: r.amount || 0,
-            remaining: r.remaining ?? (sub.remaining ?? 0),
+            remaining: remaining,
             month: r.month || "-",
             date: r.date || "-"
         };
@@ -78,10 +85,14 @@ function printReceipt(id) {
     const r = receipts.find(x => x.id == id);
     if (!r) return alert("الإيصال غير موجود");
 
-    const sub = subscribers.find(s => s.id === r.subscriberId) || {};
+    const sub = subscribers.find(
+        s => Number(s.id) === Number(r.subscriberId)
+    ) || {};
 
-    const total = sub.price || 0;
-    const remaining = r.remaining ?? sub.remaining ?? 0;
+    const total = sub.price ?? 0;
+    const remaining =
+        r.remaining !== undefined ? r.remaining :
+        sub.remaining !== undefined ? sub.remaining : 0;
 
     const status =
         remaining === 0 ? "مدفوع كليًا" : "مدفوع جزئيًا";
