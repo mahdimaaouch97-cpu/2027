@@ -4,28 +4,28 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>إدارة المشتركين - POSNEW</title>
-<link rel="stylesheet" href="assets/css/style.css">
 <style>
-body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; direction: rtl; }
-h1 { text-align: center; margin-bottom: 15px; color: #333; }
-.top-buttons { text-align:center; margin-bottom: 20px; }
-.top-buttons button { margin: 5px; padding: 10px 16px; font-weight: bold; border-radius: 5px; border:none; cursor:pointer; }
-.home-btn { background-color: #007bff; color:white; }
-.search-filter { max-width: 500px; margin: 0 auto 15px auto; display: flex; gap:10px; flex-wrap:wrap; justify-content:center; }
+body { font-family: Arial, sans-serif; padding:20px; background:#f5f5f5; direction:rtl; }
+h1 { text-align:center; margin-bottom:15px; color:#333; }
+.top-buttons { text-align:center; margin-bottom:20px; }
+.top-buttons button { margin:5px; padding:10px 16px; font-weight:bold; border-radius:5px; border:none; cursor:pointer; }
+.home-btn { background-color:#007bff; color:white; transition:0.3s; }
+.home-btn:hover { background-color:#0056b3; }
+.search-filter { max-width:400px; margin:0 auto 15px auto; display:flex; gap:10px; flex-wrap:wrap; justify-content:center; }
 .search-filter input, .search-filter select { flex:1; padding:8px; border-radius:5px; border:1px solid #ccc; }
-.add-form { max-width: 500px; margin: 0 auto 15px auto; background:#fff; padding:15px; border-radius:8px; box-shadow:0 0 5px rgba(0,0,0,0.2); }
+.add-form { max-width:500px; margin:0 auto 15px auto; background:#fff; padding:15px; border-radius:8px; box-shadow:0 0 5px rgba(0,0,0,0.2); }
 .add-form input { width:100%; padding:8px; margin-bottom:10px; border-radius:5px; border:1px solid #ccc; }
 .add-form button { width:100%; padding:10px; background:#007bff; color:white; border:none; border-radius:5px; cursor:pointer; font-weight:bold; }
 .table-container { overflow-x:auto; }
-table { width:100%; border-collapse: collapse; margin-top:10px; }
+table { width:100%; border-collapse: collapse; margin-top:10px; box-shadow:0 2px 5px rgba(0,0,0,0.1); }
 th, td { padding:10px; border:1px solid #ddd; text-align:center; }
-th { background-color: #007bff; color:white; }
-tr:nth-child(even) { background-color: #f9f9f9; }
-.delete-btn { background-color: #dc3545; color:white; padding:5px 8px; border:none; border-radius:4px; cursor:pointer; }
-.reminder-btn { background-color: #25D366; color:white; padding:5px 8px; border:none; border-radius:4px; cursor:pointer; font-size:12px; }
-.status-full { background-color: #388e3c; color:white; font-weight:bold; }
-.status-partial { background-color: #f57c00; color:white; font-weight:bold; }
-.status-unpaid { background-color: #c62828; color:white; font-weight:bold; }
+th { background-color:#007bff; color:white; }
+tr:nth-child(even) { background-color:#f9f9f9; }
+.delete-btn { background-color:#dc3545; color:white; padding:5px 8px; border:none; border-radius:4px; cursor:pointer; }
+.reminder-btn { background-color:#25D366; color:white; padding:5px 8px; border:none; border-radius:4px; cursor:pointer; font-size:12px; }
+.status-full { background-color:#388e3c; color:white; font-weight:bold; }
+.status-partial { background-color:#f57c00; color:white; font-weight:bold; }
+.status-unpaid { background-color:#c62828; color:white; font-weight:bold; }
 .export-import { text-align:center; margin:15px 0; }
 .export-import button { margin:3px; padding:8px 14px; border:none; border-radius:5px; cursor:pointer; }
 </style>
@@ -35,12 +35,12 @@ tr:nth-child(even) { background-color: #f9f9f9; }
 <h1>إدارة المشتركين</h1>
 
 <div class="top-buttons">
-    <button class="home-btn" onclick="goHome()">العودة للرئيسية</button>
-    <button class="home-btn" onclick="goPayments()">صفحة الدفع</button>
+    <button class="home-btn" onclick="window.location.href='index.html'">العودة إلى الصفحة الرئيسية</button>
+    <button class="home-btn" onclick="window.location.href='payments.html'">صفحة الدفع</button>
 </div>
 
 <div class="search-filter">
-    <input type="text" id="search" placeholder="بحث بالاسم..." onkeyup="renderTable()">
+    <input type="text" id="search" placeholder="ابحث عن المشترك بالاسم..." onkeyup="renderTable()">
     <select id="filterStatus" onchange="renderTable()">
         <option value="all">الكل</option>
         <option value="full">مدفوع كليًا</option>
@@ -50,137 +50,192 @@ tr:nth-child(even) { background-color: #f9f9f9; }
 </div>
 
 <div class="add-form">
-    <input type="text" id="name" placeholder="اسم المشترك">
-    <input type="text" id="phone" placeholder="رقم الهاتف">
-    <input type="text" id="address" placeholder="العنوان">
-    <input type="number" id="price" placeholder="سعر الاشتراك ($)">
-    <button id="addBtn">إضافة مشترك</button>
+    <input type="text" id="name" placeholder="اسم المشترك" required>
+    <input type="text" id="phone" placeholder="رقم الهاتف" required>
+    <input type="text" id="address" placeholder="العنوان" required>
+    <input type="number" id="price" placeholder="سعر الاشتراك ($)" min="0" required>
+    <button type="submit" id="addBtn">إضافة مشترك</button>
 </div>
 
 <div class="export-import">
-    <button onclick="deleteAllSubscribers()" style="background:#dc3545;color:white;">حذف الجميع</button>
-    <button onclick="document.getElementById('importFile').click()" style="background:#28a745;color:white;">استيراد CSV</button>
+    <button onclick="deleteAllSubscribers()" style="background:#dc3545; color:white;">حذف جميع المشتركين</button>
+    <button onclick="document.getElementById('importFile').click()" style="background:#28a745; color:white;">استيراد CSV</button>
     <button onclick="exportCSV()" style="background:#ffc107;">تصدير CSV</button>
-    <input type="file" id="importFile" accept=".csv" onchange="importCSV(event)" hidden>
+    <input type="file" id="importFile" accept=".csv" onchange="importCSV(event)" style="display:none;">
 </div>
 
 <div class="table-container">
-<table>
-<thead>
-<tr>
-<th>ID</th>
-<th>الاسم</th>
-<th>الهاتف</th>
-<th>العنوان</th>
-<th>السعر</th>
-<th>المدفوع</th>
-<th>المتبقي</th>
-<th>الحالة</th>
-<th>تذكير</th>
-<th>حذف</th>
-</tr>
-</thead>
-<tbody id="tableBody"></tbody>
-</table>
+    <table id="subscribersTable">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>الاسم</th>
+                <th>الهاتف</th>
+                <th>العنوان</th>
+                <th>سعر الاشتراك ($)</th>
+                <th>المدفوع ($)</th>
+                <th>المتبقي ($)</th>
+                <th>حالة الدفع</th>
+                <th>تذكير</th>
+                <th>إجراءات</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
 </div>
 
 <script>
+// ====== تحميل البيانات ======
 let subscribers = JSON.parse(localStorage.getItem("subscribers")) || [];
-
-subscribers = subscribers.map((s,i)=>({
- id: s.id ?? i+1,
- name: s.name || "بدون اسم",
- phone: s.phone || "-",
- address: s.address || "غير محدد",
- price: s.price ?? 0,
- payments: Array.isArray(s.payments) ? s.payments : []
+subscribers = subscribers.map((sub, index) => ({
+    id: sub.id ?? index + 1,
+    name: sub.name || "بدون اسم",
+    phone: sub.phone || "غير محدد",
+    address: sub.address || "غير محدد",
+    price: Number(sub.price) || 0,
+    remaining: sub.remaining !== undefined ? Number(sub.remaining) : Number(sub.price) || 0,
+    payments: Array.isArray(sub.payments) ? sub.payments : []
 }));
+localStorage.setItem("subscribers", JSON.stringify(subscribers));
 
-localStorage.setItem("subscribers",JSON.stringify(subscribers));
+const tableBody = document.querySelector("#subscribersTable tbody");
+const addBtn = document.getElementById("addBtn");
 
-const tableBody=document.getElementById("tableBody");
+// ====== دوال التنقل ======
+function goHome(){ window.location.href="index.html"; }
+function goPayments(){ window.location.href="payments.html"; }
 
-function goHome(){location.href="index.html";}
-function goPayments(){location.href="payments.html";}
-
+// ====== عرض الجدول ======
 function renderTable(){
- tableBody.innerHTML="";
- const search=document.getElementById("search").value.toLowerCase();
- const filter=document.getElementById("filterStatus").value;
+    const searchValue = document.getElementById("search").value.toLowerCase();
+    const filterValue = document.getElementById("filterStatus").value;
+    tableBody.innerHTML = "";
 
- subscribers.filter(s=>{
-  const paid=s.payments.reduce((a,p)=>a+Number(p.amount),0);
-  const remaining=s.price-paid;
-  let status="unpaid";
-  if(remaining==0) status="full";
-  else if(remaining<s.price) status="partial";
-  return s.name.toLowerCase().includes(search) && (filter=="all"||filter==status);
- }).forEach(s=>{
-  const paid=s.payments.reduce((a,p)=>a+Number(p.amount),0);
-  const remaining=s.price-paid;
-  let cls="status-unpaid", txt="غير مدفوع";
-  if(remaining==0){cls="status-full";txt="مدفوع كليًا";}
-  else if(remaining<s.price){cls="status-partial";txt="مدفوع جزئيًا";}
-  tableBody.innerHTML+=`
-<tr>
-<td>${s.id}</td>
-<td>${s.name}</td>
-<td>${s.phone}</td>
-<td>${s.address}</td>
-<td>$${s.price}</td>
-<td>$${paid}</td>
-<td>$${remaining}</td>
-<td class="${cls}">${txt}</td>
-<td>${remaining>0?`<button class="reminder-btn" onclick="sendReminder(${s.id})">واتساب</button>`:""}</td>
-<td><button class="delete-btn" onclick="deleteSubscriber(${s.id})">X</button></td>
-</tr>`;
- });
+    let filtered = subscribers.filter(sub=>{
+        const paid = sub.payments.reduce((sum,p)=>sum+Number(p.amount),0).toFixed(2);
+        const remaining = (sub.price - paid).toFixed(2);
+        let status = "unpaid";
+        if(remaining==0) status="full";
+        else if(remaining<sub.price) status="partial";
+
+        const matchesSearch = sub.name.toLowerCase().includes(searchValue) ||
+                              sub.phone.toLowerCase().includes(searchValue) ||
+                              sub.address.toLowerCase().includes(searchValue);
+        const matchesFilter = filterValue=="all" || status==filterValue;
+        return matchesSearch && matchesFilter;
+    });
+
+    if(filtered.length==0){ tableBody.innerHTML=`<tr><td colspan="10">لا يوجد مشتركين.</td></tr>`; return; }
+
+    filtered.forEach(sub=>{
+        const paidAmount = sub.payments.reduce((sum,p)=>sum+Number(p.amount),0).toFixed(2);
+        const remaining = (sub.price - paidAmount).toFixed(2);
+        let statusText="غير مدفوع"; let statusClass="status-unpaid";
+        if(remaining==0){statusText="مدفوع كليًا"; statusClass="status-full";}
+        else if(remaining<sub.price){statusText="مدفوع جزئيًا"; statusClass="status-partial";}
+        const tr=document.createElement("tr");
+        tr.innerHTML=`
+            <td>${sub.id}</td>
+            <td>${sub.name}</td>
+            <td>${sub.phone}</td>
+            <td>${sub.address}</td>
+            <td>$${sub.price}</td>
+            <td>$${paidAmount}</td>
+            <td>$${remaining}</td>
+            <td class="${statusClass}">${statusText}</td>
+            <td>${remaining>0?`<button class="reminder-btn" onclick="sendReminder(${sub.id})">تذكير واتساب</button>`:""}</td>
+            <td><button class="delete-btn" onclick="deleteSubscriber(${sub.id})">حذف</button></td>
+        `;
+        tableBody.appendChild(tr);
+    });
 }
 
-document.getElementById("addBtn").onclick=()=>{
- const name=nameInput.value.trim();
- const phone=phoneInput.value.trim();
- const address=addressInput.value.trim();
- const price=parseFloat(priceInput.value);
- if(!name||!phone||!address||isNaN(price)) return alert("أدخل كل البيانات");
- subscribers.push({id:Date.now(),name,phone,address,price,payments:[]});
- localStorage.setItem("subscribers",JSON.stringify(subscribers));
- nameInput.value=phoneInput.value=addressInput.value=priceInput.value="";
- renderTable();
-};
+// ====== إضافة مشترك ======
+addBtn.addEventListener("click", ()=>{
+    const nameInput = document.getElementById("name");
+    const phoneInput = document.getElementById("phone");
+    const priceInput = document.getElementById("price");
+    const addressInput = document.getElementById("address");
 
-function deleteSubscriber(id){
- subscribers=subscribers.filter(s=>s.id!==id);
- localStorage.setItem("subscribers",JSON.stringify(subscribers));
- renderTable();
-}
+    const name = nameInput.value.trim();
+    const phone = phoneInput.value.trim();
+    const price = parseFloat(priceInput.value);
+    const address = addressInput.value.trim() || "غير محدد";
 
-function deleteAllSubscribers(){
- if(confirm("تأكيد حذف الجميع؟")){
-  subscribers=[];
-  localStorage.removeItem("subscribers");
-  renderTable();
- }
-}
+    if(!name || !phone || isNaN(price)) return alert("الرجاء إدخال بيانات صحيحة");
 
+    const newId = subscribers.length>0?subscribers[subscribers.length-1].id+1:1;
+    subscribers.push({id:newId,name,phone,address,price,remaining:price,payments:[]});
+    localStorage.setItem("subscribers",JSON.stringify(subscribers));
+
+    nameInput.value=""; phoneInput.value=""; priceInput.value=""; addressInput.value="";
+    renderTable();
+});
+
+// ====== حذف ======
+function deleteSubscriber(id){if(!confirm("هل أنت متأكد من حذف هذا المشترك؟")) return; subscribers=subscribers.filter(sub=>sub.id!==id); localStorage.setItem("subscribers",JSON.stringify(subscribers)); renderTable();}
+function deleteAllSubscribers(){if(!confirm("هل أنت متأكد من حذف جميع المشتركين؟")) return; subscribers=[]; localStorage.setItem("subscribers",JSON.stringify(subscribers)); renderTable();}
+
+// ====== واتساب ======
 function sendReminder(id){
- const s=subscribers.find(x=>x.id===id);
- const paid=s.payments.reduce((a,p)=>a+Number(p.amount),0);
- const remaining=s.price-paid;
- const msg=`مرحبا ${s.name}\nالعنوان: ${s.address}\nالمتبقي: $${remaining}`;
- window.open(`https://wa.me/${s.phone}?text=${encodeURIComponent(msg)}`);
+    const sub=subscribers.find(s=>s.id===id);
+    if(!sub.payments.length) return alert("لا توجد دفعات لهذا المشترك");
+    const paid=sub.payments.reduce((sum,p)=>sum+Number(p.amount),0).toFixed(2);
+    const remaining=(sub.price-paid).toFixed(2);
+    const today=new Date().toLocaleDateString();
+    const statusText=remaining<sub.price?'مدفوع جزئيًا':'غير مدفوع';
+    const msg=`عزيزي المشترك/ة، نذكركم بتسديد اشتراك الإنترنت.\n👤 الاسم: ${sub.name}\n💵 المبلغ المتبقي: $${remaining}\n📅 التاريخ: ${today}\n📌 الحالة: ${statusText}\n\nشكراً لاستخدامكم خدماتنا! 🚀`;
+    window.open(`https://wa.me/${sub.phone}?text=${encodeURIComponent(msg)}`,"_blank");
 }
 
+// ====== استيراد CSV ======
+function importCSV(event){
+    const file=event.target.files[0];if(!file)return;
+    const reader=new FileReader();
+    reader.onload=function(e){
+        const text=e.target.result;
+        const rows=text.trim().split("\n");
+        rows.shift();
+        rows.forEach(row=>{
+            const cols=row.split(",").map(c=>c.replace(/^"(.*)"$/,'$1').trim());
+            const [id,name,phone,address,price,paid,remaining,status]=cols;
+            if(name && phone && !isNaN(price)){
+                const newId=subscribers.length>0?subscribers[subscribers.length-1].id+1:1;
+                const priceNum=parseFloat(price);
+                const paidNum=parseFloat(paid)||0;
+                subscribers.push({
+                    id:newId,
+                    name,
+                    phone,
+                    address,
+                    price:priceNum,
+                    remaining:priceNum-paidNum,
+                    payments:paidNum>0?[{amount:paidNum,month:"-",date:new Date().toLocaleDateString()}]:[]
+                });
+            }
+        });
+        localStorage.setItem("subscribers",JSON.stringify(subscribers));
+        renderTable();
+    };
+    reader.readAsText(file,"UTF-8");
+}
+
+// ====== تصدير CSV ======
 function exportCSV(){
- let csv="ID,الاسم,الهاتف,العنوان,السعر\n";
- subscribers.forEach(s=>{
-  csv+=`${s.id},${s.name},${s.phone},${s.address},${s.price}\n`;
- });
- const blob=new Blob(["\uFEFF"+csv],{type:"text/csv"});
- const a=document.createElement("a");
- a.href=URL.createObjectURL(blob);
- a.download="subscribers.csv";
- a.click();
+    if(subscribers.length===0) return alert("لا يوجد مشتركين للتصدير");
+    const headers=["ID","اسم المشترك","رقم الهاتف","العنوان","سعر الاشتراك","المدفوع","المتبقي","حالة الدفع"];
+    const rows=subscribers.map(sub=>{
+        const paid=sub.payments.reduce((sum,p)=>sum+Number(p.amount),0).toFixed(2);
+        const remaining=(sub.price-paid).toFixed(2);
+        let status="غير مدفوع"; if(remaining==0)status="مدفوع كليًا"; else if(remaining<sub.price)status="مدفوع جزئيًا";
+        return [`"${sub.id}"`,`"${sub.name}"`,`"${sub.phone}"`,`"${sub.address}"`,`"${sub.price}"`,`"${paid}"`,`"${remaining}"`,`"${status}"`].join(",");
+    });
+    const csvContent="\uFEFF"+[headers.join(","),...rows].join("\n");
+    const blob=new Blob([csvContent],{type:"text/csv;charset=utf-8;"});
+    const link=document.createElement("a");
+    link.href=URL.createObjectURL(blob);
+    link.download="subscribers.csv";
+    link.click();
 }
 
 renderTable();
