@@ -5,6 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>الدفع - FAST NET</title>
 <style>
+    .cancel-btn {
+    background-color:#6c757d;
+    color:white;
+    padding:5px 10px;
+    margin-top:4px;
+    border-radius:4px;
+    cursor:pointer;
+}
+.cancel-btn:hover {
+    background-color:#5a6268;
+}
+
 body { 
     font-family: Arial, sans-serif; 
     padding:20px; 
@@ -141,6 +153,26 @@ function renderTable(){
         const status = remaining===0 ? "full" : (remaining<sub.price ? "partial" : "unpaid");
 
         if(!(statusFilterValue==="all" || status===statusFilterValue)) return;
+        const cancelBtn = tr.querySelector(".cancel-btn");
+
+cancelBtn.addEventListener("click", ()=>{
+    if(sub.payments.length === 0){
+        return alert("لا توجد دفعات لإلغائها");
+    }
+
+    const last = sub.payments[sub.payments.length - 1];
+
+    if(!confirm(`هل أنت متأكد من إلغاء آخر دفعة بقيمة $${last.amount} ؟`)) return;
+
+    sub.payments.pop(); // حذف آخر دفعة فقط
+
+    update(ref(db, "subscribers/" + sub.fid), {
+        payments: sub.payments
+    }).then(()=>{
+        renderTable();
+    });
+});
+
         if(!(sub.name.toLowerCase().includes(searchFilter) || sub.phone.includes(searchFilter))) return;
 
         const tr = document.createElement("tr");
