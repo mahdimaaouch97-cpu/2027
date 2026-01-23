@@ -153,7 +153,8 @@ function renderTable(){
         const status = remaining===0 ? "full" : (remaining<sub.price ? "partial" : "unpaid");
 
         if(!(statusFilterValue==="all" || status===statusFilterValue)) return;
-        const cancelBtn = tr.querySelector(".cancel-btn");
+        if(!(sub.name.toLowerCase().includes(searchFilter) || sub.phone.includes(searchFilter))) return;
+const cancelBtn = tr.querySelector(".cancel-btn");
 
 cancelBtn.addEventListener("click", ()=>{
     if(sub.payments.length === 0){
@@ -172,8 +173,6 @@ cancelBtn.addEventListener("click", ()=>{
         renderTable();
     });
 });
-
-        if(!(sub.name.toLowerCase().includes(searchFilter) || sub.phone.includes(searchFilter))) return;
 
         const tr = document.createElement("tr");
         tr.innerHTML = `
