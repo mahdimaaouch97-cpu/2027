@@ -38,6 +38,7 @@ button{
     font-weight:bold;border-radius:6px;
     margin-bottom:15px;cursor:pointer
 }
+
 input[type=number]{width:70px;text-align:center}
 
 .status-paid{background:#388e3c;color:white;padding:6px 10px;border-radius:8px}
@@ -139,14 +140,15 @@ function renderTable(){
         const payBtn=tr.querySelector(".pay-btn");
         const payInput=tr.querySelector(".pay-input");
         const monthSelect=tr.querySelector(".month-select");
+        const printBtn=tr.querySelector(".print-btn");
+        const waBtn=tr.querySelector(".wa-btn");
 
         payBtn.onclick=()=>{
             const amount=parseFloat(payInput.value);
             if(isNaN(amount)||amount<=0||amount>remaining){
                 alert("مبلغ غير صحيح"); return;
             }
-
-            if(!confirm(`تأكيد دفع $${amount} ؟`)) return; // 🔒 هنا الإلغاء الحقيقي
+            if(!confirm(`تأكيد دفع $${amount} ؟`)) return;
 
             sub.payments.push({
                 amount,
@@ -157,6 +159,36 @@ function renderTable(){
             update(ref(db,"subscribers/"+sub.fid),{
                 payments:sub.payments
             }).then(renderTable);
+        };
+
+        printBtn.onclick=()=>{
+            if(sub.payments.length===0){alert("لا توجد دفعات");return;}
+            const last=sub.payments[sub.payments.length-1];
+            const win=window.open("","","width=220,height=400");
+            win.document.write(`
+            <div style="font-family:Arial;direction:rtl;font-size:12px">
+            <h3 style="text-align:center">FAST NET</h3>
+            <hr>
+            الاسم: ${sub.name}<br>
+            العنوان: ${sub.address}<br>
+            السعر: $${sub.price}<br>
+            المدفوع: $${last.amount}<br>
+            الشهر: ${last.month}<br>
+            التاريخ: ${last.date}
+            </div>`);
+            win.print();
+        };
+
+        waBtn.onclick=()=>{
+            if(sub.payments.length===0){alert("لا توجد دفعات");return;}
+            const last=sub.payments[sub.payments.length-1];
+            const phone=sub.phone.startsWith("+")?sub.phone:"+961"+sub.phone;
+            const msg=`📩 إشعار FAST NET
+👤 ${sub.name}
+💰 المدفوع: $${last.amount}
+🗓️ الشهر: ${last.month}
+📅 ${last.date}`;
+            window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`,"_blank");
         };
 
         tableBody.appendChild(tr);
