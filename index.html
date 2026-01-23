@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>لوحة التحكم - FAST NET</title>
-<link rel="stylesheet" href="assets/css/style.css">
 <style>
 /* ===== قاعدة الصفحة ===== */
 body { font-family: "Segoe UI", Tahoma, Arial, sans-serif; background:#f5f5f5; margin:0; padding:0; color:#333; }
@@ -12,88 +11,34 @@ header { background:#007bff; color:white; padding:15px; text-align:center; }
 header h1 { margin:0; font-size:1.8em; }
 
 /* ===== شريط التنقل ===== */
-nav ul { 
-  list-style:none; 
-  padding:0; 
-  display:flex; 
-  justify-content:center; 
-  margin:10px 0 0 0; 
-  flex-wrap:wrap; 
-}
+nav ul { list-style:none; padding:0; display:flex; justify-content:center; margin:10px 0 0 0; flex-wrap:wrap; }
 nav ul li { margin:0 10px; }
-nav ul li a {
-  color:white; 
-  text-decoration:none; 
-  padding:12px 25px; 
-  border-radius:6px;
-  font-size:1.2em; 
-  font-weight:600; 
-  transition: background 0.3s, opacity 0.3s;
-  display:inline-block;
-  min-width:110px; 
-  text-align:center;
-}
+nav ul li a { color:white; text-decoration:none; padding:12px 25px; border-radius:6px; font-size:1.2em; font-weight:600; transition: background 0.3s, opacity 0.3s; display:inline-block; min-width:110px; text-align:center; }
 
-/* ===== ألوان محددة لكل زر ===== */
-nav ul li a[href="index.html"] { background-color: #F1C40F; } /* أزرق متوسط */
+/* ألوان محددة لكل زر */
+nav ul li a[href="index.html"] { background-color: #F1C40F; } /* أصفر متوسط */
 nav ul li a[href="subscribers.html"] { background-color: #7BB661; } /* أخضر متوسط */
 nav ul li a[href="payments.html"] { background-color: #F5A623; } /* برتقالي متوسط */
 nav ul li a[href="receipts.html"] { background-color: #9B59B6; } /* أرجواني متوسط */
-
-/* تأثير المرور على الأزرار */
-nav ul li a:hover {
-  opacity: 0.85;
-}
-
-/* الزر النشط يبقى واضح */
-nav ul li a.active {
-  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-}
+nav ul li a:hover { opacity: 0.85; }
+nav ul li a.active { box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
 
 /* ===== المحتوى الرئيسي ===== */
 main { padding:30px 20px; max-width:1200px; margin:auto; }
-.dashboard { 
-  display:flex; 
-  gap:20px; 
-  flex-wrap:wrap; 
-  justify-content:center; 
-  margin-bottom:30px; 
-}
+.dashboard { display:flex; gap:20px; flex-wrap:wrap; justify-content:center; margin-bottom:30px; }
 
 /* ===== البطاقات ===== */
-.card { 
-  padding:25px 20px; 
-  border-radius:12px; 
-  flex:1 1 250px; 
-  text-align:center; 
-  box-shadow:0 4px 10px rgba(0,0,0,0.1); 
-  min-width:220px;
-  font-weight:600; 
-  transition: transform 0.3s, box-shadow 0.3s;
-}
+.card { padding:25px 20px; border-radius:12px; flex:1 1 250px; text-align:center; box-shadow:0 4px 10px rgba(0,0,0,0.1); min-width:220px; font-weight:600; transition: transform 0.3s, box-shadow 0.3s; }
 .card:hover { transform: translateY(-3px); box-shadow:0 8px 16px rgba(0,0,0,0.2); }
-
-/* ===== ألوان البطاقات متوسطة ومريحة ===== */
-.card.subscribers { background:#4682B4; color:#fff; border:2px solid #315f7f; } /* أزرق متوسط */
-.card.receipts    { background:#7BB661; color:#fff; border:2px solid #5A8C43; } /* أخضر متوسط */
-.card.revenue     { background:#F5A623; color:#fff; border:2px solid #D4881C; } /* برتقالي متوسط */
-
+.card.subscribers { background:#4682B4; color:#fff; border:2px solid #315f7f; }
+.card.receipts    { background:#7BB661; color:#fff; border:2px solid #5A8C43; }
+.card.revenue     { background:#F5A623; color:#fff; border:2px solid #D4881C; }
 .card h2 { margin:0 0 10px 0; font-size:2em; color:#ffffff; }
 .card p { margin:0; font-size:1em; color:#f0f0f0; }
 
 /* ===== الأزرار السريعة ===== */
 .quick-links { text-align:center; margin-top:20px; display:flex; gap:15px; justify-content:center; flex-wrap:wrap; }
-.delete-all-btn { 
-  background:#e74c3c; 
-  color:white; 
-  padding:12px 20px; 
-  border:none; 
-  border-radius:5px; 
-  cursor:pointer; 
-  font-size:1em;
-  min-width:140px;
-  transition: background 0.3s;
-}
+.delete-all-btn { background:#e74c3c; color:white; padding:12px 20px; border:none; border-radius:5px; cursor:pointer; font-size:1em; min-width:140px; transition: background 0.3s; }
 .delete-all-btn:hover { background:#c0392b; }
 .delete-all-btn.secondary { background:#555; }
 .delete-all-btn.secondary:hover { background:#333; }
@@ -111,13 +56,6 @@ footer { text-align:center; padding:15px; background:#f1f1f1; margin-top:30px; f
 </style>
 </head>
 <body>
-
-<!-- حماية الصفحة -->
-<script>
-if(localStorage.getItem("auth") !== "1"){
-  location.href = "login.html";
-}
-</script>
 
 <header>
 <h1>لوحة التحكم - FAST NET</h1>
@@ -157,11 +95,11 @@ if(localStorage.getItem("auth") !== "1"){
 <p>© 2026 FAST NET. جميع الحقوق محفوظة.</p>
 </footer>
 
-<!-- 🔥 Firebase -->
+<!-- Firebase Authentication + Realtime Database -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getDatabase, ref, onValue, remove }
-from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import { getDatabase, ref, onValue, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAolIz4UgOSbV1oe0XTl8a8pVfg7Pnfs1w",
@@ -175,37 +113,40 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
+const auth = getAuth(app);
+
+// حماية الصفحة متقدمة
+onAuthStateChanged(auth, user => {
+  if(!user) {
+    window.location.href = "login.html";
+  }
+});
 
 // تسجيل الخروج
 window.logout = function(){
-  localStorage.removeItem("auth");
-  location.href = "login.html";
+  signOut(auth).then(() => {
+    window.location.href = "login.html";
+  });
 };
 
 // جلب المشتركين
 onValue(ref(db, "subscribers"), snapshot => {
   const data = snapshot.val() || {};
   const subscribers = Object.values(data);
-
   document.getElementById("totalSubscribers").textContent = subscribers.length;
 
   let totalRevenue = 0;
   subscribers.forEach(sub => {
-    const paid = sub.payments
-      ? Object.values(sub.payments).reduce((s,p)=>s+Number(p.amount||0),0)
-      : 0;
+    const paid = sub.payments ? Object.values(sub.payments).reduce((s,p)=>s+Number(p.amount||0),0) : 0;
     totalRevenue += paid;
   });
-
-  document.getElementById("totalRevenue").textContent =
-    `$${totalRevenue.toFixed(2)}`;
+  document.getElementById("totalRevenue").textContent = `$${totalRevenue.toFixed(2)}`;
 });
 
 // جلب الإيصالات
 onValue(ref(db, "receipts"), snapshot => {
   const data = snapshot.val() || {};
-  document.getElementById("totalReceipts").textContent =
-    Object.keys(data).length;
+  document.getElementById("totalReceipts").textContent = Object.keys(data).length;
 });
 
 // حذف جميع البيانات
