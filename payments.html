@@ -171,11 +171,15 @@ function renderTable(){
         const payInput = tr.querySelector(".pay-input");
         const monthSelect = tr.querySelector(".month-select");
 
+        // ✅ التعديل: إضافة تأكيد قبل الدفع
         payBtn.addEventListener("click", ()=>{
             const amount = parseFloat(payInput.value);
             if(isNaN(amount) || amount<=0 || amount>remaining){
                 return alert(`الرجاء إدخال مبلغ صالح. الحد الأقصى: $${remaining}`);
             }
+
+            if(!confirm(`تأكيد دفع مبلغ $${amount} ؟`)) return; // ← هنا الإلغاء قبل الحفظ
+
             const month = monthSelect.value;
             const date = new Date().toLocaleDateString();
             sub.payments.push({amount, month, date});
