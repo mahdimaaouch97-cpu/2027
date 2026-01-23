@@ -156,7 +156,7 @@ function renderTable(){
             <td><select class="month-select">${[...Array(12)].map((_,i)=>`<option value="${i+1}">${i+1}</option>`).join("")}</select></td>
             <td>
                 <td>
-    <input type="number" class="pay-input" min="0.01" max="${remaining}" step="0.01" ${remaining===0?"disabled":""}>
+    <input type="number" class="pay-input" min="1" max="${remaining}" step="1" ${remaining===0?"disabled":""}>
     <button class="pay-btn" ${remaining===0?"disabled":""}>دفع</button>
     <button class="cancel-btn">إلغاء آخر دفعة</button>
 </td>
