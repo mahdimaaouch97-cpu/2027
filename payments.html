@@ -170,7 +170,7 @@ function renderTable(){
         const payInput = tr.querySelector(".pay-input");
         const monthSelect = tr.querySelector(".month-select");
 
-        // ✅ الدفع مع رقم إيصال عالمي ثابت
+        // الدفع مع رقم إيصال عالمي وارسال واتساب بعد الدفع
         payBtn.addEventListener("click", async ()=>{
             const amount = parseFloat(payInput.value);
             if(isNaN(amount) || amount<=0 || amount>remaining){
@@ -181,7 +181,6 @@ function renderTable(){
             const month = monthSelect.value;
             const date = new Date().toLocaleDateString();
 
-            // 🔹 رقم إيصال عالمي صحيح
             const receiptRef = ref(db, "lastReceiptNumber");
             let lastReceiptSnap = await get(receiptRef);
             let lastReceipt = lastReceiptSnap.exists() ? lastReceiptSnap.val() : 6000;
@@ -189,9 +188,8 @@ function renderTable(){
 
             sub.payments.push({amount, month, date, receiptNumber});
 
-            // تحديث الدفعة + آخر رقم إيصال عالمي
             await update(ref(db, "subscribers/"+sub.fid), {payments: sub.payments});
-            await set(receiptRef, receiptNumber); // ← التحديث الصحيح للرقم
+            await set(receiptRef, receiptNumber);
 
             // تحديث الجدول مباشرة
             const newPaid = sub.payments.reduce((sum,p)=>sum+Number(p.amount||0),0).toFixed(2);
@@ -207,7 +205,9 @@ function renderTable(){
                 payInput.disabled = true;
                 payBtn.disabled = true;
             }
-            sendWhatsApp(sub, amount, month);
+
+            // ارسال واتساب بعد التحديث
+            sendWhatsApp(sub, amount, month, receiptNumber);
         });
 
         const printBtn = tr.querySelector(".print-btn");
@@ -248,18 +248,20 @@ function renderTable(){
     if(tableBody.innerHTML==="") tableBody.innerHTML=`<tr><td colspan="12">لا يوجد مشتركين مطابقين.</td></tr>`;
 }
 
-function sendWhatsApp(sub, amount=null, month=null){
+function sendWhatsApp(sub, amount=null, month=null, receiptNumber=null){
     if(sub.payments.length===0) return alert("لا توجد دفعات");
     const last = sub.payments[sub.payments.length-1];
     amount = amount ?? last.amount;
     month = month ?? last.month;
+    receiptNumber = receiptNumber ?? last.receiptNumber;
+
     const totalPaid = sub.payments.reduce((sum,p)=>sum+Number(p.amount||0),0);
     const remaining = +(sub.price - totalPaid).toFixed(2);
     const date = last.date;
     let phone = sub.phone.startsWith("+") ? sub.phone : "+961"+sub.phone;
 
     const msg = `📩 إشعار دفع FAST NET
-🧾 رقم الإيصال: ${last.receiptNumber}
+🧾 رقم الإيصال: ${receiptNumber}
 👤 الاسم: ${sub.name}
 📍 العنوان: ${sub.address}
 💰 سعر الإشتراك :$${sub.price}
