@@ -12,27 +12,9 @@ header { background:#007bff; color:white; padding:15px; text-align:center; }
 header h1 { margin:0; font-size:1.8em; }
 
 /* ===== شريط التنقل ===== */
-nav ul { 
-  list-style:none; 
-  padding:0; 
-  display:flex; 
-  justify-content:center; 
-  margin:10px 0 0 0; 
-  flex-wrap:wrap; 
-}
+nav ul { list-style:none; padding:0; display:flex; justify-content:center; margin:10px 0 0 0; flex-wrap:wrap; }
 nav ul li { margin:0 10px; }
-nav ul li a {
-  color:white; 
-  text-decoration:none; 
-  padding:12px 25px; 
-  border-radius:6px;
-  font-size:1.2em; 
-  font-weight:600; 
-  transition: background 0.3s, opacity 0.3s;
-  display:inline-block;
-  min-width:110px; 
-  text-align:center;
-}
+nav ul li a { color:white; text-decoration:none; padding:12px 25px; border-radius:6px; font-size:1.2em; font-weight:600; transition: background 0.3s, opacity 0.3s; display:inline-block; min-width:110px; text-align:center; }
 nav ul li a[href="index.html"] { background-color: #F1C40F; } /* أصفر */
 nav ul li a[href="subscribers.html"] { background-color: #7BB661; } /* أخضر */
 nav ul li a[href="payments.html"] { background-color: #F5A623; } /* برتقالي */
@@ -96,6 +78,18 @@ if(localStorage.getItem("auth") !== "1"){ location.href = "login.html"; }
 
 <main>
 <section class="dashboard">
+<div class="card totalPrice">
+<h2 id="totalPrice">$0.00</h2>
+<p>مجموع أسعار الاشتراكات</p>
+</div>
+<div class="card revenue">
+<h2 id="totalRevenue">$0.00</h2>
+<p>إجمالي الإيرادات</p>
+</div>
+<div class="card remaining">
+<h2 id="totalRemaining">$0.00</h2>
+<p>المبلغ المتبقي</p>
+</div>
 <div class="card subscribers">
 <h2 id="totalSubscribers">0</h2>
 <p>عدد المشتركين</p>
@@ -103,18 +97,6 @@ if(localStorage.getItem("auth") !== "1"){ location.href = "login.html"; }
 <div class="card receipts">
 <h2 id="totalReceipts">0</h2>
 <p>عدد الإيصالات</p>
-</div>
-<div class="card revenue">
-<h2 id="totalRevenue">$0.00</h2>
-<p>إجمالي الإيرادات</p>
-</div>
-<div class="card totalPrice">
-<h2 id="totalPrice">$0.00</h2>
-<p>مجموع أسعار الاشتراكات</p>
-</div>
-<div class="card remaining">
-<h2 id="totalRemaining">$0.00</h2>
-<p>المبلغ المتبقي</p>
 </div>
 </section>
 
