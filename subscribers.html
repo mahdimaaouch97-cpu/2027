@@ -13,11 +13,6 @@ h1 { text-align:center; margin-bottom:15px; color:#333; }
 .home-btn { background-color:#007bff; color:white; }
 .search-filter { max-width:400px; margin:0 auto 15px; display:flex; gap:10px; }
 .search-filter input, select { flex:1; padding:8px; }
-.add-form { max-width:500px; margin:0 auto 15px; background:#fff; padding:15px; border-radius:8px; display:flex; flex-direction:column; gap:8px; }
-.add-form input { width:100%; padding:8px; }
-.add-form button { width:100%; padding:10px; border:none; cursor:pointer; color:white; border-radius:5px; font-weight:bold; }
-#addBtn { background:#007bff; }
-#cancelBtn { background:#6c757d; display:none; }
 table { width:100%; border-collapse:collapse; background:white; }
 th, td { padding:10px; border:1px solid #ddd; text-align:center; }
 th { background:#007bff; color:white; }
@@ -26,7 +21,8 @@ th { background:#007bff; color:white; }
 .status-full { background:#388e3c; color:white; }
 .status-partial { background:#f57c00; color:white; }
 .status-unpaid { background:#c62828; color:white; }
-a.name-link { cursor:pointer; color:#007bff; text-decoration:underline; }
+.editable-cell { cursor:pointer; }
+.editable-cell input { width:90%; padding:2px; }
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -52,15 +48,6 @@ a.name-link { cursor:pointer; color:#007bff; text-decoration:underline; }
     <option value="partial">مدفوع جزئيًا</option>
     <option value="unpaid">غير مدفوع</option>
   </select>
-</div>
-
-<div class="add-form">
-  <input id="name" placeholder="اسم المشترك">
-  <input id="phone" placeholder="رقم الهاتف">
-  <input id="address" placeholder="العنوان">
-  <input id="price" type="number" placeholder="سعر الاشتراك">
-  <button id="addBtn">إضافة مشترك</button>
-  <button id="cancelBtn">❌ إلغاء التعديل</button>
 </div>
 
 <table>
@@ -92,18 +79,11 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-const nameInput = document.getElementById("name");
-const phoneInput = document.getElementById("phone");
-const addressInput = document.getElementById("address");
-const priceInput = document.getElementById("price");
-const addBtn = document.getElementById("addBtn");
-const cancelBtn = document.getElementById("cancelBtn");
 const tableBody = document.getElementById("tableBody");
 const search = document.getElementById("search");
 const filterStatus = document.getElementById("filterStatus");
 
 let subscribers = [];
-let editId = null;
 
 /* تحميل البيانات */
 onValue(ref(db,"subscribers"), snap => {
@@ -120,7 +100,7 @@ onValue(ref(db,"subscribers"), snap => {
   renderTable();
 });
 
-/* عرض الجدول */
+/* عرض الجدول مع التعديل المباشر */
 window.renderTable = function(){
   const s = search.value.toLowerCase();
   const f = filterStatus.value;
@@ -138,12 +118,12 @@ window.renderTable = function(){
     else if(rem<sub.price){txt="جزئي";cls="status-partial";}
 
     tableBody.innerHTML+=`
-<tr>
+<tr data-id="${sub.fid}">
 <td>${sub.id}</td>
-<td><a class="name-link" onclick="editSub('${sub.fid}')">${sub.name}</a></td>
-<td>${sub.phone}</td>
-<td>${sub.address}</td>
-<td>$${sub.price}</td>
+<td class="editable-cell" data-field="name">${sub.name}</td>
+<td class="editable-cell" data-field="phone">${sub.phone}</td>
+<td class="editable-cell" data-field="address">${sub.address}</td>
+<td class="editable-cell" data-field="price">${sub.price}</td>
 <td>$${paid}</td>
 <td>$${rem}</td>
 <td class="${cls}">${txt}</td>
@@ -151,57 +131,30 @@ window.renderTable = function(){
 <td><button class="delete-btn" onclick="del('${sub.fid}')">حذف</button></td>
 </tr>`;
   });
-}
 
-/* إضافة / تعديل */
-addBtn.onclick = () => {
-  if(!nameInput.value || !phoneInput.value || !priceInput.value) return alert("بيانات ناقصة");
+  // تفعيل التعديل عند الضغط على أي خلية
+  document.querySelectorAll(".editable-cell").forEach(cell=>{
+    cell.onclick = function(){
+      const currentVal = this.textContent;
+      const input = document.createElement("input");
+      input.value = currentVal;
+      this.textContent = "";
+      this.appendChild(input);
+      input.focus();
 
-  if(editId){
-    const oldPayments = subscribers.find(s=>s.fid===editId).payments || [];
-    update(ref(db,"subscribers/"+editId),{
-      name:nameInput.value,
-      phone:phoneInput.value,
-      address:addressInput.value,
-      price:Number(priceInput.value),
-      payments: oldPayments
-    });
-    editId=null;
-    addBtn.textContent="إضافة مشترك";
-    cancelBtn.style.display="none";
-  } else {
-    push(ref(db,"subscribers"),{
-      name:nameInput.value,
-      phone:phoneInput.value,
-      address:addressInput.value,
-      price:Number(priceInput.value),
-      payments:[]
-    });
-  }
+      input.onblur = () => {
+        const newVal = input.value;
+        const field = cell.dataset.field;
+        const fid = cell.parentElement.dataset.id;
 
-  nameInput.value=phoneInput.value=addressInput.value=priceInput.value="";
-}
+        const updateData = {};
+        updateData[field] = (field==="price") ? Number(newVal) : newVal;
 
-/* إلغاء التعديل */
-cancelBtn.onclick = () => {
-  nameInput.value = phoneInput.value = addressInput.value = priceInput.value = "";
-  editId = null;
-  addBtn.textContent = "إضافة مشترك";
-  cancelBtn.style.display = "none";
-}
-
-/* تعديل المشترك عند الضغط على الاسم */
-window.editSub = id =>{
-  const s = subscribers.find(x=>x.fid===id);
-  if(!s) return;
-  nameInput.value = s.name;
-  phoneInput.value = s.phone;
-  addressInput.value = s.address;
-  priceInput.value = s.price;
-  editId = id;
-  addBtn.textContent = "💾 حفظ التعديل";
-  cancelBtn.style.display = "inline-block";
-  window.scrollTo({top:0,behavior:"smooth"});
+        update(ref(db,"subscribers/"+fid), updateData);
+        cell.textContent = newVal;
+      }
+    }
+  });
 }
 
 /* حذف */
