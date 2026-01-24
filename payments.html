@@ -222,6 +222,7 @@ function renderTable(){
             <div style="font-family:Arial, sans-serif; width:200px; padding:5px; direction:rtl; text-align:right; font-size:12px;">
                 <h3 style="text-align:center; margin:0;">FAST NET</h3>
                 <p style="text-align:center; margin:2px 0; font-size:12px;">71-338640   📞  71-346411</p>
+                <tr><td>رقم الإيصال:</td><td>${last.receiptNumber || '-'}</td></tr>
                 <hr>
                 <table style="width:100%; border-collapse:collapse; direction:rtl; text-align:right; font-size:12px;">
                     <tr><td>الاسم:</td><td>${sub.name}</td></tr>
@@ -231,7 +232,7 @@ function renderTable(){
                     <tr><td>المتبقي:</td><td>$${remainingPrint}</td></tr>
                     <tr><td>الشهر:</td><td>${last.month}</td></tr>
                     <tr><td>التاريخ:</td><td>${last.date}</td></tr>
-                    <tr><td>رقم الإيصال:</td><td>${last.receiptNumber || '-'}</td></tr>
+                    
                 </table>
                 <hr>
             </div>
