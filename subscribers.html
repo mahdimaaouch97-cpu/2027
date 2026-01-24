@@ -20,7 +20,6 @@ table { width:100%; border-collapse:collapse; background:white; }
 th, td { padding:10px; border:1px solid #ddd; text-align:center; }
 th { background:#007bff; color:white; }
 .delete-btn { background:#dc3545; color:white; padding:5px 8px; border:none; cursor:pointer; }
-.edit-btn { background:#ffc107; color:black; padding:5px 8px; border:none; cursor:pointer; }
 .reminder-btn { background:#25D366; color:white; padding:5px 8px; border:none; cursor:pointer; }
 .status-full { background:#388e3c; color:white; }
 .status-partial { background:#f57c00; color:white; }
@@ -66,7 +65,7 @@ a.name-link { cursor:pointer; color:#007bff; text-decoration:underline; }
 <tr>
 <th>#</th><th>الاسم</th><th>الهاتف</th><th>العنوان</th>
 <th>السعر</th><th>المدفوع</th><th>المتبقي</th>
-<th>الحالة</th><th>واتساب</th><th>تعديل</th><th>حذف</th>
+<th>الحالة</th><th>واتساب</th><th>حذف</th>
 </tr>
 </thead>
 <tbody id="tableBody"></tbody>
@@ -145,7 +144,6 @@ window.renderTable = function(){
 <td>$${rem}</td>
 <td class="${cls}">${txt}</td>
 <td>${rem>0?`<button class="reminder-btn" onclick="sendWA('${sub.fid}')">واتساب</button>`:"✔"}</td>
-<td><button class="edit-btn" onclick="editSub('${sub.fid}')">تعديل</button></td>
 <td><button class="delete-btn" onclick="del('${sub.fid}')">حذف</button></td>
 </tr>`;
   });
@@ -179,7 +177,7 @@ addBtn.onclick = () => {
   nameInput.value=phoneInput.value=addressInput.value=priceInput.value="";
 }
 
-/* تعديل المشترك */
+/* تعديل المشترك عند الضغط على الاسم */
 window.editSub = id =>{
   const s = subscribers.find(x=>x.fid===id);
   if(!s) return;
