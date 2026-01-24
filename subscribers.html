@@ -23,6 +23,7 @@ th { background:#007bff; color:white; }
 .status-unpaid { background:#c62828; color:white; }
 .editable-cell { cursor:pointer; }
 .editable-cell input { width:90%; padding:2px; }
+.editing-row { background-color: #fff3b0 !important; } /* لون أصفر أثناء التعديل */
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -114,7 +115,7 @@ window.renderTable = function(){
     const paid = (sub.payments || []).reduce((a,p)=>a+Number(p.amount||0),0);
     const rem = sub.price - paid;
     let txt="غير مدفوع",cls="status-unpaid";
-    if(rem==0){txt="مدفوع كليًا";cls="status-full";}
+    if(rem===0){txt="مدفوع كليًا";cls="status-full";}
     else if(rem<sub.price){txt="جزئي";cls="status-partial";}
 
     tableBody.innerHTML+=`
@@ -132,25 +133,28 @@ window.renderTable = function(){
 </tr>`;
   });
 
-  // تفعيل التعديل عند الضغط على أي خلية
   document.querySelectorAll(".editable-cell").forEach(cell=>{
     cell.onclick = function(){
-      const currentVal = this.textContent;
+      const row = cell.parentElement;
+      row.classList.add("editing-row"); // تمييز الصف أصفر
+      const currentVal = cell.textContent;
       const input = document.createElement("input");
       input.value = currentVal;
-      this.textContent = "";
-      this.appendChild(input);
+      cell.textContent = "";
+      cell.appendChild(input);
       input.focus();
 
       input.onblur = () => {
         const newVal = input.value;
         const field = cell.dataset.field;
-        const fid = cell.parentElement.dataset.id;
+        const fid = row.dataset.id;
 
         const updateData = {};
         updateData[field] = (field==="price") ? Number(newVal) : newVal;
 
-        update(ref(db,"subscribers/"+fid), updateData);
+        update(ref(db,"subscribers/"+fid), updateData)
+          .then(()=> row.classList.remove("editing-row")); // إزالة التمييز بعد الحفظ
+
         cell.textContent = newVal;
       }
     }
