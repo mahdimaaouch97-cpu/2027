@@ -5,73 +5,146 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>الدفع - FAST NET</title>
 <style>
+/* ===== قاعدة الصفحة ===== */
 body { 
-    font-family: Arial, sans-serif; 
+    font-family: 'Segoe UI', Tahoma, Arial, sans-serif; 
     padding:20px; 
     direction:rtl; 
-    background: linear-gradient(135deg, #e8f0fe, #f9fafc);
+    background: linear-gradient(135deg, #f0f4ff, #f9fafc);
+    color:#333;
 }
 h1 { 
     text-align:center; 
-    margin-bottom:20px; 
+    margin-bottom:25px; 
+    color:#1a237e;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
 }
-#search, #filterStatus { 
-    padding:8px; 
-    width:100%; 
-    max-width:400px; 
-    display:block; 
-    margin:10px auto; 
-    border-radius:5px; 
-    border:1px solid #ccc; 
-}
-table { 
-    width:100%; 
-    border-collapse:collapse; 
-    margin-top:10px; 
-    background:white; 
-    box-shadow:0 2px 5px rgba(0,0,0,0.1); 
-}
-th, td { 
-    padding:10px; 
-    border:1px solid #ddd; 
-    text-align:center; 
-}
-th { 
-    background-color:#007bff; 
-    color:white; 
-}
-button { 
-    padding:5px 10px; 
-    cursor:pointer; 
-    margin:2px; 
-    border-radius:4px; 
-    border:none; 
-}
-.pay-btn { background-color:#ffc107; color:white; }
-.print-btn { background-color:#28a745; color:white; }
-.wa-btn { background-color:#25d366; color:white; }
+
+/* ===== زر العودة ===== */
 .back-btn { 
-    background-color: #34495e; 
+    background-color: #1a237e; 
     color: white; 
-    padding: 18px 30px; 
-    margin-bottom:15px; 
+    padding: 15px 35px; 
+    margin-bottom:20px; 
     font-size: 20px; 
     font-weight: bold; 
-    border-radius: 6px; 
+    border-radius: 8px; 
     cursor: pointer; 
     border: none; 
-    transition: background 0.3s; 
+    transition: background 0.3s, transform 0.2s; 
     display: inline-block;
-    width: auto;
 }
-.back-btn:hover { background-color: #2c3e50; }
+.back-btn:hover { 
+    background-color: #283593; 
+    transform: translateY(-2px);
+}
 @media screen and (max-width: 600px) {
     .back-btn { width: 100%; text-align: center; }
 }
-input[type=number] { width:70px; text-align:center; border-radius:4px; border:1px solid #ccc; }
-.status-paid { background-color: #388e3c; color: white; font-weight: bold; border-radius: 8px; padding: 8px 12px; }
-.status-partial { background-color: #f57c00; color: white; font-weight: bold; border-radius: 8px; padding: 8px 12px; }
-.status-unpaid { background-color: #c62828; color: white; font-weight: bold; border-radius: 8px; padding: 8px 12px; }
+
+/* ===== البحث والتصفية ===== */
+#search, #filterStatus { 
+    padding:10px 12px; 
+    width:100%; 
+    max-width:400px; 
+    display:block; 
+    margin:12px auto; 
+    border-radius:6px; 
+    border:1px solid #bbb; 
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+    font-size: 14px;
+}
+
+/* ===== الجدول ===== */
+table { 
+    width:100%; 
+    border-collapse:collapse; 
+    margin-top:15px; 
+    background:white; 
+    box-shadow:0 4px 10px rgba(0,0,0,0.05); 
+    border-radius:8px; 
+    overflow:hidden;
+}
+th, td { 
+    padding:12px 10px; 
+    border:1px solid #ddd; 
+    text-align:center; 
+    font-size:14px;
+}
+th { 
+    background-color:#1a237e; 
+    color:white; 
+    font-weight:600;
+}
+td { background:white; }
+
+/* ===== أزرار العمليات ===== */
+button { 
+    padding:6px 12px; 
+    cursor:pointer; 
+    margin:2px; 
+    border-radius:6px; 
+    border:none; 
+    font-size:13px; 
+    font-weight:bold;
+    transition:0.2s all;
+}
+button:hover { opacity:0.85; transform:translateY(-1px); }
+
+.pay-btn { background-color:#ffc107; color:white; }
+.print-btn { background-color:#28a745; color:white; }
+.wa-btn { background-color:#25d366; color:white; }
+
+/* ===== المدفوع والحالة ===== */
+.status-paid { 
+    background-color: #388e3c; 
+    color: white; 
+    font-weight: bold; 
+    border-radius: 10px; 
+    padding: 6px 12px; 
+    display:inline-block;
+}
+.status-partial { 
+    background-color: #f57c00; 
+    color: white; 
+    font-weight: bold; 
+    border-radius: 10px; 
+    padding: 6px 12px; 
+    display:inline-block;
+}
+.status-unpaid { 
+    background-color: #c62828; 
+    color: white; 
+    font-weight: bold; 
+    border-radius: 10px; 
+    padding: 6px 12px; 
+    display:inline-block;
+}
+
+/* ===== المدخلات الصغيرة ===== */
+input[type=number] { 
+    width:75px; 
+    text-align:center; 
+    border-radius:5px; 
+    border:1px solid #bbb; 
+    padding:4px 6px;
+}
+
+/* ===== تجاوب ===== */
+@media screen and (max-width: 800px) {
+    table, thead, tbody, th, td, tr { display:block; }
+    tr { margin-bottom:15px; }
+    th { display:none; }
+    td { text-align:right; border:none; border-bottom:1px solid #eee; position:relative; padding-left:50%; }
+    td:before { 
+        content: attr(data-label); 
+        position:absolute; 
+        left:10px; 
+        width:45%; 
+        font-weight:bold; 
+        text-align:left;
+    }
+}
 </style>
 </head>
 <body>
@@ -170,7 +243,6 @@ function renderTable(){
         const payInput = tr.querySelector(".pay-input");
         const monthSelect = tr.querySelector(".month-select");
 
-        // الدفع مع رقم إيصال عالمي وارسال واتساب بعد الدفع
         payBtn.addEventListener("click", async ()=>{
             const amount = parseFloat(payInput.value);
             if(isNaN(amount) || amount<=0 || amount>remaining){
@@ -191,7 +263,6 @@ function renderTable(){
             await update(ref(db, "subscribers/"+sub.fid), {payments: sub.payments});
             await set(receiptRef, receiptNumber);
 
-            // تحديث الجدول مباشرة
             const newPaid = sub.payments.reduce((sum,p)=>sum+Number(p.amount||0),0).toFixed(2);
             const newRemaining = +(sub.price - newPaid).toFixed(2);
             tr.cells[5].innerText = `$${newPaid}`;
@@ -205,8 +276,6 @@ function renderTable(){
                 payInput.disabled = true;
                 payBtn.disabled = true;
             }
-
-            // ارسال واتساب بعد التحديث
             sendWhatsApp(sub, amount, month, receiptNumber);
         });
 
@@ -232,7 +301,6 @@ function renderTable(){
                     <tr><td>المتبقي:</td><td>$${remainingPrint}</td></tr>
                     <tr><td>الشهر:</td><td>${last.month}</td></tr>
                     <tr><td>التاريخ:</td><td>${last.date}</td></tr>
-                    
                 </table>
                 <hr>
             </div>
