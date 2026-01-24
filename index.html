@@ -33,14 +33,10 @@ nav ul li a {
   min-width:110px; 
   text-align:center;
 }
-
-/* ===== ألوان محددة لكل زر ===== */
 nav ul li a[href="index.html"] { background-color: #F1C40F; } /* أصفر */
 nav ul li a[href="subscribers.html"] { background-color: #7BB661; } /* أخضر */
 nav ul li a[href="payments.html"] { background-color: #F5A623; } /* برتقالي */
 nav ul li a[href="receipts.html"] { background-color: #9B59B6; } /* أرجواني */
-
-/* تأثير المرور على الأزرار */
 nav ul li a:hover { opacity: 0.85; }
 nav ul li a.active { box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
 
@@ -49,13 +45,13 @@ main { padding:30px 20px; max-width:1200px; margin:auto; }
 .dashboard { display:flex; gap:20px; flex-wrap:wrap; justify-content:center; margin-bottom:30px; }
 
 /* ===== البطاقات ===== */
-.card { padding:25px 20px; border-radius:12px; flex:1 1 250px; text-align:center; box-shadow:0 4px 10px rgba(0,0,0,0.1); min-width:220px; font-weight:600; transition: transform 0.3s, box-shadow 0.3s; }
+.card { padding:25px 20px; border-radius:12px; flex:1 1 200px; text-align:center; box-shadow:0 4px 10px rgba(0,0,0,0.1); min-width:180px; font-weight:600; transition: transform 0.3s, box-shadow 0.3s; }
 .card:hover { transform: translateY(-3px); box-shadow:0 8px 16px rgba(0,0,0,0.2); }
-
-/* ===== ألوان البطاقات ===== */
 .card.subscribers { background:#4682B4; color:#fff; border:2px solid #315f7f; }
 .card.receipts    { background:#7BB661; color:#fff; border:2px solid #5A8C43; }
 .card.revenue     { background:#F5A623; color:#fff; border:2px solid #D4881C; }
+.card.totalPrice  { background:#1ABC9C; color:#fff; border:2px solid #16A085; }
+.card.remaining   { background:#E67E22; color:#fff; border:2px solid #CA6F1E; }
 
 .card h2 { margin:0 0 10px 0; font-size:2em; color:#ffffff; }
 .card p { margin:0; font-size:1em; color:#f0f0f0; }
@@ -110,7 +106,15 @@ if(localStorage.getItem("auth") !== "1"){ location.href = "login.html"; }
 </div>
 <div class="card revenue">
 <h2 id="totalRevenue">$0.00</h2>
-<p>إجمالي الإيرادات بالدولار</p>
+<p>إجمالي الإيرادات</p>
+</div>
+<div class="card totalPrice">
+<h2 id="totalPrice">$0.00</h2>
+<p>مجموع أسعار الاشتراكات</p>
+</div>
+<div class="card remaining">
+<h2 id="totalRemaining">$0.00</h2>
+<p>المبلغ المتبقي</p>
 </div>
 </section>
 
@@ -127,8 +131,7 @@ if(localStorage.getItem("auth") !== "1"){ location.href = "login.html"; }
 <!-- 🔥 Firebase -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getDatabase, ref, onValue, remove }
-from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import { getDatabase, ref, onValue, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAolIz4UgOSbV1oe0XTl8a8pVfg7Pnfs1w",
@@ -157,15 +160,24 @@ onValue(ref(db, "subscribers"), snapshot => {
 
   let totalRevenue = 0;
   let totalReceipts = 0;
+  let totalPrice = 0;
+  let totalRemaining = 0;
 
   subscribers.forEach(sub => {
+    const price = Number(sub.price || 0);
+    totalPrice += price;
+
     const payments = Array.isArray(sub.payments) ? sub.payments : [];
-    totalRevenue += payments.reduce((sum,p)=>sum+Number(p.amount||0),0);
+    const paid = payments.reduce((sum,p)=>sum+Number(p.amount||0),0);
+    totalRevenue += paid;
     totalReceipts += payments.length;
+    totalRemaining += price - paid;
   });
 
   document.getElementById("totalRevenue").textContent = `$${totalRevenue.toFixed(2)}`;
   document.getElementById("totalReceipts").textContent = totalReceipts;
+  document.getElementById("totalPrice").textContent = `$${totalPrice.toFixed(2)}`;
+  document.getElementById("totalRemaining").textContent = `$${totalRemaining.toFixed(2)}`;
 });
 
 // حذف جميع البيانات
