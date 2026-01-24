@@ -20,13 +20,14 @@ table { width:100%; border-collapse:collapse; background:white; }
 th, td { padding:10px; border:1px solid #ddd; text-align:center; }
 th { background:#007bff; color:white; }
 .delete-btn { background:#dc3545; color:white; padding:5px 8px; border:none; cursor:pointer; }
+.edit-btn { background:#ffc107; color:black; padding:5px 8px; border:none; cursor:pointer; }
 .reminder-btn { background:#25D366; color:white; padding:5px 8px; border:none; cursor:pointer; }
 .status-full { background:#388e3c; color:white; }
 .status-partial { background:#f57c00; color:white; }
 .status-unpaid { background:#c62828; color:white; }
+a.name-link { cursor:pointer; color:#007bff; text-decoration:underline; }
 </style>
 
-<!-- مكتبة SheetJS -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 
@@ -65,7 +66,7 @@ th { background:#007bff; color:white; }
 <tr>
 <th>#</th><th>الاسم</th><th>الهاتف</th><th>العنوان</th>
 <th>السعر</th><th>المدفوع</th><th>المتبقي</th>
-<th>الحالة</th><th> تذكير واتساب</th><th>حذف</th>
+<th>الحالة</th><th>واتساب</th><th>تعديل</th><th>حذف</th>
 </tr>
 </thead>
 <tbody id="tableBody"></tbody>
@@ -73,7 +74,7 @@ th { background:#007bff; color:white; }
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import { getDatabase, ref, push, onValue, remove, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 /* 🔥 Firebase */
 const firebaseConfig = {
@@ -99,6 +100,7 @@ const search = document.getElementById("search");
 const filterStatus = document.getElementById("filterStatus");
 
 let subscribers = [];
+let editId = null;
 
 /* تحميل البيانات */
 onValue(ref(db,"subscribers"), snap => {
@@ -135,68 +137,93 @@ window.renderTable = function(){
     tableBody.innerHTML+=`
 <tr>
 <td>${sub.id}</td>
-<td>${sub.name}</td>
+<td><a class="name-link" onclick="editSub('${sub.fid}')">${sub.name}</a></td>
 <td>${sub.phone}</td>
 <td>${sub.address}</td>
 <td>$${sub.price}</td>
 <td>$${paid}</td>
 <td>$${rem}</td>
 <td class="${cls}">${txt}</td>
-<td>${rem>0?`<button class="reminder-btn" onclick="sendWA('${sub.fid}')"> تذكير واتساب </button>`:"✔"}</td>
+<td>${rem>0?`<button class="reminder-btn" onclick="sendWA('${sub.fid}')">واتساب</button>`:"✔"}</td>
+<td><button class="edit-btn" onclick="editSub('${sub.fid}')">تعديل</button></td>
 <td><button class="delete-btn" onclick="del('${sub.fid}')">حذف</button></td>
 </tr>`;
   });
 }
 
-/* إضافة وحذف المشتركين */
+/* إضافة / تعديل */
 addBtn.onclick = () => {
   if(!nameInput.value || !phoneInput.value || !priceInput.value) return alert("بيانات ناقصة");
-  push(ref(db,"subscribers"),{
-    name: nameInput.value,
-    phone: phoneInput.value,
-    address: addressInput.value,
-    price: Number(priceInput.value),
-    payments:[]
-  });
-  nameInput.value = phoneInput.value = addressInput.value = priceInput.value = "";
+
+  if(editId){
+    const oldPayments = subscribers.find(s=>s.fid===editId).payments || [];
+    update(ref(db,"subscribers/"+editId),{
+      name:nameInput.value,
+      phone:phoneInput.value,
+      address:addressInput.value,
+      price:Number(priceInput.value),
+      payments: oldPayments
+    });
+    editId=null;
+    addBtn.textContent="إضافة مشترك";
+  }else{
+    push(ref(db,"subscribers"),{
+      name:nameInput.value,
+      phone:phoneInput.value,
+      address:addressInput.value,
+      price:Number(priceInput.value),
+      payments:[]
+    });
+  }
+
+  nameInput.value=phoneInput.value=addressInput.value=priceInput.value="";
 }
+
+/* تعديل المشترك */
+window.editSub = id =>{
+  const s = subscribers.find(x=>x.fid===id);
+  if(!s) return;
+  nameInput.value=s.name;
+  phoneInput.value=s.phone;
+  addressInput.value=s.address;
+  priceInput.value=s.price;
+  editId=id;
+  addBtn.textContent="💾 حفظ التعديل";
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+/* حذف */
 window.del = id => confirm("تأكيد الحذف؟") && remove(ref(db,"subscribers/"+id));
 
-/* واتساب - رسالة رسمية مع السعر وحالة الدفع */
+/* واتساب */
 window.sendWA = id => {
   const s = subscribers.find(x => x.fid == id);
   if(!s.phone.startsWith("+")) s.phone = "+961" + s.phone;
 
-  // حساب المدفوع والمتبقي
-  const paid = (s.payments || []).reduce((a, p) => a + Number(p.amount || 0), 0);
+  const paid = (s.payments || []).reduce((a,p)=>a+Number(p.amount||0),0);
   const rem = s.price - paid;
 
-  // تحديد الرسالة حسب حالة الدفع
   let msg = `السيد/ة ${s.name} المحترم/ة،\n`;
   if(rem === 0){
       alert(`${s.name} دفع كامل المبلغ بالفعل!`);
       return;
-  }
-  else if(rem < s.price){
+  } else if(rem < s.price){
       msg += `نذكركم بدفع إشتراك الأنترنت.\n`;
       msg += `قيمة الإشتراك: $${s.price}\n`;
       msg += `المبلغ المدفوع جزئيًا: $${paid}\n`;
       msg += `المتبقي: $${rem}\n`;
       msg += `يرجى دفع المبلغ المتبقي في أقرب وقت ممكن.`;
-  }
-  else{
+  } else{
       msg += `نذكركم بدفع إشتراك الأنترنت.\n`;
       msg += `قيمة الإشتراك: $${s.price}\n`;
       msg += `لم يتم دفع أي مبلغ بعد.\n`;
       msg += `يرجى دفع الاشتراك في أقرب وقت ممكن.`;
   }
 
-  // فتح واتساب بالرسالة
   window.open(`https://wa.me/${s.phone}?text=${encodeURIComponent(msg)}`);
 }
 
-
-/* استيراد من Excel */
+/* استيراد Excel */
 document.getElementById('importFile').addEventListener('change', function(e){
   const file = e.target.files[0];
   if(!file) return;
@@ -208,35 +235,29 @@ document.getElementById('importFile').addEventListener('change', function(e){
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
     const json = XLSX.utils.sheet_to_json(sheet);
 
-    console.log("DATA FROM EXCEL:", json);
-
     json.forEach(row=>{
       const name = row["الاسم"];
       const phone = row["الهاتف"];
       const address = row["العنوان"] || "";
       const price = row["السعر"];
-
       if(name && phone && price){
         push(ref(db,"subscribers"),{
-          name: name,
-          phone: phone.toString(),
-          address: address,
-          price: Number(price),
-          payments: []
-        }).catch(err=>{
-          console.error("Firebase Error:", err);
+          name:name,
+          phone:phone.toString(),
+          address:address,
+          price:Number(price),
+          payments:[]
         });
       }
     });
 
     alert("تم استيراد البيانات بنجاح!");
-    e.target.value = "";
+    e.target.value="";
   };
-
   reader.readAsArrayBuffer(file);
 });
 
-/* تصدير إلى Excel */
+/* تصدير Excel */
 window.exportToExcel = function() {
   const dbRef = ref(db,"subscribers");
   onValue(dbRef, snap=>{
@@ -262,5 +283,3 @@ window.exportToExcel = function() {
 </script>
 </body>
 </html>
-
-
