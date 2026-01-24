@@ -154,7 +154,7 @@ function renderTable(){
             <td class="status-cell"></td>
             <td><select class="month-select">${[...Array(12)].map((_,i)=>`<option value="${i+1}">${i+1}</option>`).join("")}</select></td>
             <td>
-                <input type="number" class="pay-input" min="0.01" max="${remaining}" step="0.01" ${remaining===0?"disabled":""}>
+                <input type="number" class="pay-input" min="1" max="${remaining}" step="1" ${remaining===0?"disabled":""}>
                 <button class="pay-btn" ${remaining===0?"disabled":""}>دفع</button>
             </td>
             <td><button class="print-btn">طباعة</button></td>
@@ -219,6 +219,7 @@ function renderTable(){
                 <h3 style="text-align:center; margin:0;">FAST NET</h3>
                 <p style="text-align:center; margin:2px 0; font-size:12px;">71-338640   📞  71-346411</p>
                 <hr>
+                <tr><td>رقم الإيصال:</td><td>${last.receiptNumber || '-'}</td></tr>
                 <table style="width:100%; border-collapse:collapse; direction:rtl; text-align:right; font-size:12px;">
                     <tr><td>الاسم:</td><td>${sub.name}</td></tr>
                     <tr><td>العنوان:</td><td>${sub.address}</td></tr>
@@ -227,7 +228,7 @@ function renderTable(){
                     <tr><td>المتبقي:</td><td>$${remainingPrint}</td></tr>
                     <tr><td>الشهر:</td><td>${last.month}</td></tr>
                     <tr><td>التاريخ:</td><td>${last.date}</td></tr>
-                    <tr><td>رقم الإيصال:</td><td>${last.receiptNumber || '-'}</td></tr>
+                    
                 </table>
                 <hr>
             </div>
