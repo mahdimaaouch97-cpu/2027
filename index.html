@@ -12,22 +12,49 @@ header { background:#007bff; color:white; padding:15px; text-align:center; }
 header h1 { margin:0; font-size:1.8em; }
 
 /* ===== شريط التنقل ===== */
-nav ul { list-style:none; padding:0; display:flex; justify-content:center; margin:10px 0 0 0; flex-wrap:wrap; }
+nav ul { 
+  list-style:none; 
+  padding:0; 
+  display:flex; 
+  justify-content:center; 
+  margin:10px 0 0 0; 
+  flex-wrap:wrap; 
+}
 nav ul li { margin:0 10px; }
-nav ul li a { color:white; text-decoration:none; padding:12px 25px; border-radius:6px; font-size:1.2em; font-weight:600; transition: background 0.3s, opacity 0.3s; display:inline-block; min-width:110px; text-align:center; }
-nav ul li a[href="index.html"] { background-color: #F1C40F; } /* أصفر */
-nav ul li a[href="subscribers.html"] { background-color: #7BB661; } /* أخضر */
-nav ul li a[href="payments.html"] { background-color: #F5A623; } /* برتقالي */
-nav ul li a[href="receipts.html"] { background-color: #9B59B6; } /* أرجواني */
+nav ul li a {
+  color:white; 
+  text-decoration:none; 
+  padding:12px 25px; 
+  border-radius:6px;
+  font-size:1.2em; 
+  font-weight:600; 
+  transition: background 0.3s, opacity 0.3s;
+  display:inline-block;
+  min-width:110px; 
+  text-align:center;
+}
+nav ul li a[href="index.html"] { background-color: #F1C40F; }
+nav ul li a[href="subscribers.html"] { background-color: #7BB661; }
+nav ul li a[href="payments.html"] { background-color: #F5A623; }
+nav ul li a[href="receipts.html"] { background-color: #9B59B6; }
 nav ul li a:hover { opacity: 0.85; }
 nav ul li a.active { box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
 
 /* ===== المحتوى الرئيسي ===== */
 main { padding:30px 20px; max-width:1200px; margin:auto; }
-.dashboard { display:flex; gap:20px; flex-wrap:wrap; justify-content:center; margin-bottom:30px; }
+.dashboard { display:flex; gap:20px; flex-wrap: nowrap; justify-content:center; margin-bottom:30px; }
 
 /* ===== البطاقات ===== */
-.card { padding:25px 20px; border-radius:12px; flex:1 1 200px; text-align:center; box-shadow:0 4px 10px rgba(0,0,0,0.1); min-width:180px; font-weight:600; transition: transform 0.3s, box-shadow 0.3s; }
+.card { 
+  flex: 1 1 0; /* كل بطاقة تأخذ نفس المساحة */
+  min-width: 180px; 
+  text-align:center; 
+  padding:25px 20px; 
+  border-radius:12px; 
+  box-shadow:0 4px 10px rgba(0,0,0,0.1); 
+  font-weight:600; 
+  transition: transform 0.3s, box-shadow 0.3s; 
+}
 .card:hover { transform: translateY(-3px); box-shadow:0 8px 16px rgba(0,0,0,0.2); }
 .card.subscribers { background:#4682B4; color:#fff; border:2px solid #315f7f; }
 .card.receipts    { background:#7BB661; color:#fff; border:2px solid #5A8C43; }
@@ -50,9 +77,9 @@ footer { text-align:center; padding:15px; background:#f1f1f1; margin-top:30px; f
 
 /* ===== تجاوب الهاتف ===== */
 @media (max-width: 768px) {
+  .dashboard { flex-direction: column; gap:15px; flex-wrap: wrap; }
+  .card { width: 100%; }
   nav ul li a { font-size:1.1em; padding:10px 18px; min-width:90px; }
-  .dashboard { flex-direction:column; gap:15px; }
-  .card { width:100%; }
   .quick-links { flex-direction:column; gap:10px; }
 }
 </style>
@@ -78,18 +105,6 @@ if(localStorage.getItem("auth") !== "1"){ location.href = "login.html"; }
 
 <main>
 <section class="dashboard">
-<div class="card totalPrice">
-<h2 id="totalPrice">$0.00</h2>
-<p>مجموع أسعار الاشتراكات</p>
-</div>
-<div class="card revenue">
-<h2 id="totalRevenue">$0.00</h2>
-<p>إجمالي الإيرادات</p>
-</div>
-<div class="card remaining">
-<h2 id="totalRemaining">$0.00</h2>
-<p>المبلغ المتبقي</p>
-</div>
 <div class="card subscribers">
 <h2 id="totalSubscribers">0</h2>
 <p>عدد المشتركين</p>
@@ -97,6 +112,18 @@ if(localStorage.getItem("auth") !== "1"){ location.href = "login.html"; }
 <div class="card receipts">
 <h2 id="totalReceipts">0</h2>
 <p>عدد الإيصالات</p>
+</div>
+<div class="card revenue">
+<h2 id="totalRevenue">$0.00</h2>
+<p>إجمالي الإيرادات</p>
+</div>
+<div class="card totalPrice">
+<h2 id="totalPrice">$0.00</h2>
+<p>مجموع أسعار الاشتراكات</p>
+</div>
+<div class="card remaining">
+<h2 id="totalRemaining">$0.00</h2>
+<p>المبلغ المتبقي</p>
 </div>
 </section>
 
@@ -134,7 +161,7 @@ window.logout = function(){
   location.href = "login.html";
 };
 
-// جلب المشتركين والإيصالات
+// جلب البيانات
 onValue(ref(db, "subscribers"), snapshot => {
   const data = snapshot.val() || {};
   const subscribers = Object.values(data);
