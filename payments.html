@@ -50,7 +50,6 @@ button {
 .pay-btn { background-color:#ffc107; color:white; }
 .print-btn { background-color:#28a745; color:white; }
 .wa-btn { background-color:#25d366; color:white; }
-/* زر العودة أكبر وواضح */
 .back-btn { 
     background-color: #34495e; 
     color: white; 
@@ -171,18 +170,24 @@ function renderTable(){
         const payInput = tr.querySelector(".pay-input");
         const monthSelect = tr.querySelector(".month-select");
 
-        // ✅ التعديل: إضافة تأكيد قبل الدفع
+        // ✅ الدفع مع رقم إيصال ترتيبي
         payBtn.addEventListener("click", ()=>{
             const amount = parseFloat(payInput.value);
             if(isNaN(amount) || amount<=0 || amount>remaining){
                 return alert(`الرجاء إدخال مبلغ صالح. الحد الأقصى: $${remaining}`);
             }
 
-            if(!confirm(`تأكيد دفع مبلغ $${amount} ؟`)) return; // ← هنا الإلغاء قبل الحفظ
+            if(!confirm(`تأكيد دفع مبلغ $${amount} ؟`)) return;
 
             const month = monthSelect.value;
             const date = new Date().toLocaleDateString();
-            sub.payments.push({amount, month, date});
+
+            // 🔹 توليد رقم إيصال ترتيبي
+            let lastReceipt = sub.payments.length ? Math.max(...sub.payments.map(p=>p.receiptNumber || 6000)) : 6000;
+            const receiptNumber = lastReceipt + 1;
+
+            sub.payments.push({amount, month, date, receiptNumber});
+
             update(ref(db, "subscribers/"+sub.fid), {payments: sub.payments}).then(()=>{
                 const newPaid = sub.payments.reduce((sum,p)=>sum+Number(p.amount||0),0).toFixed(2);
                 const newRemaining = +(sub.price - newPaid).toFixed(2);
@@ -222,9 +227,9 @@ function renderTable(){
                     <tr><td>المتبقي:</td><td>$${remainingPrint}</td></tr>
                     <tr><td>الشهر:</td><td>${last.month}</td></tr>
                     <tr><td>التاريخ:</td><td>${last.date}</td></tr>
+                    <tr><td>رقم الإيصال:</td><td>${last.receiptNumber || '-'}</td></tr>
                 </table>
                 <hr>
-                <p style="text-align:center; font-weight:bold;"></p>
             </div>
             `);
             win.print();
@@ -256,7 +261,8 @@ function sendWhatsApp(sub, amount=null, month=null){
 💰 المدفوع : $${amount}
 💵 المتبقي: $${remaining}
 🗓️ الشهر: ${month}
-📅 التاريخ: ${date}`;
+📅 التاريخ: ${date}
+🧾 رقم الإيصال: ${last.receiptNumber}`;
 
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, "_blank");
 }
