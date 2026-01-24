@@ -35,65 +35,34 @@ nav ul li a {
 }
 
 /* ===== ألوان محددة لكل زر ===== */
-nav ul li a[href="index.html"] { background-color: #F1C40F; } /* أزرق متوسط */
-nav ul li a[href="subscribers.html"] { background-color: #7BB661; } /* أخضر متوسط */
-nav ul li a[href="payments.html"] { background-color: #F5A623; } /* برتقالي متوسط */
-nav ul li a[href="receipts.html"] { background-color: #9B59B6; } /* أرجواني متوسط */
+nav ul li a[href="index.html"] { background-color: #F1C40F; } /* أصفر */
+nav ul li a[href="subscribers.html"] { background-color: #7BB661; } /* أخضر */
+nav ul li a[href="payments.html"] { background-color: #F5A623; } /* برتقالي */
+nav ul li a[href="receipts.html"] { background-color: #9B59B6; } /* أرجواني */
 
 /* تأثير المرور على الأزرار */
-nav ul li a:hover {
-  opacity: 0.85;
-}
-
-/* الزر النشط يبقى واضح */
-nav ul li a.active {
-  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-}
+nav ul li a:hover { opacity: 0.85; }
+nav ul li a.active { box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
 
 /* ===== المحتوى الرئيسي ===== */
 main { padding:30px 20px; max-width:1200px; margin:auto; }
-.dashboard { 
-  display:flex; 
-  gap:20px; 
-  flex-wrap:wrap; 
-  justify-content:center; 
-  margin-bottom:30px; 
-}
+.dashboard { display:flex; gap:20px; flex-wrap:wrap; justify-content:center; margin-bottom:30px; }
 
 /* ===== البطاقات ===== */
-.card { 
-  padding:25px 20px; 
-  border-radius:12px; 
-  flex:1 1 250px; 
-  text-align:center; 
-  box-shadow:0 4px 10px rgba(0,0,0,0.1); 
-  min-width:220px;
-  font-weight:600; 
-  transition: transform 0.3s, box-shadow 0.3s;
-}
+.card { padding:25px 20px; border-radius:12px; flex:1 1 250px; text-align:center; box-shadow:0 4px 10px rgba(0,0,0,0.1); min-width:220px; font-weight:600; transition: transform 0.3s, box-shadow 0.3s; }
 .card:hover { transform: translateY(-3px); box-shadow:0 8px 16px rgba(0,0,0,0.2); }
 
-/* ===== ألوان البطاقات متوسطة ومريحة ===== */
-.card.subscribers { background:#4682B4; color:#fff; border:2px solid #315f7f; } /* أزرق متوسط */
-.card.receipts    { background:#7BB661; color:#fff; border:2px solid #5A8C43; } /* أخضر متوسط */
-.card.revenue     { background:#F5A623; color:#fff; border:2px solid #D4881C; } /* برتقالي متوسط */
+/* ===== ألوان البطاقات ===== */
+.card.subscribers { background:#4682B4; color:#fff; border:2px solid #315f7f; }
+.card.receipts    { background:#7BB661; color:#fff; border:2px solid #5A8C43; }
+.card.revenue     { background:#F5A623; color:#fff; border:2px solid #D4881C; }
 
 .card h2 { margin:0 0 10px 0; font-size:2em; color:#ffffff; }
 .card p { margin:0; font-size:1em; color:#f0f0f0; }
 
 /* ===== الأزرار السريعة ===== */
 .quick-links { text-align:center; margin-top:20px; display:flex; gap:15px; justify-content:center; flex-wrap:wrap; }
-.delete-all-btn { 
-  background:#e74c3c; 
-  color:white; 
-  padding:12px 20px; 
-  border:none; 
-  border-radius:5px; 
-  cursor:pointer; 
-  font-size:1em;
-  min-width:140px;
-  transition: background 0.3s;
-}
+.delete-all-btn { background:#e74c3c; color:white; padding:12px 20px; border:none; border-radius:5px; cursor:pointer; font-size:1em; min-width:140px; transition: background 0.3s; }
 .delete-all-btn:hover { background:#c0392b; }
 .delete-all-btn.secondary { background:#555; }
 .delete-all-btn.secondary:hover { background:#333; }
@@ -114,9 +83,7 @@ footer { text-align:center; padding:15px; background:#f1f1f1; margin-top:30px; f
 
 <!-- حماية الصفحة -->
 <script>
-if(localStorage.getItem("auth") !== "1"){
-  location.href = "login.html";
-}
+if(localStorage.getItem("auth") !== "1"){ location.href = "login.html"; }
 </script>
 
 <header>
@@ -182,30 +149,23 @@ window.logout = function(){
   location.href = "login.html";
 };
 
-// جلب المشتركين
+// جلب المشتركين والإيصالات
 onValue(ref(db, "subscribers"), snapshot => {
   const data = snapshot.val() || {};
   const subscribers = Object.values(data);
-
   document.getElementById("totalSubscribers").textContent = subscribers.length;
 
   let totalRevenue = 0;
+  let totalReceipts = 0;
+
   subscribers.forEach(sub => {
-    const paid = sub.payments
-      ? Object.values(sub.payments).reduce((s,p)=>s+Number(p.amount||0),0)
-      : 0;
-    totalRevenue += paid;
+    const payments = Array.isArray(sub.payments) ? sub.payments : [];
+    totalRevenue += payments.reduce((sum,p)=>sum+Number(p.amount||0),0);
+    totalReceipts += payments.length;
   });
 
-  document.getElementById("totalRevenue").textContent =
-    `$${totalRevenue.toFixed(2)}`;
-});
-
-// جلب الإيصالات
-onValue(ref(db, "receipts"), snapshot => {
-  const data = snapshot.val() || {};
-  document.getElementById("totalReceipts").textContent =
-    Object.keys(data).length;
+  document.getElementById("totalRevenue").textContent = `$${totalRevenue.toFixed(2)}`;
+  document.getElementById("totalReceipts").textContent = totalReceipts;
 });
 
 // حذف جميع البيانات
