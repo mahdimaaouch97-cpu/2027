@@ -6,29 +6,124 @@
 <title>إدارة المشتركين - POSNEW</title>
 
 <style>
-body { font-family: Arial, sans-serif; padding:20px; background:#f5f5f5; direction:rtl; }
-h1 { text-align:center; margin-bottom:15px; color:#333; }
-.top-buttons { text-align:center; margin-bottom:20px; }
-.top-buttons button { margin:5px; padding:10px 16px; font-weight:bold; border-radius:5px; border:none; cursor:pointer; }
-.home-btn { background-color:#007bff; color:white; }
-.search-filter { max-width:400px; margin:0 auto 15px; display:flex; gap:10px; }
-.search-filter input, select { flex:1; padding:8px; }
-.add-form { max-width:500px; margin:0 auto 15px; background:#fff; padding:15px; border-radius:8px; }
-.add-form input { width:100%; padding:8px; margin-bottom:10px; }
-.add-form button { width:100%; padding:10px; background:#007bff; color:white; border:none; cursor:pointer; }
-table { width:100%; border-collapse:collapse; background:white; }
-th, td { padding:10px; border:1px solid #ddd; text-align:center; }
-th { background:#007bff; color:white; }
-.delete-btn { background:#dc3545; color:white; padding:5px 8px; border:none; cursor:pointer; border-radius:3px; }
-.reminder-btn { background:#25D366; color:white; padding:5px 8px; border:none; cursor:pointer; border-radius:3px; }
-.status-full { background:#388e3c; color:white; }
-.status-partial { background:#f57c00; color:white; }
-.status-unpaid { background:#c62828; color:white; }
+/* ===== قاعدة الصفحة ===== */
+body {
+  font-family: Arial, sans-serif;
+  padding:20px;
+  background:#f0f2f5;
+  direction:rtl;
+  color:#333;
+}
+h1 {
+  text-align:center;
+  margin-bottom:20px;
+  color:#222;
+  text-shadow: 1px 1px 2px #ccc;
+}
+
+/* ===== شريط الأزرار العلوي ===== */
+.top-buttons {
+  text-align:center;
+  margin-bottom:25px;
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  gap:10px;
+}
+.top-buttons button {
+  margin:5px;
+  padding:12px 18px;
+  font-weight:bold;
+  border-radius:6px;
+  border:none;
+  cursor:pointer;
+  transition: 0.3s;
+  color:white;
+}
+.top-buttons .home-btn { background-color:#007bff; }
+.top-buttons .payments-btn { background-color:#28a745; }
+.top-buttons .import-btn { background-color:#17a2b8; }
+.top-buttons .export-btn { background-color:#ffc107; color:#222; }
+.top-buttons button:hover { opacity:0.85; }
+
+/* ===== نموذج إضافة مشترك ===== */
+.add-form {
+  max-width:500px;
+  margin:0 auto 20px;
+  background:#fff;
+  padding:20px;
+  border-radius:10px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+.add-form input {
+  width:100%;
+  padding:10px;
+  margin-bottom:12px;
+  border:1px solid #ccc;
+  border-radius:6px;
+}
+.add-form button {
+  width:100%;
+  padding:12px;
+  background:#007bff;
+  color:white;
+  border:none;
+  border-radius:6px;
+  font-weight:bold;
+  cursor:pointer;
+  transition:0.3s;
+}
+.add-form button:hover { opacity:0.85; }
+
+/* ===== شريط البحث ===== */
+.search-filter {
+  max-width:450px;
+  margin:0 auto 20px;
+  display:flex;
+  gap:10px;
+}
+.search-filter input, select {
+  flex:1;
+  padding:10px;
+  border-radius:6px;
+  border:1px solid #ccc;
+}
+
+/* ===== الجدول ===== */
+table {
+  width:100%;
+  border-collapse:collapse;
+  background:white;
+  box-shadow:0 4px 10px rgba(0,0,0,0.1);
+}
+th, td {
+  padding:12px;
+  border:1px solid #ddd;
+  text-align:center;
+  font-size:0.95em;
+}
+th {
+  background:#007bff;
+  color:white;
+}
+.delete-btn { background:#dc3545; color:white; padding:6px 10px; border:none; cursor:pointer; border-radius:4px; }
+.reminder-btn { background:#25D366; color:white; padding:6px 10px; border:none; cursor:pointer; border-radius:4px; }
+.status-full { background:#388e3c; color:white; padding:5px 8px; border-radius:4px; }
+.status-partial { background:#f57c00; color:white; padding:5px 8px; border-radius:4px; }
+.status-unpaid { background:#c62828; color:white; padding:5px 8px; border-radius:4px; }
 .editing-row { background-color: #fff3b0 !important; }
-.edit-btn, .save-btn, .cancel-btn { padding:3px 6px; border:none; border-radius:3px; cursor:pointer; }
+.edit-btn, .save-btn, .cancel-btn { padding:5px 8px; border:none; border-radius:4px; cursor:pointer; font-size:0.85em; }
 .edit-btn { background:#007bff; color:white; }
 .save-btn { background:#28a745; color:white; }
-.cancel-btn { background:#ffc107; color:white; }
+.cancel-btn { background:#ffc107; color:#222; }
+
+/* ===== تجاوب الهاتف ===== */
+@media(max-width:768px){
+  .top-buttons { flex-direction:column; gap:8px; }
+  .search-filter { flex-direction:column; gap:8px; }
+  .add-form { width:95%; padding:15px; }
+  th, td { font-size:0.85em; padding:8px; }
+}
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -40,13 +135,12 @@ th { background:#007bff; color:white; }
 
 <div class="top-buttons">
   <button class="home-btn" onclick="location.href='index.html'">الرئيسية</button>
-  <button class="home-btn" onclick="location.href='payments.html'">الدفع</button>
+  <button class="payments-btn" onclick="location.href='payments.html'">الدفع</button>
   <input type="file" id="importFile" style="display:none" accept=".xlsx,.xls">
-  <button class="home-btn" onclick="document.getElementById('importFile').click()">استيراد من Excel</button>
-  <button class="home-btn" onclick="exportToExcel()">تصدير إلى Excel</button>
+  <button class="import-btn" onclick="document.getElementById('importFile').click()">استيراد من Excel</button>
+  <button class="export-btn" onclick="exportToExcel()">تصدير إلى Excel</button>
 </div>
 
-<!-- إضافة مشترك -->
 <div class="add-form">
   <input id="name" placeholder="اسم المشترك">
   <input id="phone" placeholder="رقم الهاتف">
