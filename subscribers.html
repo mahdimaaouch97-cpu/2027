@@ -50,33 +50,39 @@ h1 {
 
 /* ===== نموذج إضافة مشترك ===== */
 .add-form {
-  max-width:500px;
+  max-width:550px;                     /* زيادة عرض النموذج قليلًا */
   margin:0 auto 20px;
   background:#fff;
-  padding:20px;
+  padding:25px;                        /* زيادة الحشو الداخلي للنموذج */
   border-radius:10px;
   box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 }
+
 .add-form input {
   width:100%;
- padding:14px 12px;     /* زيادة ارتفاع الحقل ومساحة النص */
-  margin-bottom:12px;
+  padding:14px 12px;                   /* زيادة ارتفاع الحقل ومساحة النص */
+  margin-bottom:15px;
   border:1px solid #ccc;
   border-radius:6px;
-  font-size:18px;        /* تكبير الخط */
+  font-size:18px;                      /* تكبير الخط داخل الحقول */
 }
+
 .add-form button {
   width:100%;
-  padding:12px;
+  padding:16px;                         /* زيادة ارتفاع الزر */
+  font-size:18px;                        /* تكبير الخط داخل الزر */
   background:#007bff;
   color:white;
   border:none;
-  border-radius:6px;
+  border-radius:8px;                     /* زيادة الانحناء */
   font-weight:bold;
   cursor:pointer;
   transition:0.3s;
 }
-.add-form button:hover { opacity:0.85; }
+
+.add-form button:hover {
+  opacity:0.85;
+}
 
 /* ===== شريط البحث ===== */
 .search-filter {
@@ -384,6 +390,7 @@ window.exportToExcel = function() {
 </script>
 </body>
 </html>
+
 
 
 
