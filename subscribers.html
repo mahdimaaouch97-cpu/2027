@@ -13,14 +13,16 @@ h1 { text-align:center; margin-bottom:15px; color:#333; }
 .home-btn { background-color:#007bff; color:white; }
 .search-filter { max-width:400px; margin:0 auto 15px; display:flex; gap:10px; }
 .search-filter input, select { flex:1; padding:8px; }
-.add-form { max-width:500px; margin:0 auto 15px; background:#fff; padding:15px; border-radius:8px; }
-.add-form input { width:100%; padding:8px; margin-bottom:10px; }
-.add-form button { width:100%; padding:10px; background:#007bff; color:white; border:none; cursor:pointer; }
+.add-form { max-width:500px; margin:0 auto 15px; background:#fff; padding:15px; border-radius:8px; display:flex; flex-direction:column; gap:8px; }
+.add-form input { width:100%; padding:8px; }
+.add-form button { width:100%; padding:10px; border:none; cursor:pointer; color:white; border-radius:5px; font-weight:bold; }
+#addBtn { background:#007bff; }
+#cancelBtn { background:#6c757d; display:none; }
 table { width:100%; border-collapse:collapse; background:white; }
 th, td { padding:10px; border:1px solid #ddd; text-align:center; }
 th { background:#007bff; color:white; }
-.delete-btn { background:#dc3545; color:white; padding:5px 8px; border:none; cursor:pointer; }
-.reminder-btn { background:#25D366; color:white; padding:5px 8px; border:none; cursor:pointer; }
+.delete-btn { background:#dc3545; color:white; padding:5px 8px; border:none; cursor:pointer; border-radius:3px; }
+.reminder-btn { background:#25D366; color:white; padding:5px 8px; border:none; cursor:pointer; border-radius:3px; }
 .status-full { background:#388e3c; color:white; }
 .status-partial { background:#f57c00; color:white; }
 .status-unpaid { background:#c62828; color:white; }
@@ -58,6 +60,7 @@ a.name-link { cursor:pointer; color:#007bff; text-decoration:underline; }
   <input id="address" placeholder="العنوان">
   <input id="price" type="number" placeholder="سعر الاشتراك">
   <button id="addBtn">إضافة مشترك</button>
+  <button id="cancelBtn">❌ إلغاء التعديل</button>
 </div>
 
 <table>
@@ -75,7 +78,7 @@ a.name-link { cursor:pointer; color:#007bff; text-decoration:underline; }
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getDatabase, ref, push, onValue, remove, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-/* 🔥 Firebase */
+/* Firebase */
 const firebaseConfig = {
   apiKey: "AIzaSyAolIz4UgOSbV1oe0XTl8a8pVfg7Pnfs1w",
   authDomain: "pos2026-310b7.firebaseapp.com",
@@ -94,6 +97,7 @@ const phoneInput = document.getElementById("phone");
 const addressInput = document.getElementById("address");
 const priceInput = document.getElementById("price");
 const addBtn = document.getElementById("addBtn");
+const cancelBtn = document.getElementById("cancelBtn");
 const tableBody = document.getElementById("tableBody");
 const search = document.getElementById("search");
 const filterStatus = document.getElementById("filterStatus");
@@ -164,7 +168,8 @@ addBtn.onclick = () => {
     });
     editId=null;
     addBtn.textContent="إضافة مشترك";
-  }else{
+    cancelBtn.style.display="none";
+  } else {
     push(ref(db,"subscribers"),{
       name:nameInput.value,
       phone:phoneInput.value,
@@ -177,16 +182,25 @@ addBtn.onclick = () => {
   nameInput.value=phoneInput.value=addressInput.value=priceInput.value="";
 }
 
+/* إلغاء التعديل */
+cancelBtn.onclick = () => {
+  nameInput.value = phoneInput.value = addressInput.value = priceInput.value = "";
+  editId = null;
+  addBtn.textContent = "إضافة مشترك";
+  cancelBtn.style.display = "none";
+}
+
 /* تعديل المشترك عند الضغط على الاسم */
 window.editSub = id =>{
   const s = subscribers.find(x=>x.fid===id);
   if(!s) return;
-  nameInput.value=s.name;
-  phoneInput.value=s.phone;
-  addressInput.value=s.address;
-  priceInput.value=s.price;
-  editId=id;
-  addBtn.textContent="💾 حفظ التعديل";
+  nameInput.value = s.name;
+  phoneInput.value = s.phone;
+  addressInput.value = s.address;
+  priceInput.value = s.price;
+  editId = id;
+  addBtn.textContent = "💾 حفظ التعديل";
+  cancelBtn.style.display = "inline-block";
   window.scrollTo({top:0,behavior:"smooth"});
 }
 
