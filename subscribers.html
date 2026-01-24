@@ -13,6 +13,9 @@ h1 { text-align:center; margin-bottom:15px; color:#333; }
 .home-btn { background-color:#007bff; color:white; }
 .search-filter { max-width:400px; margin:0 auto 15px; display:flex; gap:10px; }
 .search-filter input, select { flex:1; padding:8px; }
+.add-form { max-width:500px; margin:0 auto 15px; background:#fff; padding:15px; border-radius:8px; }
+.add-form input { width:100%; padding:8px; margin-bottom:10px; }
+.add-form button { width:100%; padding:10px; background:#007bff; color:white; border:none; cursor:pointer; }
 table { width:100%; border-collapse:collapse; background:white; }
 th, td { padding:10px; border:1px solid #ddd; text-align:center; }
 th { background:#007bff; color:white; }
@@ -41,6 +44,15 @@ th { background:#007bff; color:white; }
   <input type="file" id="importFile" style="display:none" accept=".xlsx,.xls">
   <button class="home-btn" onclick="document.getElementById('importFile').click()">استيراد من Excel</button>
   <button class="home-btn" onclick="exportToExcel()">تصدير إلى Excel</button>
+</div>
+
+<!-- إضافة مشترك -->
+<div class="add-form">
+  <input id="name" placeholder="اسم المشترك">
+  <input id="phone" placeholder="رقم الهاتف">
+  <input id="address" placeholder="العنوان">
+  <input id="price" type="number" placeholder="سعر الاشتراك">
+  <button id="addBtn">إضافة مشترك</button>
 </div>
 
 <div class="search-filter">
@@ -82,12 +94,19 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
+/* عناصر DOM */
+const nameInput = document.getElementById("name");
+const phoneInput = document.getElementById("phone");
+const addressInput = document.getElementById("address");
+const priceInput = document.getElementById("price");
+const addBtn = document.getElementById("addBtn");
 const tableBody = document.getElementById("tableBody");
 const search = document.getElementById("search");
 const filterStatus = document.getElementById("filterStatus");
 
 let subscribers = [];
 
+/* تحميل البيانات */
 onValue(ref(db,"subscribers"), snap => {
   const data = snap.val() || {};
   subscribers = Object.entries(data).map(([id,sub],i)=>({
@@ -102,6 +121,7 @@ onValue(ref(db,"subscribers"), snap => {
   renderTable();
 });
 
+/* عرض الجدول */
 window.renderTable = function(){
   const s = search.value.toLowerCase();
   const f = filterStatus.value;
@@ -131,16 +151,29 @@ window.renderTable = function(){
 <td>${rem>0?`<button class="reminder-btn" onclick="sendWA('${sub.fid}')">واتساب</button>`:"✔"}</td>
 <td>
   <button class="edit-btn" onclick="startEdit(this)">تعديل</button>
+  <button class="delete-btn" onclick="del('${sub.fid}')">حذف</button>
 </td>
 </tr>`;
   });
 }
 
-/* بدء التعديل */
+/* إضافة مشترك */
+addBtn.onclick = () => {
+  if(!nameInput.value || !phoneInput.value || !priceInput.value) return alert("بيانات ناقصة");
+  push(ref(db,"subscribers"),{
+    name: nameInput.value,
+    phone: phoneInput.value,
+    address: addressInput.value,
+    price: Number(priceInput.value),
+    payments:[]
+  });
+  nameInput.value = phoneInput.value = addressInput.value = priceInput.value = "";
+}
+
+/* تعديل المشترك */
 window.startEdit = (btn) => {
   const row = btn.parentElement.parentElement;
   if(row.classList.contains("editing-row")) return;
-
   row.classList.add("editing-row");
   const fields = ["name","phone","address","price"];
   const originalData = {};
@@ -153,14 +186,12 @@ window.startEdit = (btn) => {
     cell.textContent = "";
     cell.appendChild(input);
   });
-
   row.querySelector("td:last-child").innerHTML = `
     <button class="save-btn" onclick="saveEdit(this)">حفظ</button>
     <button class="cancel-btn" onclick='cancelEdit(this,${JSON.stringify(originalData)})'>إلغاء</button>
   `;
 }
 
-/* حفظ التعديل */
 window.saveEdit = (btn) => {
   const row = btn.parentElement.parentElement;
   const fid = row.dataset.id;
@@ -169,14 +200,12 @@ window.saveEdit = (btn) => {
     const input = row.querySelector(`.field.${f} input`);
     updateData[f] = (f==="price")? Number(input.value): input.value;
   });
-  update(ref(db,"subscribers/"+fid), updateData)
-    .then(()=>{
-      row.classList.remove("editing-row");
-      renderTable();
-    });
+  update(ref(db,"subscribers/"+fid), updateData).then(()=>{
+    row.classList.remove("editing-row");
+    renderTable();
+  });
 }
 
-/* إلغاء التعديل */
 window.cancelEdit = (btn,originalData) => {
   const row = btn.parentElement.parentElement;
   ["name","phone","address","price"].forEach(f=>{
@@ -184,7 +213,10 @@ window.cancelEdit = (btn,originalData) => {
     cell.textContent = originalData[f];
   });
   row.classList.remove("editing-row");
-  row.querySelector("td:last-child").innerHTML = `<button class="edit-btn" onclick="startEdit(this)">تعديل</button>`;
+  row.querySelector("td:last-child").innerHTML = `
+    <button class="edit-btn" onclick="startEdit(this)">تعديل</button>
+    <button class="delete-btn" onclick="del('${row.dataset.id}')">حذف</button>
+  `;
 }
 
 /* حذف */
@@ -194,27 +226,15 @@ window.del = id => confirm("تأكيد الحذف؟") && remove(ref(db,"subscrib
 window.sendWA = id => {
   const s = subscribers.find(x => x.fid == id);
   if(!s.phone.startsWith("+")) s.phone = "+961" + s.phone;
-
   const paid = (s.payments || []).reduce((a,p)=>a+Number(p.amount||0),0);
   const rem = s.price - paid;
-
   let msg = `السيد/ة ${s.name} المحترم/ة،\n`;
-  if(rem === 0){
-      alert(`${s.name} دفع كامل المبلغ بالفعل!`);
-      return;
-  } else if(rem < s.price){
-      msg += `نذكركم بدفع إشتراك الأنترنت.\n`;
-      msg += `قيمة الإشتراك: $${s.price}\n`;
-      msg += `المبلغ المدفوع جزئيًا: $${paid}\n`;
-      msg += `المتبقي: $${rem}\n`;
-      msg += `يرجى دفع المبلغ المتبقي في أقرب وقت ممكن.`;
-  } else{
-      msg += `نذكركم بدفع إشتراك الأنترنت.\n`;
-      msg += `قيمة الإشتراك: $${s.price}\n`;
-      msg += `لم يتم دفع أي مبلغ بعد.\n`;
-      msg += `يرجى دفع الاشتراك في أقرب وقت ممكن.`;
+  if(rem === 0){ alert(`${s.name} دفع كامل المبلغ بالفعل!`); return; }
+  else if(rem < s.price){
+    msg += `نذكركم بدفع إشتراك الأنترنت.\nقيمة الإشتراك: $${s.price}\nالمبلغ المدفوع جزئيًا: $${paid}\nالمتبقي: $${rem}\nيرجى دفع المبلغ المتبقي في أقرب وقت ممكن.`;
+  } else {
+    msg += `نذكركم بدفع إشتراك الأنترنت.\nقيمة الإشتراك: $${s.price}\nلم يتم دفع أي مبلغ بعد.\nيرجى دفع الاشتراك في أقرب وقت ممكن.`;
   }
-
   window.open(`https://wa.me/${s.phone}?text=${encodeURIComponent(msg)}`);
 }
 
@@ -222,30 +242,21 @@ window.sendWA = id => {
 document.getElementById('importFile').addEventListener('change', function(e){
   const file = e.target.files[0];
   if(!file) return;
-
   const reader = new FileReader();
   reader.onload = function(evt){
     const data = new Uint8Array(evt.target.result);
     const workbook = XLSX.read(data, {type:'array'});
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
     const json = XLSX.utils.sheet_to_json(sheet);
-
     json.forEach(row=>{
       const name = row["الاسم"];
       const phone = row["الهاتف"];
       const address = row["العنوان"] || "";
       const price = row["السعر"];
       if(name && phone && price){
-        push(ref(db,"subscribers"),{
-          name:name,
-          phone:phone.toString(),
-          address:address,
-          price:Number(price),
-          payments:[]
-        });
+        push(ref(db,"subscribers"),{ name, phone:phone.toString(), address, price:Number(price), payments:[] });
       }
     });
-
     alert("تم استيراد البيانات بنجاح!");
     e.target.value="";
   };
@@ -264,10 +275,7 @@ window.exportToExcel = function() {
       const rem = sub.price - paid;
       let status="غير مدفوع";
       if(rem===0) status="مدفوع كليًا"; else if(rem<sub.price) status="جزئي";
-      return {
-        "#":i+1,"الاسم":sub.name,"الهاتف":sub.phone,"العنوان":sub.address,
-        "السعر":sub.price,"المدفوع":paid,"المتبقي":rem,"الحالة":status
-      };
+      return {"#":i+1,"الاسم":sub.name,"الهاتف":sub.phone,"العنوان":sub.address,"السعر":sub.price,"المدفوع":paid,"المتبقي":rem,"الحالة":status};
     });
     const ws = XLSX.utils.json_to_sheet(list);
     const wb = XLSX.utils.book_new();
