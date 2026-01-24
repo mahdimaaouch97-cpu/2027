@@ -154,7 +154,7 @@ function renderTable(){
             <td class="status-cell"></td>
             <td><select class="month-select">${[...Array(12)].map((_,i)=>`<option value="${i+1}">${i+1}</option>`).join("")}</select></td>
             <td>
-                <input type="number" class="pay-input" min="1" max="${remaining}" step="1" ${remaining===0?"disabled":""}>
+                <input type="number" class="pay-input" min="0.01" max="${remaining}" step="0.01" ${remaining===0?"disabled":""}>
                 <button class="pay-btn" ${remaining===0?"disabled":""}>دفع</button>
             </td>
             <td><button class="print-btn">طباعة</button></td>
@@ -170,40 +170,44 @@ function renderTable(){
         const payInput = tr.querySelector(".pay-input");
         const monthSelect = tr.querySelector(".month-select");
 
-        // ✅ الدفع مع رقم إيصال ترتيبي
-        payBtn.addEventListener("click", ()=>{
+        // ✅ الدفع مع رقم إيصال عالمي
+        payBtn.addEventListener("click", async ()=>{
             const amount = parseFloat(payInput.value);
             if(isNaN(amount) || amount<=0 || amount>remaining){
                 return alert(`الرجاء إدخال مبلغ صالح. الحد الأقصى: $${remaining}`);
             }
-
             if(!confirm(`تأكيد دفع مبلغ $${amount} ؟`)) return;
 
             const month = monthSelect.value;
             const date = new Date().toLocaleDateString();
 
-            // 🔹 توليد رقم إيصال ترتيبي
-            let lastReceipt = sub.payments.length ? Math.max(...sub.payments.map(p=>p.receiptNumber || 6000)) : 6000;
+            // 🔹 رقم إيصال عالمي
+            const receiptRef = ref(db, "lastReceiptNumber");
+            let lastReceiptSnap = await new Promise(res => onValue(receiptRef, snap => res(snap), {onlyOnce:true}));
+            let lastReceipt = lastReceiptSnap.val() || 6000;
             const receiptNumber = lastReceipt + 1;
 
             sub.payments.push({amount, month, date, receiptNumber});
 
-            update(ref(db, "subscribers/"+sub.fid), {payments: sub.payments}).then(()=>{
-                const newPaid = sub.payments.reduce((sum,p)=>sum+Number(p.amount||0),0).toFixed(2);
-                const newRemaining = +(sub.price - newPaid).toFixed(2);
-                tr.cells[5].innerText = `$${newPaid}`;
-                tr.cells[6].innerText = `$${newRemaining}`;
-                statusCell.innerHTML = newRemaining===0 ? '<span class="status-paid">مدفوع كليًا</span>' :
-                                        newRemaining<sub.price ? '<span class="status-partial">مدفوع جزئيًا</span>' :
-                                        '<span class="status-unpaid">غير مدفوع</span>';
-                payInput.value = "";
-                payInput.max = newRemaining;
-                if(newRemaining===0){
-                    payInput.disabled = true;
-                    payBtn.disabled = true;
-                }
-                sendWhatsApp(sub, amount, month);
-            });
+            // تحديث الدفعة + آخر رقم إيصال عالمي
+            await update(ref(db, "subscribers/"+sub.fid), {payments: sub.payments});
+            await update(ref(db, "lastReceiptNumber"), receiptNumber);
+
+            // تحديث الجدول مباشرة
+            const newPaid = sub.payments.reduce((sum,p)=>sum+Number(p.amount||0),0).toFixed(2);
+            const newRemaining = +(sub.price - newPaid).toFixed(2);
+            tr.cells[5].innerText = `$${newPaid}`;
+            tr.cells[6].innerText = `$${newRemaining}`;
+            statusCell.innerHTML = newRemaining===0 ? '<span class="status-paid">مدفوع كليًا</span>' :
+                                    newRemaining<sub.price ? '<span class="status-partial">مدفوع جزئيًا</span>' :
+                                    '<span class="status-unpaid">غير مدفوع</span>';
+            payInput.value = "";
+            payInput.max = newRemaining;
+            if(newRemaining===0){
+                payInput.disabled = true;
+                payBtn.disabled = true;
+            }
+            sendWhatsApp(sub, amount, month);
         });
 
         const printBtn = tr.querySelector(".print-btn");
@@ -219,7 +223,6 @@ function renderTable(){
                 <h3 style="text-align:center; margin:0;">FAST NET</h3>
                 <p style="text-align:center; margin:2px 0; font-size:12px;">71-338640   📞  71-346411</p>
                 <hr>
-                <tr><td>رقم الإيصال:</td><td>${last.receiptNumber || '-'}</td></tr>
                 <table style="width:100%; border-collapse:collapse; direction:rtl; text-align:right; font-size:12px;">
                     <tr><td>الاسم:</td><td>${sub.name}</td></tr>
                     <tr><td>العنوان:</td><td>${sub.address}</td></tr>
@@ -228,7 +231,7 @@ function renderTable(){
                     <tr><td>المتبقي:</td><td>$${remainingPrint}</td></tr>
                     <tr><td>الشهر:</td><td>${last.month}</td></tr>
                     <tr><td>التاريخ:</td><td>${last.date}</td></tr>
-                    
+                    <tr><td>رقم الإيصال:</td><td>${last.receiptNumber || '-'}</td></tr>
                 </table>
                 <hr>
             </div>
