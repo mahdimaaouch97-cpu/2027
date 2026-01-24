@@ -21,9 +21,11 @@ th { background:#007bff; color:white; }
 .status-full { background:#388e3c; color:white; }
 .status-partial { background:#f57c00; color:white; }
 .status-unpaid { background:#c62828; color:white; }
-.editable-cell { cursor:pointer; }
-.editable-cell input { width:90%; padding:2px; }
-.editing-row { background-color: #fff3b0 !important; } /* لون أصفر أثناء التعديل */
+.editing-row { background-color: #fff3b0 !important; }
+.edit-btn, .save-btn, .cancel-btn { padding:3px 6px; border:none; border-radius:3px; cursor:pointer; }
+.edit-btn { background:#007bff; color:white; }
+.save-btn { background:#28a745; color:white; }
+.cancel-btn { background:#ffc107; color:white; }
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -56,7 +58,7 @@ th { background:#007bff; color:white; }
 <tr>
 <th>#</th><th>الاسم</th><th>الهاتف</th><th>العنوان</th>
 <th>السعر</th><th>المدفوع</th><th>المتبقي</th>
-<th>الحالة</th><th>واتساب</th><th>حذف</th>
+<th>الحالة</th><th>واتساب</th><th>الإجراءات</th>
 </tr>
 </thead>
 <tbody id="tableBody"></tbody>
@@ -86,7 +88,6 @@ const filterStatus = document.getElementById("filterStatus");
 
 let subscribers = [];
 
-/* تحميل البيانات */
 onValue(ref(db,"subscribers"), snap => {
   const data = snap.val() || {};
   subscribers = Object.entries(data).map(([id,sub],i)=>({
@@ -101,7 +102,6 @@ onValue(ref(db,"subscribers"), snap => {
   renderTable();
 });
 
-/* عرض الجدول مع التعديل المباشر */
 window.renderTable = function(){
   const s = search.value.toLowerCase();
   const f = filterStatus.value;
@@ -121,44 +121,70 @@ window.renderTable = function(){
     tableBody.innerHTML+=`
 <tr data-id="${sub.fid}">
 <td>${sub.id}</td>
-<td class="editable-cell" data-field="name">${sub.name}</td>
-<td class="editable-cell" data-field="phone">${sub.phone}</td>
-<td class="editable-cell" data-field="address">${sub.address}</td>
-<td class="editable-cell" data-field="price">${sub.price}</td>
+<td class="field name">${sub.name}</td>
+<td class="field phone">${sub.phone}</td>
+<td class="field address">${sub.address}</td>
+<td class="field price">${sub.price}</td>
 <td>$${paid}</td>
 <td>$${rem}</td>
 <td class="${cls}">${txt}</td>
 <td>${rem>0?`<button class="reminder-btn" onclick="sendWA('${sub.fid}')">واتساب</button>`:"✔"}</td>
-<td><button class="delete-btn" onclick="del('${sub.fid}')">حذف</button></td>
+<td>
+  <button class="edit-btn" onclick="startEdit(this)">تعديل</button>
+</td>
 </tr>`;
   });
+}
 
-  document.querySelectorAll(".editable-cell").forEach(cell=>{
-    cell.onclick = function(){
-      const row = cell.parentElement;
-      row.classList.add("editing-row"); // تمييز الصف أصفر
-      const currentVal = cell.textContent;
-      const input = document.createElement("input");
-      input.value = currentVal;
-      cell.textContent = "";
-      cell.appendChild(input);
-      input.focus();
+/* بدء التعديل */
+window.startEdit = (btn) => {
+  const row = btn.parentElement.parentElement;
+  if(row.classList.contains("editing-row")) return;
 
-      input.onblur = () => {
-        const newVal = input.value;
-        const field = cell.dataset.field;
-        const fid = row.dataset.id;
-
-        const updateData = {};
-        updateData[field] = (field==="price") ? Number(newVal) : newVal;
-
-        update(ref(db,"subscribers/"+fid), updateData)
-          .then(()=> row.classList.remove("editing-row")); // إزالة التمييز بعد الحفظ
-
-        cell.textContent = newVal;
-      }
-    }
+  row.classList.add("editing-row");
+  const fields = ["name","phone","address","price"];
+  const originalData = {};
+  fields.forEach(f=>{
+    const cell = row.querySelector(`.field.${f}`);
+    originalData[f] = cell.textContent;
+    const input = document.createElement("input");
+    input.value = cell.textContent;
+    if(f==="price") input.type="number";
+    cell.textContent = "";
+    cell.appendChild(input);
   });
+
+  row.querySelector("td:last-child").innerHTML = `
+    <button class="save-btn" onclick="saveEdit(this)">حفظ</button>
+    <button class="cancel-btn" onclick='cancelEdit(this,${JSON.stringify(originalData)})'>إلغاء</button>
+  `;
+}
+
+/* حفظ التعديل */
+window.saveEdit = (btn) => {
+  const row = btn.parentElement.parentElement;
+  const fid = row.dataset.id;
+  const updateData = {};
+  ["name","phone","address","price"].forEach(f=>{
+    const input = row.querySelector(`.field.${f} input`);
+    updateData[f] = (f==="price")? Number(input.value): input.value;
+  });
+  update(ref(db,"subscribers/"+fid), updateData)
+    .then(()=>{
+      row.classList.remove("editing-row");
+      renderTable();
+    });
+}
+
+/* إلغاء التعديل */
+window.cancelEdit = (btn,originalData) => {
+  const row = btn.parentElement.parentElement;
+  ["name","phone","address","price"].forEach(f=>{
+    const cell = row.querySelector(`.field.${f}`);
+    cell.textContent = originalData[f];
+  });
+  row.classList.remove("editing-row");
+  row.querySelector("td:last-child").innerHTML = `<button class="edit-btn" onclick="startEdit(this)">تعديل</button>`;
 }
 
 /* حذف */
