@@ -28,7 +28,6 @@ h1 {
   gap:12px;
   margin-bottom:25px;
 }
-
 .top-buttons button {
   padding:14px 22px;
   font-size:17px;
@@ -40,7 +39,6 @@ h1 {
   min-width:120px;
 }
 .top-buttons button:hover { opacity:0.85; }
-
 .top-buttons .home-btn { background-color:#007bff; color:white; }
 .top-buttons .payments-btn { background-color:#28a745; color:white; }
 .top-buttons .import-btn { background-color:#17a2b8; color:white; }
@@ -163,13 +161,12 @@ th { background:#007bff; color:white; }
 <h1>إدارة المشتركين</h1>
 
 <div class="top-buttons">
-  
+  <button class="home-btn" onclick="toggleAddForm()">➕ إضافة مشترك</button>
   <button class="home-btn" onclick="location.href='index.html'">الرئيسية</button>
   <button class="payments-btn" onclick="location.href='payments.html'">الدفع</button>
   <button class="import-btn" onclick="document.getElementById('importFile').click()">استيراد Excel</button>
   <button class="export-btn" onclick="exportToExcel()">تصدير Excel</button>
   <input type="file" id="importFile" hidden accept=".xlsx,.xls">
-  <button class="home-btn" onclick="toggleAddForm()">➕ إضافة مشترك</button>
 </div>
 
 <div class="add-form" id="addForm">
@@ -283,6 +280,7 @@ window.renderTable = ()=>{
   });
 }
 
+/* إضافة مشترك */
 addBtn.onclick = ()=>{
   if(!nameInput.value||!phoneInput.value||!priceInput.value){ alert("بيانات ناقصة"); return; }
   push(ref(db,"subscribers"),{
@@ -296,17 +294,120 @@ addBtn.onclick = ()=>{
   toggleAddForm();
 }
 
-/* التعديلات والحذف والواتساب وExcel تبقى كما هي */
-window.startEdit=(btn)=>{/* ... */}
-window.saveEdit=(btn)=>{/* ... */}
-window.cancelEdit=(btn,orig)=>{/* ... */}
+/* ===== التعديل ===== */
+window.startEdit = (btn)=>{
+  const row = btn.closest("tr");
+  if(row.classList.contains("editing-row")) return;
+  row.classList.add("editing-row");
+  const fields = ["name","phone","address","price"];
+  const originalData = {};
+  fields.forEach(f=>{
+    const cell = row.querySelector(`.field.${f}`);
+    originalData[f] = cell.textContent;
+    const input = document.createElement("input");
+    input.value = cell.textContent;
+    if(f==="price") input.type="number";
+    cell.textContent="";
+    cell.appendChild(input);
+  });
+  row.querySelector("td:last-child").innerHTML = `
+    <button class="save-btn" onclick="saveEdit(this)">حفظ</button>
+    <button class="cancel-btn" onclick='cancelEdit(this,${JSON.stringify(originalData)})'>إلغاء</button>
+  `;
+}
+
+window.saveEdit = (btn)=>{
+  const row = btn.closest("tr");
+  const fid = row.dataset.id;
+  const updateData = {};
+  ["name","phone","address","price"].forEach(f=>{
+    const input = row.querySelector(`.field.${f} input`);
+    updateData[f] = (f==="price")? Number(input.value): input.value;
+  });
+  update(ref(db,"subscribers/"+fid), updateData).then(()=>{
+    row.classList.remove("editing-row");
+    renderTable();
+  });
+}
+
+window.cancelEdit = (btn,originalData)=>{
+  const row = btn.closest("tr");
+  ["name","phone","address","price"].forEach(f=>{
+    const cell = row.querySelector(`.field.${f}`);
+    cell.textContent = originalData[f];
+  });
+  row.classList.remove("editing-row");
+  row.querySelector("td:last-child").innerHTML = `
+    <button class="edit-btn" onclick="startEdit(this)">تعديل</button>
+    <button class="delete-btn" onclick="del('${row.dataset.id}')">حذف</button>
+  `;
+}
+
+/* حذف */
 window.del=id=>confirm("تأكيد الحذف؟")&&remove(ref(db,"subscribers/"+id));
-window.sendWA=id=>{/* ... */}
-document.getElementById('importFile').addEventListener('change',function(e){/* ... */});
-window.exportToExcel=()=>{/* ... */}
+
+/* واتساب */
+window.sendWA=id=>{
+  const s = subscribers.find(x=>x.fid==id);
+  if(!s.phone.startsWith("+")) s.phone = "+961"+s.phone;
+  const paid = (s.payments||[]).reduce((a,p)=>a+Number(p.amount||0),0);
+  const rem = s.price-paid;
+  let msg = `السيد/ة ${s.name} المحترم/ة،\n`;
+  if(rem===0){ alert(`${s.name} دفع كامل المبلغ بالفعل!`); return; }
+  else if(rem< s.price){
+    msg += `نذكركم بدفع إشتراك الأنترنت.\nقيمة الإشتراك: $${s.price}\nالمبلغ المدفوع جزئيًا: $${paid}\nالمتبقي: $${rem}\nيرجى دفع المبلغ المتبقي في أقرب وقت ممكن.`;
+  } else {
+    msg += `نذكركم بدفع إشتراك الأنترنت.\nقيمة الإشتراك: $${s.price}\nلم يتم دفع أي مبلغ بعد.\nيرجى دفع الاشتراك في أقرب وقت ممكن.`;
+  }
+  window.open(`https://wa.me/${s.phone}?text=${encodeURIComponent(msg)}`);
+}
+
+/* استيراد Excel */
+document.getElementById('importFile').addEventListener('change',function(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(evt){
+    const data = new Uint8Array(evt.target.result);
+    const workbook = XLSX.read(data, {type:'array'});
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const json = XLSX.utils.sheet_to_json(sheet);
+    json.forEach(row=>{
+      const name = row["الاسم"];
+      const phone = row["الهاتف"];
+      const address = row["العنوان"]||"";
+      const price = row["السعر"];
+      if(name && phone && price){
+        push(ref(db,"subscribers"),{name,phone:phone.toString(),address,price:Number(price),payments:[]});
+      }
+    });
+    alert("تم استيراد البيانات بنجاح!");
+    e.target.value="";
+  };
+  reader.readAsArrayBuffer(file);
+});
+
+/* تصدير Excel */
+window.exportToExcel = ()=>{
+  const dbRef = ref(db,"subscribers");
+  onValue(dbRef,snap=>{
+    const dataFirebase = snap.val();
+    if(!dataFirebase){alert("لا يوجد مشتركين للتصدير!"); return;}
+    const list = Object.entries(dataFirebase).map(([id,sub],i)=>{
+      const payments = sub.payments||[];
+      const paid = payments.reduce((a,p)=>a+Number(p.amount||0),0);
+      const rem = sub.price-paid;
+      let status="غير مدفوع";
+      if(rem===0) status="مدفوع كليًا"; else if(rem<sub.price) status="جزئي";
+      return {"#":i+1,"الاسم":sub.name,"الهاتف":sub.phone,"العنوان":sub.address,"السعر":sub.price,"المدفوع":paid,"المتبقي":rem,"الحالة":status};
+    });
+    const ws = XLSX.utils.json_to_sheet(list);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "المشتركين");
+    XLSX.writeFile(wb, "subscribers.xlsx");
+  }, { onlyOnce:true });
+}
 </script>
 
 </body>
 </html>
-
-
