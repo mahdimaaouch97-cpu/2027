@@ -161,12 +161,13 @@ th { background:#007bff; color:white; }
 <h1>إدارة المشتركين</h1>
 
 <div class="top-buttons">
-  <button class="home-btn" onclick="toggleAddForm()">➕ إضافة مشترك</button>
+
   <button class="home-btn" onclick="location.href='index.html'">الرئيسية</button>
   <button class="payments-btn" onclick="location.href='payments.html'">الدفع</button>
   <button class="import-btn" onclick="document.getElementById('importFile').click()">استيراد Excel</button>
   <button class="export-btn" onclick="exportToExcel()">تصدير Excel</button>
   <input type="file" id="importFile" hidden accept=".xlsx,.xls">
+    <button class="home-btn" onclick="toggleAddForm()">➕ إضافة مشترك</button>
 </div>
 
 <div class="add-form" id="addForm">
@@ -411,3 +412,4 @@ window.exportToExcel = ()=>{
 
 </body>
 </html>
+
