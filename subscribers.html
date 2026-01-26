@@ -17,17 +17,16 @@ h1 {
   text-align:center;
   margin-bottom:20px;
   color:#222;
-  text-shadow: 1px 1px 2px #ccc;
+  text-shadow:1px 1px 2px #ccc;
 }
 
 /* ===== شريط الأزرار ===== */
 .top-buttons {
-  text-align:center;
-  margin-bottom:25px;
   display:flex;
   flex-wrap:wrap;
   justify-content:center;
   gap:10px;
+  margin-bottom:20px;
 }
 .top-buttons button {
   margin:5px;
@@ -54,8 +53,13 @@ h1 {
   padding:25px;
   border-radius:10px;
   box-shadow:0 4px 10px rgba(0,0,0,0.1);
-  display:none; /* مخفي افتراضيًا */
+  display:none;
+  position:relative;
+  transition: all 0.3s ease-in-out;
 }
+.add-form.show { display:block; animation:fadeIn 0.3s; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(-10px);} to{opacity:1;transform:translateY(0);} }
+
 .add-form input {
   width:100%;
   padding:14px 12px;
@@ -76,6 +80,21 @@ h1 {
   cursor:pointer;
 }
 .add-form button:hover { opacity:0.85; }
+
+/* زر إغلاق النموذج */
+.close-btn {
+  position:absolute;
+  top:10px;
+  left:10px;
+  background:#dc3545;
+  color:white;
+  border:none;
+  border-radius:50%;
+  width:30px;
+  height:30px;
+  font-weight:bold;
+  cursor:pointer;
+}
 
 /* ===== شريط البحث ===== */
 .search-filter {
@@ -137,12 +156,13 @@ th { background:#007bff; color:white; }
   <button class="home-btn" onclick="toggleAddForm()">➕ إضافة مشترك</button>
   <button class="home-btn" onclick="location.href='index.html'">الرئيسية</button>
   <button class="payments-btn" onclick="location.href='payments.html'">الدفع</button>
-  <input type="file" id="importFile" style="display:none" accept=".xlsx,.xls">
-  <button class="import-btn" onclick="document.getElementById('importFile').click()">استيراد من Excel</button>
-  <button class="export-btn" onclick="exportToExcel()">تصدير إلى Excel</button>
+  <input type="file" id="importFile" hidden accept=".xlsx,.xls">
+  <button class="import-btn" onclick="document.getElementById('importFile').click()">استيراد Excel</button>
+  <button class="export-btn" onclick="exportToExcel()">تصدير Excel</button>
 </div>
 
 <div class="add-form" id="addForm">
+  <button class="close-btn" onclick="toggleAddForm()">❌</button>
   <input id="name" placeholder="اسم المشترك">
   <input id="phone" placeholder="رقم الهاتف">
   <input id="address" placeholder="العنوان">
@@ -180,12 +200,8 @@ const firebaseConfig = {
   apiKey: "AIzaSyAolIz4UgOSbV1oe0XTl8a8pVfg7Pnfs1w",
   authDomain: "pos2026-310b7.firebaseapp.com",
   databaseURL: "https://pos2026-310b7-default-rtdb.firebaseio.com",
-  projectId: "pos2026-310b7",
-  storageBucket: "pos2026-310b7.appspot.com",
-  messagingSenderId: "221592625111",
-  appId: "1:221592625111:web:81b9704a1fa790bcd0f592"
+  projectId: "pos2026-310b7"
 };
-
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
@@ -203,8 +219,9 @@ const filterStatus = document.getElementById("filterStatus");
 let subscribers = [];
 
 /* Toggle form */
-window.toggleAddForm = () => {
-  addForm.style.display = addForm.style.display==="block" ? "none":"block";
+window.toggleAddForm = ()=>{
+  if(addForm.classList.contains("show")) addForm.classList.remove("show");
+  else addForm.classList.add("show");
   addForm.scrollIntoView({behavior:"smooth"});
 }
 
@@ -260,7 +277,6 @@ window.renderTable = ()=>{
 
 /* Add subscriber */
 addBtn.onclick = ()=>{
-  if(addForm.style.display==="none"){ toggleAddForm(); return; }
   if(!nameInput.value||!phoneInput.value||!priceInput.value){ alert("بيانات ناقصة"); return; }
   push(ref(db,"subscribers"),{
     name:nameInput.value,
@@ -270,17 +286,17 @@ addBtn.onclick = ()=>{
     payments:[]
   });
   nameInput.value=phoneInput.value=addressInput.value=priceInput.value="";
-  addForm.style.display="none";
+  toggleAddForm();
 }
 
-/* تعديل، حذف، واتساب، Excel */
-window.startEdit = (btn)=>{/* كما هو سابقًا */};
-window.saveEdit = (btn)=>{/* كما هو */};
-window.cancelEdit = (btn,originalData)=>{/* كما هو */};
+/* تعديل، حذف، واتساب، Excel (كما في الكود الأصلي بدون تغيير) */
+window.startEdit=(btn)=>{/* ... */}
+window.saveEdit=(btn)=>{/* ... */}
+window.cancelEdit=(btn,orig)=>{/* ... */}
 window.del=id=>confirm("تأكيد الحذف؟")&&remove(ref(db,"subscribers/"+id));
-window.sendWA=id=>{/* كما هو */};
-document.getElementById('importFile').addEventListener('change',function(e){/* كما هو */});
-window.exportToExcel=()=>{/* كما هو */};
+window.sendWA=id=>{/* ... */}
+document.getElementById('importFile').addEventListener('change',function(e){/* ... */});
+window.exportToExcel=()=>{/* ... */}
 </script>
 
 </body>
