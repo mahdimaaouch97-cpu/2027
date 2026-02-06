@@ -209,7 +209,7 @@ function renderTable(){
     const statusFilterValue = filterStatus.value;
     tableBody.innerHTML = "";
 
-    const currentMonth = new Date().getMonth() + 1; // الشهر الحالي 1-12
+    const currentMonth = new Date().getMonth() + 1;
 
     subscribers.forEach(sub => {
         const paid = sub.payments.reduce((sum,p)=>sum+Number(p.amount||0),0);
@@ -218,7 +218,6 @@ function renderTable(){
 
         if(!(statusFilterValue==="all" || status===statusFilterValue)) return;
 
-        // تحقق من البحث في جميع الأعمدة
         const searchMatch = [sub.name, sub.phone, sub.address, sub.price].some(field =>
             field.toString().toLowerCase().includes(searchFilter)
         );
@@ -293,30 +292,31 @@ function renderTable(){
         });
 
         const printBtn = tr.querySelector(".print-btn");
-        printBtn.addEventListener("click", ()=>{ 
+        printBtn.addEventListener("click", ()=>{
             if(sub.payments.length===0) return alert("لا توجد دفعات");
             const last = sub.payments[sub.payments.length-1];
             const totalPaid = sub.payments.reduce((sum,p)=>sum+Number(p.amount||0),0);
             const remainingPrint = +(sub.price - totalPaid).toFixed(2);
 
-            const win = window.open("", "", "width=220,height=500");
+            // هنا تم تعديل الطباعة لتكون 57mm (200px)
+            const win = window.open("", "", "width=200,height=800");
             win.document.write(`
-            <div style="font-family:Arial, sans-serif; width:200px; padding:5px; direction:rtl; text-align:right; font-size:12px;">
-                <h3 style="text-align:center; margin:0;">FAST NET</h3>
-                <p style="text-align:center; margin:2px 0; font-size:12px;">71-338640   📞  71-346411</p>
-                <tr><td>رقم الإيصال:</td><td>${last.receiptNumber || '-'}</td></tr>
-                <hr>
-                <table style="width:100%; border-collapse:collapse; direction:rtl; text-align:right; font-size:12px;">
-                    <tr><td>الاسم:</td><td>${sub.name}</td></tr>
-                    <tr><td>العنوان:</td><td>${sub.address}</td></tr>
-                    <tr><td>سعر الاشتراك:</td><td>$${sub.price}</td></tr>
-                    <tr><td>المدفوع:</td><td>$${last.amount}</td></tr>
-                    <tr><td>المتبقي:</td><td>$${remainingPrint}</td></tr>
-                    <tr><td>الشهر:</td><td>${last.month}</td></tr>
-                    <tr><td>التاريخ:</td><td>${last.date}</td></tr>
-                </table>
-                <hr>
-            </div>
+                <div style="font-family:Arial, sans-serif; width:200px; padding:5px; direction:rtl; text-align:right; font-size:12px;">
+                    <h3 style="text-align:center; margin:0;">FAST NET</h3>
+                    <p style="text-align:center; margin:2px 0; font-size:12px;">71-338640   📞  71-346411</p>
+                    <hr>
+                    <table style="width:100%; border-collapse:collapse; font-size:12px;">
+                        <tr><td>رقم الإيصال:</td><td>${last.receiptNumber || '-'}</td></tr>
+                        <tr><td>الاسم:</td><td>${sub.name}</td></tr>
+                        <tr><td>العنوان:</td><td>${sub.address}</td></tr>
+                        <tr><td>سعر الاشتراك:</td><td>$${sub.price}</td></tr>
+                        <tr><td>المدفوع:</td><td>$${last.amount}</td></tr>
+                        <tr><td>المتبقي:</td><td>$${remainingPrint}</td></tr>
+                        <tr><td>الشهر:</td><td>${last.month}</td></tr>
+                        <tr><td>التاريخ:</td><td>${last.date}</td></tr>
+                    </table>
+                    <hr>
+                </div>
             `);
             win.print();
         });
