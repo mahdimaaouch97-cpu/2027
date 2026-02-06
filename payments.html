@@ -147,13 +147,6 @@ input[type=number] {
         font-size:16px;
     }
 }
-
-/* ===== طباعة ===== */
-@media print {
-    body * { visibility:hidden; }
-    #print-area, #print-area * { visibility:visible; }
-    #print-area { position:absolute; left:0; top:0; width:100%; }
-}
 </style>
 </head>
 <body>
@@ -189,9 +182,6 @@ input[type=number] {
 <tbody id="subscribersTable"></tbody>
 </table>
 
-<!-- div للطباعة -->
-<div id="print-area" style="display:none;"></div>
-
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getDatabase, ref, onValue, update, get, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
@@ -211,7 +201,6 @@ const db = getDatabase(app);
 const tableBody = document.getElementById("subscribersTable");
 const searchInput = document.getElementById("search");
 const filterStatus = document.getElementById("filterStatus");
-const printArea = document.getElementById("print-area");
 
 let subscribers = [];
 
@@ -220,7 +209,7 @@ function renderTable(){
     const statusFilterValue = filterStatus.value;
     tableBody.innerHTML = "";
 
-    const currentMonth = new Date().getMonth() + 1;
+    const currentMonth = new Date().getMonth() + 1; // الشهر الحالي 1-12
 
     subscribers.forEach(sub => {
         const paid = sub.payments.reduce((sum,p)=>sum+Number(p.amount||0),0);
@@ -229,6 +218,7 @@ function renderTable(){
 
         if(!(statusFilterValue==="all" || status===statusFilterValue)) return;
 
+        // تحقق من البحث في جميع الأعمدة
         const searchMatch = [sub.name, sub.phone, sub.address, sub.price].some(field =>
             field.toString().toLowerCase().includes(searchFilter)
         );
@@ -265,8 +255,6 @@ function renderTable(){
         const payBtn = tr.querySelector(".pay-btn");
         const payInput = tr.querySelector(".pay-input");
         const monthSelect = tr.querySelector(".month-select");
-        const printBtn = tr.querySelector(".print-btn");
-        const waBtn = tr.querySelector(".wa-btn");
 
         payBtn.addEventListener("click", async ()=>{
             const amount = parseFloat(payInput.value);
@@ -304,33 +292,36 @@ function renderTable(){
             sendWhatsApp(sub, amount, month, receiptNumber);
         });
 
+        const printBtn = tr.querySelector(".print-btn");
         printBtn.addEventListener("click", ()=>{ 
             if(sub.payments.length===0) return alert("لا توجد دفعات");
             const last = sub.payments[sub.payments.length-1];
             const totalPaid = sub.payments.reduce((sum,p)=>sum+Number(p.amount||0),0);
             const remainingPrint = +(sub.price - totalPaid).toFixed(2);
 
-            printArea.innerHTML = `
-                <div style="width:57mm; font-family:Arial, sans-serif; font-size:12px; direction:rtl; text-align:right; margin:0; padding:5px;">
-                    <h3 style="text-align:center; margin:0;">FAST NET</h3>
-                    <p style="text-align:center; margin:2px 0;">71-338640 📞 71-346411</p>
-                    <hr>
-                    <table style="width:100%; border-collapse:collapse; font-size:12px;">
-                        <tr><td>رقم الإيصال:</td><td>${last.receiptNumber || '-'}</td></tr>
-                        <tr><td>الاسم:</td><td>${sub.name}</td></tr>
-                        <tr><td>العنوان:</td><td>${sub.address}</td></tr>
-                        <tr><td>سعر الاشتراك:</td><td>$${sub.price}</td></tr>
-                        <tr><td>المدفوع:</td><td>$${last.amount}</td></tr>
-                        <tr><td>المتبقي:</td><td>$${remainingPrint}</td></tr>
-                        <tr><td>الشهر:</td><td>${last.month}</td></tr>
-                        <tr><td>التاريخ:</td><td>${last.date}</td></tr>
-                    </table>
-                    <hr>
-                </div>
-            `;
-            window.print();
+            const win = window.open("", "", "width=220,height=500");
+            win.document.write(`
+            <div style="font-family:Arial, sans-serif; width:200px; padding:5px; direction:rtl; text-align:right; font-size:12px;">
+                <h3 style="text-align:center; margin:0;">FAST NET</h3>
+                <p style="text-align:center; margin:2px 0; font-size:12px;">71-338640   📞  71-346411</p>
+                <tr><td>رقم الإيصال:</td><td>${last.receiptNumber || '-'}</td></tr>
+                <hr>
+                <table style="width:100%; border-collapse:collapse; direction:rtl; text-align:right; font-size:12px;">
+                    <tr><td>الاسم:</td><td>${sub.name}</td></tr>
+                    <tr><td>العنوان:</td><td>${sub.address}</td></tr>
+                    <tr><td>سعر الاشتراك:</td><td>$${sub.price}</td></tr>
+                    <tr><td>المدفوع:</td><td>$${last.amount}</td></tr>
+                    <tr><td>المتبقي:</td><td>$${remainingPrint}</td></tr>
+                    <tr><td>الشهر:</td><td>${last.month}</td></tr>
+                    <tr><td>التاريخ:</td><td>${last.date}</td></tr>
+                </table>
+                <hr>
+            </div>
+            `);
+            win.print();
         });
 
+        const waBtn = tr.querySelector(".wa-btn");
         waBtn.addEventListener("click", ()=> sendWhatsApp(sub));
 
         tableBody.appendChild(tr);
