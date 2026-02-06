@@ -298,7 +298,6 @@ function renderTable(){
             const totalPaid = sub.payments.reduce((sum,p)=>sum+Number(p.amount||0),0);
             const remainingPrint = +(sub.price - totalPaid).toFixed(2);
 
-            // هنا تم تعديل الطباعة لتكون 57mm (200px)
             const win = window.open("", "", "width=200,height=800");
             win.document.write(`
                 <div style="font-family:Arial, sans-serif; width:200px; padding:5px; direction:rtl; text-align:right; font-size:12px;">
