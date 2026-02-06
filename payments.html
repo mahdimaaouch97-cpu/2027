@@ -148,19 +148,11 @@ input[type=number] {
     }
 }
 
-/* ===== حجم الطباعة 57mm ===== */
+/* ===== إعدادات الطباعة ===== */
 @media print {
-    body, div.print-area {
-        width: 57mm;
-        font-size:12px;
-    }
-    table, th, td {
-        border: none;
-        font-size:12px;
-    }
-    button, input, select {
-        display: none;
-    }
+    body * { visibility:hidden; }
+    #print-area, #print-area * { visibility:visible; }
+    #print-area { position:absolute; left:0; top:0; width:57mm; font-size:12px; margin:0; padding:0; }
 }
 </style>
 </head>
@@ -197,6 +189,8 @@ input[type=number] {
 <tbody id="subscribersTable"></tbody>
 </table>
 
+<div id="print-area" style="display:none;"></div>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getDatabase, ref, onValue, update, get, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
@@ -216,6 +210,7 @@ const db = getDatabase(app);
 const tableBody = document.getElementById("subscribersTable");
 const searchInput = document.getElementById("search");
 const filterStatus = document.getElementById("filterStatus");
+const printArea = document.getElementById("print-area");
 
 let subscribers = [];
 
@@ -223,14 +218,12 @@ function renderTable(){
     const searchFilter = searchInput.value.toLowerCase();
     const statusFilterValue = filterStatus.value;
     tableBody.innerHTML = "";
-
     const currentMonth = new Date().getMonth() + 1;
 
     subscribers.forEach(sub => {
         const paid = sub.payments.reduce((sum,p)=>sum+Number(p.amount||0),0);
         const remaining = +(sub.price - paid).toFixed(2);
         const status = remaining===0 ? "full" : (remaining<sub.price ? "partial" : "unpaid");
-
         if(!(statusFilterValue==="all" || status===statusFilterValue)) return;
 
         const searchMatch = [sub.name, sub.phone, sub.address, sub.price].some(field =>
@@ -279,7 +272,6 @@ function renderTable(){
 
             const month = monthSelect.value;
             const date = new Date().toLocaleDateString();
-
             const receiptRef = ref(db, "lastReceiptNumber");
             let lastReceiptSnap = await get(receiptRef);
             let lastReceipt = lastReceiptSnap.exists() ? lastReceiptSnap.val() : 6000;
@@ -313,9 +305,8 @@ function renderTable(){
             const totalPaid = sub.payments.reduce((sum,p)=>sum+Number(p.amount||0),0);
             const remainingPrint = +(sub.price - totalPaid).toFixed(2);
 
-            const win = window.open("", "", "width=200,height=800");
-            win.document.write(`
-                <div class="print-area" style="direction:rtl; text-align:right; padding:5px;">
+            printArea.innerHTML = `
+                <div style="width:57mm; font-family:Arial, sans-serif; font-size:12px; direction:rtl; text-align:right; margin:0; padding:5px;">
                     <h3 style="text-align:center; margin:0;">FAST NET</h3>
                     <p style="text-align:center; margin:2px 0;">71-338640 📞 71-346411</p>
                     <hr>
@@ -331,8 +322,8 @@ function renderTable(){
                     </table>
                     <hr>
                 </div>
-            `);
-            win.print();
+            `;
+            window.print();
         });
 
         const waBtn = tr.querySelector(".wa-btn");
@@ -371,7 +362,7 @@ function sendWhatsApp(sub, amount=null, month=null, receiptNumber=null){
 
 onValue(ref(db,"subscribers"), snap=>{
     const data = snap.val() || {};
-    subscribers = Object.entries(data).map(([fid, sub], i)=>( {
+    subscribers = Object.entries(data).map(([fid, sub], i)=>(({
         fid,
         id: i+1,
         name: sub.name || "بدون اسم",
@@ -379,7 +370,7 @@ onValue(ref(db,"subscribers"), snap=>{
         address: sub.address || "غير محدد",
         price: Number(sub.price || 0),
         payments: Array.isArray(sub.payments) ? sub.payments : []
-    }));
+    })));
     renderTable();
 });
 
