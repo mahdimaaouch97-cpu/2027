@@ -150,9 +150,9 @@ input[type=number] {
 
 /* ===== إعدادات الطباعة ===== */
 @media print {
-    body * { display:none; }
-    #print-area { display:block; position:static; width:auto; font-size:12px; margin:0; padding:0; }
-    #print-area * { display:block; }
+    body * { visibility:hidden; }
+    #print-area, #print-area * { visibility:visible; }
+    #print-area { position:absolute; left:0; top:0; width:57mm; font-size:12px; margin:0; padding:0; }
 }
 </style>
 </head>
@@ -189,6 +189,7 @@ input[type=number] {
 <tbody id="subscribersTable"></tbody>
 </table>
 
+<!-- div مخفي للطباعة -->
 <div id="print-area" style="display:none;"></div>
 
 <script type="module">
@@ -306,7 +307,7 @@ function renderTable(){
             const remainingPrint = +(sub.price - totalPaid).toFixed(2);
 
             printArea.innerHTML = `
-                <div style="font-family:Arial, sans-serif; font-size:12px; direction:rtl; text-align:right; margin:0; padding:5px;">
+                <div style="width:57mm; font-family:Arial, sans-serif; font-size:12px; direction:rtl; text-align:right; margin:0; padding:5px;">
                     <h3 style="text-align:center; margin:0;">FAST NET</h3>
                     <p style="text-align:center; margin:2px 0;">71-338640 📞 71-346411</p>
                     <hr>
@@ -323,7 +324,7 @@ function renderTable(){
                     <hr>
                 </div>
             `;
-            setTimeout(()=>window.print(), 100);
+            window.print();
         });
 
         const waBtn = tr.querySelector(".wa-btn");
@@ -362,7 +363,7 @@ function sendWhatsApp(sub, amount=null, month=null, receiptNumber=null){
 
 onValue(ref(db,"subscribers"), snap=>{
     const data = snap.val() || {};
-    subscribers = Object.entries(data).map(([fid, sub], i)=>(({
+    subscribers = Object.entries(data).map(([fid, sub], i)=>({
         fid,
         id: i+1,
         name: sub.name || "بدون اسم",
@@ -370,7 +371,7 @@ onValue(ref(db,"subscribers"), snap=>{
         address: sub.address || "غير محدد",
         price: Number(sub.price || 0),
         payments: Array.isArray(sub.payments) ? sub.payments : []
-    })));
+    }));
     renderTable();
 });
 
