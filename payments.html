@@ -295,61 +295,78 @@ function renderTable(){
             payInput.value = "";
         });
 
-        /* ===========================
-           🔥 FIXED RAWBT PRINT ONLY
-        ============================ */
+      /* ===========================
+   🖨️ RAWBT PRINT (CLEAN & FIXED)
+=========================== */
+
 const printBtn = tr.querySelector(".print-btn");
 
-printBtn.addEventListener("click", async ()=>{
+printBtn.addEventListener("click", () => {
 
-    if(!sub.payments || sub.payments.length === 0){
-        return alert("لا توجد دفعات");
+    if (!sub.payments || sub.payments.length === 0) {
+        return alert("لا توجد دفعات للطباعة");
     }
 
-    try {
+    const last = sub.payments[sub.payments.length - 1];
+    const totalPaid = sub.payments.reduce((s, p) => s + Number(p.amount || 0), 0);
+    const remaining = +(sub.price - totalPaid).toFixed(2);
 
-        const device = await navigator.bluetooth.requestDevice({
-            acceptAllDevices: true,
-            optionalServices: [0x18F0]
-        });
-
-        const server = await device.gatt.connect();
-        const service = await server.getPrimaryService(0x18F0);
-        const characteristic = await service.getCharacteristic(0x2AF1);
-
-        const last = sub.payments[sub.payments.length - 1];
-        const totalPaid = sub.payments.reduce((sum,p)=>sum+Number(p.amount||0),0);
-        const remaining = +(sub.price - totalPaid).toFixed(2);
-
-        const encoder = new TextEncoder();
-
-        const text =
+    const text =
 `FAST NET
---------------------
-رقم الإيصال: ${last.receiptNumber || '-'}
+----------------------
+رقم الإيصال: ${last.receiptNumber || "-"}
 الاسم: ${sub.name}
 الهاتف: ${sub.phone}
 العنوان: ${sub.address}
---------------------
+----------------------
 سعر الاشتراك: $${sub.price}
-المدفوع: $${last.amount}
+المدفوع: $${totalPaid.toFixed(2)}
 المتبقي: $${remaining}
-الشهر: ${last.month}
-التاريخ: ${last.date}
---------------------\n\n\n`;
+الشهر: ${last.month || "-"}
+التاريخ: ${last.date || "-"}
+----------------------`;
 
-        const data = encoder.encode(text);
+    try {
 
-        await characteristic.writeValue(data);
+        if (/Android/i.test(navigator.userAgent)) {
 
-        alert("تمت الطباعة بنجاح ✔");
+            const cleanText = text.replace(/\r/g, "").trim();
+            const encoded = encodeURIComponent(cleanText);
+
+            const rawbtUrl =
+                "intent://" + encoded +
+                "#Intent;" +
+                "scheme=rawbt;" +
+                "package=ru.a402d.rawbtprinter;" +
+                "action=android.intent.action.SEND;" +
+                "end;";
+
+            window.location.href = rawbtUrl;
+
+        } else {
+
+            const win = window.open("", "_blank", "width=350,height=600");
+
+            win.document.write(`
+                <html>
+                <head><title>Receipt</title></head>
+                <body style="font-family: monospace; white-space: pre; direction: rtl;">
+                    ${text}
+                </body>
+                </html>
+            `);
+
+            win.document.close();
+            win.focus();
+            win.print();
+            win.close();
+        }
 
     } catch (err) {
         console.error(err);
-        alert("فشل الاتصال بالطابعة ❌ تأكد من Bluetooth والطابعة");
+        alert("فشل الطباعة");
     }
 });
-
         tableBody.appendChild(tr);
     });
 
