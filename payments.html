@@ -303,19 +303,22 @@ const printBtn = tr.querySelector(".print-btn");
 
 printBtn.addEventListener("click", () => {
 
-    if (!sub.payments || sub.payments.length === 0) {
-        return alert("لا توجد دفعات للطباعة");
-    }
+    try {
 
-    const last = sub.payments[sub.payments.length - 1];
-    const price = Number(sub.price);
-    const paid = sub.payments.reduce((sum,p)=>sum+Number(p.amount||0),0);
-    const remaining = +(price - paid).toFixed(2);
+        const payments = Array.isArray(sub.payments) ? sub.payments : [];
 
-    const text =
+        if (payments.length === 0) {
+            alert("لا توجد دفعات للطباعة");
+            return;
+        }
+
+        const totalPaid = payments.reduce((s, p) => s + Number(p.amount || 0), 0);
+        const remaining = +(sub.price - totalPaid).toFixed(2);
+        const last = payments[payments.length - 1];
+
+        const text =
 `FAST NET
 ----------------------
-رقم الإيصال: ${last.receiptNumber || "-"}
 الاسم: ${sub.name}
 الهاتف: ${sub.phone}
 العنوان: ${sub.address}
@@ -323,16 +326,14 @@ printBtn.addEventListener("click", () => {
 سعر الاشتراك: $${sub.price}
 المدفوع: $${totalPaid.toFixed(2)}
 المتبقي: $${remaining}
-الشهر: ${last.month || "-"}
-التاريخ: ${last.date || "-"}
+الشهر: ${last?.month || "-"}
+التاريخ: ${last?.date || "-"}
 ----------------------`;
 
-    try {
-
+        // Android (RawBT)
         if (/Android/i.test(navigator.userAgent)) {
 
-            const cleanText = text.replace(/\r/g, "").trim();
-            const encoded = encodeURIComponent(cleanText);
+            const encoded = encodeURIComponent(text.trim());
 
             const rawbtUrl =
                 "intent://" + encoded +
@@ -346,27 +347,19 @@ printBtn.addEventListener("click", () => {
 
         } else {
 
+            // PC fallback
             const win = window.open("", "_blank", "width=350,height=600");
-
-            win.document.write(`
-                <html>
-                <head><title>Receipt</title></head>
-                <body style="font-family: monospace; white-space: pre; direction: rtl;">
-                    ${text}
-                </body>
-                </html>
-            `);
-
+            win.document.write(`<pre>${text}</pre>`);
             win.document.close();
             win.focus();
             win.print();
-            win.close();
         }
 
     } catch (err) {
-        console.error(err);
-        alert("فشل الطباعة");
+        console.error("PRINT ERROR:", err);
+        alert("فشل الطباعة - راجع الكونسول");
     }
+
 });
         tableBody.appendChild(tr);
     });
