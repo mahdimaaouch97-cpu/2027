@@ -298,16 +298,19 @@ function renderTable(){
         /* ===========================
            🔥 FIXED RAWBT PRINT ONLY
         ============================ */
-        const printBtn = tr.querySelector(".print-btn");
-        printBtn.addEventListener("click", ()=>{ 
+const printBtn = tr.querySelector(".print-btn");
 
-            if(sub.payments.length===0) return alert("لا توجد دفعات");
+printBtn.addEventListener("click", ()=>{
 
-            const last = sub.payments[sub.payments.length-1];
-            const totalPaid = sub.payments.reduce((sum,p)=>sum+Number(p.amount||0),0);
-            const remainingPrint = +(sub.price - totalPaid).toFixed(2);
+    if(!sub.payments || sub.payments.length === 0){
+        return alert("لا توجد دفعات");
+    }
 
-            const text =
+    const last = sub.payments[sub.payments.length - 1];
+    const totalPaid = sub.payments.reduce((sum,p)=>sum+Number(p.amount||0),0);
+    const remainingPrint = +(sub.price - totalPaid).toFixed(2);
+
+    const text =
 `FAST NET
 --------------------
 رقم الإيصال: ${last.receiptNumber || '-'}
@@ -322,16 +325,12 @@ function renderTable(){
 التاريخ: ${last.date}
 --------------------`;
 
-            /* ✔ RAWBT INTENT FIX */
-            const url =
-                "intent:" + encodeURIComponent(text) +
-                "#Intent;" +
-                "scheme=rawbt;" +
-                "package=ru.a402d.rawbtprinter;" +
-                "end;";
+    // ✔ الطريقة الصحيحة لـ RawBT
+    const rawbtUrl =
+        "rawbt:text/" + encodeURIComponent(text);
 
-            window.location.href = url;
-        });
+    window.location.href = rawbtUrl;
+});
 
         tableBody.appendChild(tr);
     });
