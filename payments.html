@@ -254,7 +254,7 @@ function renderTable(){
         const statusCell = tr.querySelector(".status-cell");
         statusCell.innerHTML = remaining===0 
             ? '<span class="status-paid">مدفوع كليًا</span>'
-            : remaining<sub.price 
+            : remaining < Number(sub.price)
                 ? '<span class="status-partial">مدفوع جزئيًا</span>'
                 : '<span class="status-unpaid">غير مدفوع</span>';
 
@@ -308,8 +308,9 @@ printBtn.addEventListener("click", () => {
     }
 
     const last = sub.payments[sub.payments.length - 1];
-    const totalPaid = sub.payments.reduce((s, p) => s + Number(p.amount || 0), 0);
-    const remaining = +(sub.price - totalPaid).toFixed(2);
+    const price = Number(sub.price);
+    const paid = sub.payments.reduce((sum,p)=>sum+Number(p.amount||0),0);
+    const remaining = +(price - paid).toFixed(2);
 
     const text =
 `FAST NET
