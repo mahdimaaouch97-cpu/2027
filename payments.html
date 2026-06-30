@@ -299,28 +299,35 @@ function renderTable(){
             const totalPaid = sub.payments.reduce((sum,p)=>sum+Number(p.amount||0),0);
             const remainingPrint = +(sub.price - totalPaid).toFixed(2);
 
-            const win = window.open("", "", "width=220,height=500");
-            win.document.write(`
-            <div style="font-family:Arial, sans-serif; width:200px; padding:5px; direction:rtl; text-align:right; font-size:16px; font-weight:bold;">
-              <h3 style="text-align:center; margin:0; font-size:12px;">FAST NET</h3>
-               <p style="text-align:center; margin:2px 0; font-size:12px; font-weight:bold;">
-📞 71-338640 &nbsp;&nbsp; 📞 71-346411
-</p>
-                <tr><td>رقم الإيصال:</td><td>${last.receiptNumber || '-'}</td></tr>
-                <hr>
-                <table style="width:100%; border-collapse:collapse; direction:rtl; text-align:right; font-size:15px; font-weight:bold;">
-                    <tr><td>الاسم:</td><td>${sub.name}</td></tr>
-                    <tr><td>العنوان:</td><td>${sub.address}</td></tr>
-                    <tr><td>سعر الاشتراك:</td><td>$${sub.price}</td></tr>
-                    <tr><td>المدفوع:</td><td>$${last.amount}</td></tr>
-                    <tr><td>المتبقي:</td><td>$${remainingPrint}</td></tr>
-                    <tr><td>الشهر:</td><td>${last.month}</td></tr>
-                    <tr><td>التاريخ:</td><td>${last.date}</td></tr>
-                </table>
-                <hr>
-            </div>
-            `);
-            win.print();
+
+    if(sub.payments.length===0) return alert("لا توجد دفعات");
+
+    const last = sub.payments[sub.payments.length-1];
+    const totalPaid = sub.payments.reduce((s,p)=>s+Number(p.amount||0),0);
+    const remainingPrint = +(sub.price - totalPaid).toFixed(2);
+
+    const escpos =
+`ESC @
+ESC a 1
+FAST NET
+ESC a 0
+------------------------
+Receipt: ${last.receiptNumber || '-'}
+Name: ${sub.name}
+Phone: ${sub.phone}
+------------------------
+Price: ${sub.price}$
+Paid: ${last.amount}$
+Remaining: ${remainingPrint}$
+Month: ${last.month}
+Date: ${last.date}
+------------------------
+Thank you
+GS V 1`;
+
+    window.location.href = "rawbt:" + encodeURIComponent(escpos);
+
+});
         });
 
         const waBtn = tr.querySelector(".wa-btn");
