@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>الدفع - FAST NET</title>
+
 <style>
 /* ===== قاعدة الصفحة ===== */
 body { 
@@ -149,6 +150,7 @@ input[type=number] {
 }
 </style>
 </head>
+
 <body>
 
 <h1>الدفع - FAST NET</h1>
@@ -209,7 +211,7 @@ function renderTable(){
     const statusFilterValue = filterStatus.value;
     tableBody.innerHTML = "";
 
-    const currentMonth = new Date().getMonth() + 1; // الشهر الحالي 1-12
+    const currentMonth = new Date().getMonth() + 1;
 
     subscribers.forEach(sub => {
         const paid = sub.payments.reduce((sum,p)=>sum+Number(p.amount||0),0);
@@ -218,13 +220,13 @@ function renderTable(){
 
         if(!(statusFilterValue==="all" || status===statusFilterValue)) return;
 
-        // تحقق من البحث في جميع الأعمدة
         const searchMatch = [sub.name, sub.phone, sub.address, sub.price].some(field =>
             field.toString().toLowerCase().includes(searchFilter)
         );
         if(!searchMatch) return;
 
         const tr = document.createElement("tr");
+
         tr.innerHTML = `
             <td data-label="#">${sub.id}</td>
             <td data-label="الاسم">${sub.name}</td>
@@ -240,7 +242,7 @@ function renderTable(){
                 </select>
             </td>
             <td data-label="دفع">
-                <input type="number" class="pay-input" min="0.01" max="${remaining}" step="0.01" ${remaining===0?"disabled":""}>
+                <input type="number" class="pay-input" min="1" max="${remaining}" step="1" ${remaining===0?"disabled":""}>
                 <button class="pay-btn" ${remaining===0?"disabled":""}>دفع</button>
             </td>
             <td data-label="طباعة"><button class="print-btn">طباعة</button></td>
@@ -248,79 +250,77 @@ function renderTable(){
         `;
 
         const statusCell = tr.querySelector(".status-cell");
-        statusCell.innerHTML = remaining===0 ? '<span class="status-paid">مدفوع كليًا</span>' :
-                                remaining<sub.price ? '<span class="status-partial">مدفوع جزئيًا</span>' :
-                                '<span class="status-unpaid">غير مدفوع</span>';
+        statusCell.innerHTML = remaining===0 
+            ? '<span class="status-paid">مدفوع كليًا</span>'
+            : remaining<sub.price
+                ? '<span class="status-partial">مدفوع جزئيًا</span>'
+                : '<span class="status-unpaid">غير مدفوع</span>';
 
         const payBtn = tr.querySelector(".pay-btn");
         const payInput = tr.querySelector(".pay-input");
         const monthSelect = tr.querySelector(".month-select");
 
         payBtn.addEventListener("click", async ()=>{
+
             const amount = parseFloat(payInput.value);
             if(isNaN(amount) || amount<=0 || amount>remaining){
-                return alert(`الرجاء إدخال مبلغ صالح. الحد الأقصى: $${remaining}`);
+                return alert(`مبلغ غير صالح`);
             }
-            if(!confirm(`تأكيد دفع مبلغ $${amount} ؟`)) return;
 
             const month = monthSelect.value;
             const date = new Date().toLocaleDateString();
 
             const receiptRef = ref(db, "lastReceiptNumber");
-            let lastReceiptSnap = await get(receiptRef);
-            let lastReceipt = lastReceiptSnap.exists() ? lastReceiptSnap.val() : 6000;
-            const receiptNumber = lastReceipt + 1;
+            let lastSnap = await get(receiptRef);
+            let last = lastSnap.exists() ? lastSnap.val() : 6000;
+            const receiptNumber = last + 1;
 
             sub.payments.push({amount, month, date, receiptNumber});
 
-            await update(ref(db, "subscribers/"+sub.fid), {payments: sub.payments});
+            await update(ref(db,"subscribers/"+sub.fid), {
+                payments: sub.payments
+            });
+
             await set(receiptRef, receiptNumber);
 
-            const newPaid = sub.payments.reduce((sum,p)=>sum+Number(p.amount||0),0).toFixed(2);
+            const newPaid = sub.payments.reduce((s,p)=>s+Number(p.amount||0),0);
             const newRemaining = +(sub.price - newPaid).toFixed(2);
+
             tr.cells[5].innerText = `$${newPaid}`;
             tr.cells[6].innerText = `$${newRemaining}`;
-            statusCell.innerHTML = newRemaining===0 ? '<span class="status-paid">مدفوع كليًا</span>' :
-                                    newRemaining<sub.price ? '<span class="status-partial">مدفوع جزئيًا</span>' :
-                                    '<span class="status-unpaid">غير مدفوع</span>';
+
             payInput.value = "";
-            payInput.max = newRemaining;
-            if(newRemaining===0){
-                payInput.disabled = true;
-                payBtn.disabled = true;
-            }
-          // sendWhatsApp(sub, amount, month, receiptNumber);
         });
 
+        /* ======= ✅ RAWBT PRINT (ESC/POS) ======= */
         const printBtn = tr.querySelector(".print-btn");
-        printBtn.addEventListener("click", ()=>{ 
-            if(sub.payments.length===0) return alert("لا توجد دفعات");
+        printBtn.addEventListener("click", ()=>{
+
+            if(sub.payments.length===0){
+                return alert("لا توجد دفعات");
+            }
+
             const last = sub.payments[sub.payments.length-1];
-            const totalPaid = sub.payments.reduce((sum,p)=>sum+Number(p.amount||0),0);
+            const totalPaid = sub.payments.reduce((s,p)=>s+Number(p.amount||0),0);
             const remainingPrint = +(sub.price - totalPaid).toFixed(2);
 
-            const win = window.open("", "", "width=220,height=500");
-            win.document.write(`
-            <div style="font-family:Arial, sans-serif; width:200px; padding:5px; direction:rtl; text-align:right; font-size:16px; font-weight:bold;">
-              <h3 style="text-align:center; margin:0; font-size:12px;">FAST NET</h3>
-               <p style="text-align:center; margin:2px 0; font-size:12px; font-weight:bold;">
-📞 71-338640 &nbsp;&nbsp; 📞 71-346411
-</p>
-                <tr><td>رقم الإيصال:</td><td>${last.receiptNumber || '-'}</td></tr>
-                <hr>
-                <table style="width:100%; border-collapse:collapse; direction:rtl; text-align:right; font-size:15px; font-weight:bold;">
-                    <tr><td>الاسم:</td><td>${sub.name}</td></tr>
-                    <tr><td>العنوان:</td><td>${sub.address}</td></tr>
-                    <tr><td>سعر الاشتراك:</td><td>$${sub.price}</td></tr>
-                    <tr><td>المدفوع:</td><td>$${last.amount}</td></tr>
-                    <tr><td>المتبقي:</td><td>$${remainingPrint}</td></tr>
-                    <tr><td>الشهر:</td><td>${last.month}</td></tr>
-                    <tr><td>التاريخ:</td><td>${last.date}</td></tr>
-                </table>
-                <hr>
-            </div>
-            `);
-            win.print();
+            const text =
+`*** FAST NET ***
+--------------------
+Receipt: ${last.receiptNumber || '-'}
+Name: ${sub.name}
+Address: ${sub.address}
+--------------------
+Price: $${sub.price}
+Paid: $${last.amount}
+Remaining: $${remainingPrint}
+Month: ${last.month}
+Date: ${last.date}
+--------------------
+THANK YOU`;
+
+            // إرسال إلى RawBT مباشرة
+            window.location.href = "rawbt:" + encodeURIComponent(text);
         });
 
         const waBtn = tr.querySelector(".wa-btn");
@@ -329,30 +329,26 @@ function renderTable(){
         tableBody.appendChild(tr);
     });
 
-    if(tableBody.innerHTML==="") tableBody.innerHTML=`<tr><td colspan="12">لا يوجد مشتركين مطابقين.</td></tr>`;
+    if(tableBody.innerHTML===""){
+        tableBody.innerHTML = `<tr><td colspan="12">لا يوجد مشتركين</td></tr>`;
+    }
 }
 
-function sendWhatsApp(sub, amount=null, month=null, receiptNumber=null){
-    if(sub.payments.length===0) return alert("لا توجد دفعات");
+function sendWhatsApp(sub){
+    if(sub.payments.length===0) return;
+
     const last = sub.payments[sub.payments.length-1];
-    amount = amount ?? last.amount;
-    month = month ?? last.month;
-    receiptNumber = receiptNumber ?? last.receiptNumber;
-
-    const totalPaid = sub.payments.reduce((sum,p)=>sum+Number(p.amount||0),0);
+    const totalPaid = sub.payments.reduce((s,p)=>s+Number(p.amount||0),0);
     const remaining = +(sub.price - totalPaid).toFixed(2);
-    const date = last.date;
-    let phone = sub.phone.startsWith("+") ? sub.phone : "+961"+sub.phone;
 
-    const msg = `📩 إشعار دفع FAST NET
-🧾 رقم الإيصال: ${receiptNumber}
-👤 الاسم: ${sub.name}
-📍 العنوان: ${sub.address}
-💰 سعر الإشتراك :$${sub.price}
-💰 المدفوع : $${amount}
-💵 المتبقي: $${remaining}
-🗓️ الشهر: ${month}
-📅 التاريخ: ${date}`;
+    const phone = sub.phone.startsWith("+") ? sub.phone : "+961"+sub.phone;
+
+    const msg =
+`FAST NET
+Receipt: ${last.receiptNumber}
+Name: ${sub.name}
+Paid: ${last.amount}
+Remaining: ${remaining}`;
 
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, "_blank");
 }
@@ -362,17 +358,19 @@ onValue(ref(db,"subscribers"), snap=>{
     subscribers = Object.entries(data).map(([fid, sub], i)=>({
         fid,
         id: i+1,
-        name: sub.name || "بدون اسم",
-        phone: sub.phone || "غير محدد",
-        address: sub.address || "غير محدد",
+        name: sub.name || "",
+        phone: sub.phone || "",
+        address: sub.address || "",
         price: Number(sub.price || 0),
         payments: Array.isArray(sub.payments) ? sub.payments : []
     }));
+
     renderTable();
 });
 
 searchInput.addEventListener("input", renderTable);
 filterStatus.addEventListener("change", renderTable);
 </script>
+
 </body>
 </html>
