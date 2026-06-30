@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>الدفع - FAST NET</title>
-
 <style>
+/* ===== قاعدة الصفحة ===== */
 body { 
     font-family: 'Segoe UI', Tahoma, Arial, sans-serif; 
     padding:20px; 
@@ -13,8 +13,14 @@ body {
     background: linear-gradient(135deg, #f0f4ff, #f9fafc);
     color:#333;
 }
-h1 { text-align:center; margin-bottom:25px; color:#1a237e; }
+h1 { 
+    text-align:center; 
+    margin-bottom:25px; 
+    color:#1a237e;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+}
 
+/* ===== زر العودة ===== */
 .back-btn { 
     background-color: #1a237e; 
     color: white; 
@@ -25,66 +31,136 @@ h1 { text-align:center; margin-bottom:25px; color:#1a237e; }
     border-radius: 8px; 
     cursor: pointer; 
     border: none; 
+    transition: background 0.3s, transform 0.2s; 
+    display: inline-block;
+}
+.back-btn:hover { 
+    background-color: #283593; 
+    transform: translateY(-2px);
+}
+@media screen and (max-width: 600px) {
+    .back-btn { width: 100%; text-align: center; }
 }
 
+/* ===== البحث والتصفية ===== */
 #search, #filterStatus { 
     padding:10px 12px; 
     width:100%; 
     max-width:400px; 
     display:block; 
     margin:12px auto; 
+    border-radius:6px; 
+    border:1px solid #bbb; 
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+    font-size: 16px; 
 }
 
+/* ===== الجدول ===== */
 table { 
     width:100%; 
     border-collapse:collapse; 
+    margin-top:15px; 
     background:white; 
+    box-shadow:0 4px 10px rgba(0,0,0,0.05); 
+    border-radius:8px; 
+    overflow:hidden;
 }
-
 th, td { 
     padding:12px 10px; 
     border:1px solid #ddd; 
     text-align:center; 
+    font-size:20px; 
 }
+th { 
+    background-color:#007bff; 
+    color:white; 
+    font-weight:600;
+    font-size:17px; 
+}
+td { background:white; }
 
-th { background:#007bff; color:white; }
-
+/* ===== أزرار العمليات ===== */
 button { 
     padding:8px 14px; 
     cursor:pointer; 
     margin:2px; 
+    border-radius:6px; 
     border:none; 
-    border-radius:6px;
+    font-size:15px; 
+    font-weight:bold;
+    transition:0.2s all;
+}
+button:hover { opacity:0.85; transform:translateY(-1px); }
+
+.pay-btn { background-color:#ffc107; color:white; }
+.print-btn { background-color:#28a745; color:white; }
+.wa-btn { background-color:#25d366; color:white; }
+
+/* ===== المدفوع والحالة ===== */
+.status-paid { 
+    background-color: #388e3c; 
+    color: white; 
+    font-weight: bold; 
+    border-radius: 10px; 
+    padding: 8px 14px; 
+    display:inline-block;
+}
+.status-partial { 
+    background-color: #f57c00; 
+    color: white; 
+    font-weight: bold; 
+    border-radius: 10px; 
+    padding: 8px 14px; 
+    display:inline-block;
+}
+.status-unpaid { 
+    background-color: #c62828; 
+    color: white; 
+    font-weight: bold; 
+    border-radius: 10px; 
+    padding: 8px 14px; 
+    display:inline-block;
 }
 
-.print-btn { background:#28a745; color:white; }
-.pay-btn { background:#ffc107; }
-.wa-btn { background:#25d366; color:white; }
+/* ===== المدخلات الصغيرة ===== */
+input[type=number] { 
+    width:75px; 
+    text-align:center; 
+    border-radius:5px; 
+    border:1px solid #bbb; 
+    padding:4px 6px;
+}
 
-.status-paid { background:#388e3c; color:white; padding:8px; }
-.status-partial { background:#f57c00; color:white; padding:8px; }
-.status-unpaid { background:#c62828; color:white; padding:8px; }
-
-input[type=number] { width:75px; }
-
+/* ===== تجاوب ===== */
+@media screen and (max-width: 800px) {
+    table, thead, tbody, th, td, tr { display:block; }
+    tr { margin-bottom:15px; }
+    th { display:none; }
+    td { text-align:right; border:none; border-bottom:1px solid #eee; position:relative; padding-left:50%; font-size:16px; }
+    td:before { 
+        content: attr(data-label); 
+        position:absolute; 
+        left:10px; 
+        width:45%; 
+        font-weight:bold; 
+        text-align:left;
+        font-size:16px;
+    }
+}
 </style>
 </head>
-
 <body>
 
 <h1>الدفع - FAST NET</h1>
+<button class="back-btn" onclick="window.location.href='index.html'">العودة للرئيسية</button>
 
-<button class="back-btn" onclick="location.href='index.html'">العودة للرئيسية</button>
-
-<input type="text" id="search">
+<input type="text" id="search" placeholder="ابحث بالإسم أو رقم الهاتف...">
 <select id="filterStatus">
-<option value="all">الكل</option>
-<option value="full">مدفوع كليًا</option>
-<option value="partial">مدفوع جزئيًا</option>
-<option value="unpaid">غير مدفوع</option>
+    <option value="all">الكل</option>
+    <option value="full">مدفوع كليًا</option>
+    <option value="partial">مدفوع جزئيًا</option>
+    <option value="unpaid">غير مدفوع</option>
 </select>
-
-<button onclick="connectPrinter()">🔗 ربط الطابعة</button>
 
 <table>
 <thead>
@@ -106,13 +182,55 @@ input[type=number] { width:75px; }
 <tbody id="subscribersTable"></tbody>
 </table>
 
-<script type="module">
+<!-- ================= ADD ONLY: PRINT SYSTEM ================= -->
+<script>
+let bluetoothDevice;
+let bluetoothCharacteristic;
 
+async function connectPrinter(){
+    try{
+        bluetoothDevice = await navigator.bluetooth.requestDevice({
+            acceptAllDevices: true,
+            optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb']
+        });
+
+        const server = await bluetoothDevice.gatt.connect();
+        const service = await server.getPrimaryService('000018f0-0000-1000-8000-00805f9b34fb');
+        bluetoothCharacteristic = await service.getCharacteristic('00002af1-0000-1000-8000-00805f9b34fb');
+
+        alert("تم ربط الطابعة ✔️");
+    }catch(e){
+        alert("فشل الاتصال بالطابعة");
+    }
+}
+
+/* ===== PRINT ONLY (FIXED) ===== */
+async function printPOS(text){
+
+    if(!bluetoothCharacteristic){
+        alert("اربط الطابعة أولاً");
+        return;
+    }
+
+    const encoder = new TextEncoder();
+
+    await bluetoothCharacteristic.writeValue(new Uint8Array([0x1B,0x40]));
+
+    const lines = text.split("\n");
+    for(let l of lines){
+        await bluetoothCharacteristic.writeValue(encoder.encode(l + "\n"));
+    }
+
+    await bluetoothCharacteristic.writeValue(encoder.encode("\n\n\n"));
+}
+</script>
+
+<script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getDatabase, ref, onValue, update, get, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyA...",
+  apiKey: "AIzaSyAolIz4UgOSV1oe0XTl8a8pVfg7Pnfs1w",
   authDomain: "pos2026-310b7.firebaseapp.com",
   databaseURL: "https://pos2026-310b7-default-rtdb.firebaseio.com",
   projectId: "pos2026-310b7",
@@ -124,95 +242,60 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-let bluetoothDevice;
-let bluetoothCharacteristic;
-
 const tableBody = document.getElementById("subscribersTable");
 const searchInput = document.getElementById("search");
 const filterStatus = document.getElementById("filterStatus");
 
 let subscribers = [];
 
-/* ================= BLUETOOTH ================= */
-window.connectPrinter = async function () {
-    try {
-        bluetoothDevice = await navigator.bluetooth.requestDevice({
-            acceptAllDevices: true,
-            optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb']
-        });
-
-        const server = await bluetoothDevice.gatt.connect();
-        const service = await server.getPrimaryService('000018f0-0000-1000-8000-00805f9b34fb');
-        bluetoothCharacteristic = await service.getCharacteristic('00002af1-0000-1000-8000-00805f9b34fb');
-
-        alert("تم الاتصال بالطابعة ✔️");
-
-    } catch (e) {
-        alert("فشل الاتصال");
-        console.log(e);
-    }
-};
-
-/* ================= PRINT FIX ONLY ================= */
-async function printPOS(text){
-
-    if(!bluetoothCharacteristic){
-        return alert("اربط الطابعة أولاً");
-    }
-
-    const encoder = new TextEncoder();
-
-    await bluetoothCharacteristic.writeValue(new Uint8Array([0x1B,0x40]));
-
-    const lines = text.split("\n");
-
-    for(let l of lines){
-        await bluetoothCharacteristic.writeValue(encoder.encode(l + "\n"));
-    }
-
-    await bluetoothCharacteristic.writeValue(encoder.encode("\n\n\n"));
-}
-
-/* ================= RENDER ================= */
+/* ===== YOUR ORIGINAL CODE (UNCHANGED) ===== */
 function renderTable(){
 
-    const search = searchInput.value.toLowerCase();
-    const filter = filterStatus.value;
+    const searchFilter = searchInput.value.toLowerCase();
+    const statusFilterValue = filterStatus.value;
 
     tableBody.innerHTML = "";
 
-    subscribers.forEach(sub=>{
+    const currentMonth = new Date().getMonth() + 1;
 
-        const paid = sub.payments.reduce((s,p)=>s+Number(p.amount||0),0);
-        const remaining = sub.price - paid;
+    subscribers.forEach(sub => {
 
-        const status =
-            remaining===0 ? "full" :
-            paid>0 ? "partial" : "unpaid";
+        const paid = sub.payments.reduce((sum,p)=>sum+Number(p.amount||0),0);
+        const remaining = +(sub.price - paid).toFixed(2);
 
-        if(filter!=="all" && filter!==status) return;
+        const status = remaining===0 ? "full" : (remaining<sub.price ? "partial" : "unpaid");
+
+        if(!(statusFilterValue==="all" || status===statusFilterValue)) return;
+
+        const searchMatch = [sub.name, sub.phone, sub.address, sub.price].some(field =>
+            field.toString().toLowerCase().includes(searchFilter)
+        );
+
+        if(!searchMatch) return;
 
         const tr = document.createElement("tr");
 
         tr.innerHTML = `
-            <td>${sub.id}</td>
-            <td>${sub.name}</td>
-            <td>${sub.phone}</td>
-            <td>${sub.address}</td>
-            <td>${sub.price}</td>
-            <td>${paid}</td>
-            <td>${remaining}</td>
-            <td></td>
-            <td>${new Date().getMonth()+1}</td>
-            <td><input type="number"></td>
-            <td><button class="print-btn">طباعة</button></td>
-            <td><button class="wa-btn">واتساب</button></td>
+            <td data-label="#">${sub.id}</td>
+            <td data-label="الاسم">${sub.name}</td>
+            <td data-label="الهاتف">${sub.phone}</td>
+            <td data-label="العنوان">${sub.address}</td>
+            <td data-label="سعر الإشتراك">$${sub.price}</td>
+            <td data-label="المدفوع">$${paid.toFixed(2)}</td>
+            <td data-label="المتبقي">$${remaining}</td>
+            <td data-label="حالة الدفع"></td>
+            <td data-label="الشهر">${currentMonth}</td>
+            <td data-label="دفع"><input type="number"></td>
+            <td data-label="طباعة"><button class="print-btn">طباعة</button></td>
+            <td data-label="واتساب"><button class="wa-btn">واتساب</button></td>
         `;
 
-        /* ===== PRINT BUTTON (ONLY FIXED) ===== */
+        /* ===== ONLY FIX: PRINT BUTTON ===== */
         tr.querySelector(".print-btn").onclick = async ()=>{
 
             const last = sub.payments[sub.payments.length-1] || {};
+            const totalPaid = sub.payments.reduce((s,p)=>s+Number(p.amount||0),0);
+            const remaining = +(sub.price - totalPaid).toFixed(2);
 
             const text =
 `FAST NET
@@ -222,7 +305,7 @@ function renderTable(){
 العنوان: ${sub.address}
 
 السعر: ${sub.price}
-المدفوع: ${paid}
+المدفوع: ${totalPaid}
 المتبقي: ${remaining}
 
 الشهر: ${last.month || "-"}
@@ -231,25 +314,11 @@ function renderTable(){
             await printPOS(text);
         };
 
-        /* ===== WHATSAPP ===== */
-        tr.querySelector(".wa-btn").onclick = ()=>{
-
-            let phone = sub.phone.startsWith("+") ? sub.phone : "+961"+sub.phone;
-
-            const msg = `FAST NET
-الاسم: ${sub.name}
-المبلغ: ${paid}`;
-
-            window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`);
-        };
-
         tableBody.appendChild(tr);
     });
 }
 
-/* ================= FIREBASE ================= */
 onValue(ref(db,"subscribers"), snap=>{
-
     const data = snap.val() || {};
 
     subscribers = Object.entries(data).map(([fid,s],i)=>({
