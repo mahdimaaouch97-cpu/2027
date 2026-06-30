@@ -96,9 +96,7 @@ input[type=number]{width:75px;text-align:center;}
 <th>المتبقي</th>
 <th>حالة الدفع</th>
 <th>الشهر</th>
-<th>دفع</th>
 <th>طباعة</th>
-<th>واتساب</th>
 </tr>
 </thead>
 
@@ -107,7 +105,7 @@ input[type=number]{width:75px;text-align:center;}
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getDatabase, ref, onValue, update, get, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAolIz4UgOSV1oe0XTl8a8pVfg7Pnfs1w",
@@ -146,31 +144,27 @@ function renderTable(){
 
         if(!(statusFilterValue==="all" || status===statusFilterValue)) return;
 
-        const searchMatch = [sub.name, sub.phone, sub.address, sub.price].some(f =>
-            f.toString().toLowerCase().includes(searchFilter)
-        );
+        const searchMatch = [sub.name, sub.phone, sub.address, sub.price]
+        .some(f => f.toString().toLowerCase().includes(searchFilter));
 
         if(!searchMatch) return;
 
         const tr = document.createElement("tr");
 
         tr.innerHTML = `
-            <td data-label="#">${sub.id}</td>
-            <td data-label="الاسم">${sub.name}</td>
-            <td data-label="الهاتف">${sub.phone}</td>
-            <td data-label="العنوان">${sub.address}</td>
-            <td data-label="سعر الإشتراك">$${sub.price}</td>
-            <td data-label="المدفوع">$${paid.toFixed(2)}</td>
-            <td data-label="المتبقي">$${remaining}</td>
-            <td data-label="حالة الدفع" class="status-cell"></td>
-            <td data-label="الشهر">${currentMonth}</td>
-            <td data-label="دفع"><input type="number"></td>
-            <td data-label="طباعة"><button class="print-btn">طباعة</button></td>
-            <td data-label="واتساب"><button class="wa-btn">واتساب</button></td>
+            <td>${sub.id}</td>
+            <td>${sub.name}</td>
+            <td>${sub.phone}</td>
+            <td>${sub.address}</td>
+            <td>$${sub.price}</td>
+            <td>$${paid.toFixed(2)}</td>
+            <td>$${remaining}</td>
+            <td></td>
+            <td>${currentMonth}</td>
+            <td><button class="print-btn">طباعة</button></td>
         `;
 
-        /* ===== حالة الدفع ===== */
-        const statusCell = tr.querySelector(".status-cell");
+        const statusCell = tr.children[7];
 
         statusCell.innerHTML =
             remaining===0
@@ -179,7 +173,7 @@ function renderTable(){
                 ? `<span class="status-partial">مدفوع جزئيًا</span>`
                 : `<span class="status-unpaid">غير مدفوع</span>`);
 
-        /* ================= RAWBT PRINT FIX ================= */
+        /* ================= PRINT ESC/POS RAWBT ================= */
         tr.querySelector(".print-btn").onclick = ()=>{
 
             const last = sub.payments[sub.payments.length-1] || {};
@@ -197,12 +191,16 @@ function renderTable(){
 المدفوع: ${totalPaid}
 المتبقي: ${remainingPrint}
 الشهر: ${last.month || "-"}
-التاريخ: ${last.date || "-"}
+التاريخ: ${last.date || "-"}`;
 
-----------------`;
+            // ESC/POS INIT
+            const esc = "\x1B\x40";
+            const cut = "\x1D\x56\x00";
 
-            // 🔥 الحل الصحيح RawBT
-            window.location.href = "rawbt:" + encodeURIComponent(text);
+            const data = esc + text + "\n\n\n" + cut;
+
+            window.location.href =
+                "rawbt:" + btoa(unescape(encodeURIComponent(data)));
         };
 
         tableBody.appendChild(tr);
