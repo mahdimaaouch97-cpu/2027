@@ -14,31 +14,27 @@ body {
     color:#333;
 }
 
-h1 { 
-    text-align:center; 
-    margin-bottom:25px; 
-    color:#1a237e;
-}
+h1 { text-align:center; margin-bottom:25px; color:#1a237e; }
 
-/* زر العودة */
 .back-btn { 
     background-color: #1a237e; 
     color: white; 
     padding: 15px 35px; 
     margin-bottom:20px; 
     font-size: 20px; 
-    font-weight: bold; 
     border-radius: 8px; 
     cursor: pointer; 
     border: none; 
 }
 
 #search, #filterStatus { 
-    padding:10px; 
+    padding:10px 12px; 
     width:100%; 
     max-width:400px; 
     display:block; 
     margin:12px auto; 
+    border-radius:6px; 
+    border:1px solid #bbb; 
 }
 
 table { 
@@ -60,33 +56,37 @@ button {
     padding:8px 14px; 
     cursor:pointer; 
     margin:2px; 
-    border:none;
+    border:none; 
+    border-radius:6px;
 }
 
 .pay-btn { background:#ffc107; }
 .print-btn { background:#28a745; color:white; }
 .wa-btn { background:#25d366; color:white; }
 
-.status-paid { background:#388e3c; color:white; padding:5px; }
-.status-partial { background:#f57c00; color:white; padding:5px; }
-.status-unpaid { background:#c62828; color:white; padding:5px; }
+.status-paid { background:#388e3c; color:white; padding:5px 10px; border-radius:6px; }
+.status-partial { background:#f57c00; color:white; padding:5px 10px; border-radius:6px; }
+.status-unpaid { background:#c62828; color:white; padding:5px 10px; border-radius:6px; }
+
+input[type=number] { width:80px; text-align:center; }
 </style>
+
 </head>
 
 <body>
 
 <h1>الدفع - FAST NET</h1>
 
-<button class="back-btn" onclick="window.location.href='index.html'">العودة</button>
+<button class="back-btn" onclick="window.location.href='index.html'">العودة للرئيسية</button>
 
 <button onclick="connectPrinter()">🔗 ربط الطابعة</button>
 
-<input type="text" id="search" placeholder="بحث...">
+<input type="text" id="search" placeholder="ابحث...">
 <select id="filterStatus">
-<option value="all">الكل</option>
-<option value="full">مدفوع</option>
-<option value="partial">جزئي</option>
-<option value="unpaid">غير مدفوع</option>
+    <option value="all">الكل</option>
+    <option value="full">مدفوع كليًا</option>
+    <option value="partial">مدفوع جزئيًا</option>
+    <option value="unpaid">غير مدفوع</option>
 </select>
 
 <table>
@@ -106,16 +106,16 @@ button {
 <th>واتساب</th>
 </tr>
 </thead>
-
 <tbody id="subscribersTable"></tbody>
 </table>
 
 <script type="module">
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getDatabase, ref, onValue, update, get, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAolIz4UgOSbV1oe0XTl8a8pVfg7Pnfs1w",
+  apiKey: "AIzaSyAolIz4UgOSV1oe0XTl8a8pVfg7Pnfs1w",
   authDomain: "pos2026-310b7.firebaseapp.com",
   databaseURL: "https://pos2026-310b7-default-rtdb.firebaseio.com",
   projectId: "pos2026-310b7",
@@ -130,6 +130,9 @@ const db = getDatabase(app);
 let bluetoothDevice;
 let bluetoothCharacteristic;
 
+/* =========================
+   الاتصال بالطابعة POS
+========================= */
 window.connectPrinter = async function () {
     try {
         bluetoothDevice = await navigator.bluetooth.requestDevice({
@@ -143,11 +146,14 @@ window.connectPrinter = async function () {
 
         alert("تم الاتصال بالطابعة ✔️");
     } catch (e) {
-        alert("فشل الاتصال");
+        alert("فشل الاتصال بالطابعة ❌");
         console.log(e);
     }
 };
 
+/* =========================
+   إرسال ESC/POS
+========================= */
 async function printESC(text){
     const encoder = new TextEncoder();
     await bluetoothCharacteristic.writeValue(encoder.encode(text));
@@ -157,6 +163,9 @@ const tableBody = document.getElementById("subscribersTable");
 
 let subscribers = [];
 
+/* =========================
+   عرض الجدول
+========================= */
 function renderTable(){
     tableBody.innerHTML = "";
 
@@ -165,40 +174,60 @@ function renderTable(){
         const paid = sub.payments.reduce((s,p)=>s+Number(p.amount||0),0);
         const remaining = sub.price - paid;
 
+        const status =
+            remaining === 0 ? "full" :
+            paid > 0 ? "partial" : "unpaid";
+
         const tr = document.createElement("tr");
 
         tr.innerHTML = `
-        <td>${sub.id}</td>
-        <td>${sub.name}</td>
-        <td>${sub.phone}</td>
-        <td>${sub.address}</td>
-        <td>$${sub.price}</td>
-        <td>$${paid}</td>
-        <td>$${remaining}</td>
-        <td>${remaining==0?"مدفوع":"غير مدفوع"}</td>
-        <td>
-            <select class="month">
-                ${[1,2,3,4,5,6,7,8,9,10,11,12].map(m=>`<option>${m}</option>`)}
-            </select>
-        </td>
-        <td><input type="number" class="pay"></td>
-        <td><button class="print-btn">طباعة</button></td>
-        <td><button class="wa-btn">واتساب</button></td>
+            <td>${sub.id}</td>
+            <td>${sub.name}</td>
+            <td>${sub.phone}</td>
+            <td>${sub.address}</td>
+            <td>$${sub.price}</td>
+            <td>$${paid}</td>
+            <td>$${remaining}</td>
+            <td>
+                ${remaining===0
+                    ? '<span class="status-paid">مدفوع</span>'
+                    : paid>0
+                        ? '<span class="status-partial">جزئي</span>'
+                        : '<span class="status-unpaid">غير مدفوع</span>'
+                }
+            </td>
+            <td>
+                <select>
+                    ${[1,2,3,4,5,6,7,8,9,10,11,12].map(m=>`<option>${m}</option>`)}
+                </select>
+            </td>
+            <td><input type="number"></td>
+            <td><button class="print-btn">طباعة</button></td>
+            <td><button class="wa-btn">واتساب</button></td>
         `;
 
-        // 🔥 POS PRINT
+        /* =========================
+           🔥 POS PRINT
+        ========================= */
         tr.querySelector(".print-btn").onclick = async ()=>{
-            if(!bluetoothCharacteristic) return alert("اربط الطابعة");
 
-            const last = sub.payments[sub.payments.length-1] || {};
+            if(!bluetoothCharacteristic){
+                return alert("اربط الطابعة أولاً");
+            }
+
+            if(sub.payments.length === 0){
+                return alert("لا توجد دفعات");
+            }
+
+            const last = sub.payments[sub.payments.length-1];
             const total = sub.payments.reduce((s,p)=>s+Number(p.amount||0),0);
             const rem = sub.price - total;
 
-            let data =
+            let receipt =
 `\x1B\x40
 \x1B\x61\x01
 FAST NET
-----------------
+-------------------------
 \x1B\x61\x00
 الاسم: ${sub.name}
 الهاتف: ${sub.phone}
@@ -208,27 +237,37 @@ FAST NET
 المدفوع: ${total}
 المتبقي: ${rem}
 
-----------------
-\x0A\x0A`;
+الشهر: ${last.month}
+التاريخ: ${last.date}
+رقم الإيصال: ${last.receiptNumber}
 
-            await printESC(data);
+-------------------------
+شكراً لكم
+\x0A\x0A\x0A`;
+
+            await printESC(receipt);
         };
 
         tableBody.appendChild(tr);
     });
 }
 
+/* =========================
+   تحميل البيانات
+========================= */
 onValue(ref(db,"subscribers"), snap=>{
     const data = snap.val() || {};
+
     subscribers = Object.entries(data).map(([fid,s],i)=>({
         fid,
         id:i+1,
-        name:s.name,
-        phone:s.phone,
-        address:s.address,
-        price:Number(s.price||0),
+        name:s.name || "",
+        phone:s.phone || "",
+        address:s.address || "",
+        price:Number(s.price || 0),
         payments:Array.isArray(s.payments)?s.payments:[]
     }));
+
     renderTable();
 });
 
