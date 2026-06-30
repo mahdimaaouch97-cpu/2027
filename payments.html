@@ -6,7 +6,6 @@
 <title>الدفع - FAST NET</title>
 
 <style>
-/* ===== نفس ستايلك الأصلي ===== */
 body { 
     font-family: 'Segoe UI', Tahoma, Arial, sans-serif; 
     padding:20px; 
@@ -129,6 +128,36 @@ const filterStatus = document.getElementById("filterStatus");
 
 let subscribers = [];
 
+/* =========================
+   ESC/POS RAWBT PRINT
+========================= */
+function escpos(text){
+
+    const encoder = new TextEncoder();
+
+    // ESC/POS init
+    let data = [0x1B,0x40];
+
+    const lines = text.split("\n");
+
+    for(let l of lines){
+        const encoded = encoder.encode(l + "\n");
+        data = data.concat([...encoded]);
+    }
+
+    const bytes = new Uint8Array(data);
+
+    // RawBT (Android)
+    const base64 = btoa(String.fromCharCode(...bytes));
+
+    const url = `intent:${base64}#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;end;`;
+
+    window.location.href = url;
+}
+
+/* =========================
+   TABLE
+========================= */
 function renderTable(){
 
     const searchFilter = searchInput.value.toLowerCase();
@@ -136,23 +165,22 @@ function renderTable(){
 
     tableBody.innerHTML = "";
 
-    const currentMonth = new Date().getMonth() + 1;
-
     subscribers.forEach(sub => {
 
         const paid = sub.payments.reduce((s,p)=>s+Number(p.amount||0),0);
-        const remaining = +(sub.price - paid).toFixed(2);
+        const remaining = sub.price - paid;
 
-        const status =
-            remaining===0 ? "full" :
-            paid>0 ? "partial" : "unpaid";
+        let status =
+            remaining === 0 ? "full" :
+            paid > 0 ? "partial" : "unpaid";
 
-        if(!(statusFilterValue==="all" || status===statusFilterValue)) return;
+        if(statusFilterValue !== "all" && status !== statusFilterValue) return;
 
-        const searchMatch = [sub.name, sub.phone, sub.address, sub.price]
-            .some(f => f.toString().toLowerCase().includes(searchFilter));
+        const match = [sub.name, sub.phone, sub.address].some(v =>
+            v.toString().toLowerCase().includes(searchFilter)
+        );
 
-        if(!searchMatch) return;
+        if(!match) return;
 
         const tr = document.createElement("tr");
 
@@ -162,30 +190,29 @@ function renderTable(){
             <td>${sub.phone}</td>
             <td>${sub.address}</td>
             <td>$${sub.price}</td>
-            <td>$${paid.toFixed(2)}</td>
+            <td>$${paid}</td>
             <td>$${remaining}</td>
             <td></td>
-            <td>${currentMonth}</td>
+            <td>${new Date().getMonth()+1}</td>
             <td><input type="number"></td>
             <td><button class="print-btn">طباعة</button></td>
             <td><button class="wa-btn">واتساب</button></td>
         `;
 
-        /* ===== حالة الدفع ===== */
-        const statusCell = tr.children[7];
+        const statusCell = tr.cells[7];
         statusCell.innerHTML =
-            remaining===0
+            status === "full"
             ? `<span class="status-paid">مدفوع كليًا</span>`
-            : paid>0
+            : status === "partial"
             ? `<span class="status-partial">مدفوع جزئيًا</span>`
             : `<span class="status-unpaid">غير مدفوع</span>`;
 
-        /* ================= PRINT FIX ================= */
-        tr.querySelector(".print-btn").onclick = ()=>{
+        /* =========================
+           PRINT BUTTON (FIXED)
+        ========================= */
+        tr.querySelector(".print-btn").onclick = () => {
 
             const last = sub.payments[sub.payments.length-1] || {};
-            const totalPaid = paid;
-            const remainingPrint = remaining;
 
             const text =
 `FAST NET
@@ -194,15 +221,11 @@ function renderTable(){
 الهاتف: ${sub.phone}
 العنوان: ${sub.address}
 
-السعر: ${sub.price}
-المدفوع: ${totalPaid}
-المتبقي: ${remainingPrint}
-الشهر: ${last.month || "-"}
-التاريخ: ${last.date || "-"}`;
+سعر: ${sub.price}
+مدفوع: ${paid}
+متبقي: ${remaining}`;
 
-            // 🔥 الحل الصحيح 100%
-            window.location.href =
-                "rawbt:" + encodeURIComponent(text);
+            escpos(text);
         };
 
         tableBody.appendChild(tr);
@@ -224,10 +247,6 @@ onValue(ref(db,"subscribers"), snap=>{
 
     renderTable();
 });
-
-searchInput.addEventListener("input", renderTable);
-filterStatus.addEventListener("change", renderTable);
-
 </script>
 
 </body>
