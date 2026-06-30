@@ -6,52 +6,95 @@
 <title>الدفع - FAST NET</title>
 
 <style>
-body {
-    font-family: Arial;
-    direction: rtl;
-    padding: 20px;
-    background: #f5f7ff;
+/* ===== قاعدة الصفحة ===== */
+body { 
+    font-family: 'Segoe UI', Tahoma, Arial, sans-serif; 
+    padding:20px; 
+    direction:rtl; 
+    background: linear-gradient(135deg, #f0f4ff, #f9fafc);
+    color:#333;
+}
+h1 { 
+    text-align:center; 
+    margin-bottom:25px; 
+    color:#1a237e;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
 }
 
-h1 { text-align:center; color:#1a237e; }
-
-.back-btn {
-    background:#1a237e;
-    color:#fff;
-    padding:12px 25px;
-    border:none;
-    border-radius:6px;
-    margin-bottom:10px;
-    cursor:pointer;
+/* ===== زر العودة ===== */
+.back-btn { 
+    background-color: #1a237e; 
+    color: white; 
+    padding: 15px 35px; 
+    margin-bottom:20px; 
+    font-size: 20px; 
+    font-weight: bold; 
+    border-radius: 8px; 
+    cursor: pointer; 
+    border: none; 
+    transition: background 0.3s, transform 0.2s; 
+    display: inline-block;
+}
+.back-btn:hover { 
+    background-color: #283593; 
+    transform: translateY(-2px);
 }
 
-table {
-    width:100%;
-    border-collapse:collapse;
-    background:white;
+/* ===== البحث والتصفية ===== */
+#search, #filterStatus { 
+    padding:10px 12px; 
+    width:100%; 
+    max-width:400px; 
+    display:block; 
+    margin:12px auto; 
+    border-radius:6px; 
+    border:1px solid #bbb; 
+    font-size: 16px; 
 }
 
-th, td {
-    border:1px solid #ddd;
-    padding:10px;
-    text-align:center;
+/* ===== الجدول ===== */
+table { 
+    width:100%; 
+    border-collapse:collapse; 
+    margin-top:15px; 
+    background:white; 
+    box-shadow:0 4px 10px rgba(0,0,0,0.05); 
+    border-radius:8px; 
+    overflow:hidden;
+}
+th, td { 
+    padding:12px 10px; 
+    border:1px solid #ddd; 
+    text-align:center; 
+    font-size:20px; 
+}
+th { 
+    background-color:#007bff; 
+    color:white; 
+    font-size:17px; 
 }
 
-th { background:#007bff; color:white; }
-
-button {
-    padding:6px 10px;
-    border:none;
-    cursor:pointer;
+/* ===== أزرار ===== */
+button { 
+    padding:8px 14px; 
+    cursor:pointer; 
+    margin:2px; 
+    border-radius:6px; 
+    border:none; 
+    font-size:15px; 
+    font-weight:bold;
 }
 
-.print-btn { background:#28a745; color:white; }
-.pay-btn { background:#ffc107; }
+.pay-btn { background-color:#ffc107; color:white; }
+.print-btn { background-color:#28a745; color:white; }
+.wa-btn { background-color:#25d366; color:white; }
 
-.status-paid { background:green; color:white; padding:5px; }
-.status-partial { background:orange; color:white; }
-.status-unpaid { background:red; color:white; }
+/* ===== الحالات ===== */
+.status-paid { background:#388e3c; color:white; padding:8px 14px; border-radius:10px; }
+.status-partial { background:#f57c00; color:white; padding:8px 14px; border-radius:10px; }
+.status-unpaid { background:#c62828; color:white; padding:8px 14px; border-radius:10px; }
 
+input[type=number] { width:75px; text-align:center; }
 </style>
 </head>
 
@@ -59,7 +102,16 @@ button {
 
 <h1>الدفع - FAST NET</h1>
 
-<button class="back-btn" onclick="window.location.href='index.html'">رجوع</button>
+<button class="back-btn" onclick="window.location.href='index.html'">العودة للرئيسية</button>
+
+<input type="text" id="search" placeholder="ابحث بالإسم أو رقم الهاتف...">
+<select id="filterStatus">
+    <option value="all">الكل</option>
+    <option value="full">مدفوع كليًا</option>
+    <option value="partial">مدفوع جزئيًا</option>
+    <option value="unpaid">غير مدفوع</option>
+</select>
+
 <button onclick="connectPrinter()">🔗 ربط الطابعة</button>
 
 <table>
@@ -69,23 +121,28 @@ button {
 <th>الاسم</th>
 <th>الهاتف</th>
 <th>العنوان</th>
-<th>السعر</th>
+<th>سعر الإشتراك</th>
 <th>المدفوع</th>
 <th>المتبقي</th>
+<th>حالة الدفع</th>
+<th>الشهر</th>
+<th>دفع</th>
 <th>طباعة</th>
+<th>واتساب</th>
 </tr>
 </thead>
 
-<tbody id="table"></tbody>
+<tbody id="subscribersTable"></tbody>
 </table>
 
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import { getDatabase, ref, onValue, update, get, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
+/* ================= Firebase ================= */
 const firebaseConfig = {
-  apiKey: "AIzaSyA....",
+  apiKey: "AIzaSyAolIz4UgOSV1oe0XTl8a8pVfg7Pnfs1w",
   authDomain: "pos2026-310b7.firebaseapp.com",
   databaseURL: "https://pos2026-310b7-default-rtdb.firebaseio.com",
   projectId: "pos2026-310b7",
@@ -97,12 +154,10 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
+/* ================= Bluetooth POS ================= */
 let bluetoothDevice;
 let bluetoothCharacteristic;
 
-/* =======================
-   اتصال الطابعة
-======================= */
 window.connectPrinter = async function () {
     try {
         bluetoothDevice = await navigator.bluetooth.requestDevice({
@@ -114,23 +169,21 @@ window.connectPrinter = async function () {
         const service = await server.getPrimaryService('000018f0-0000-1000-8000-00805f9b34fb');
         bluetoothCharacteristic = await service.getCharacteristic('00002af1-0000-1000-8000-00805f9b34fb');
 
-        alert("تم الاتصال بالطابعة");
+        alert("تم الاتصال بالطابعة ✔️");
     } catch (e) {
-        alert("خطأ في الاتصال");
+        alert("فشل الاتصال بالطابعة");
         console.log(e);
     }
 };
 
-/* =======================
-   طباعة عربية (حل صحيح)
-======================= */
-async function printImage(text) {
+/* ================= POS PRINT (Arabic FIX) ================= */
+async function printPOS(text){
 
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
 
     canvas.width = 384;
-    canvas.height = 600;
+    canvas.height = 800;
 
     ctx.fillStyle = "white";
     ctx.fillRect(0,0,canvas.width,canvas.height);
@@ -146,51 +199,77 @@ async function printImage(text) {
         y += 28;
     });
 
-    const imgData = canvas.toDataURL("image/png");
-    const res = await fetch(imgData);
-    const buffer = await res.arrayBuffer();
+    const img = canvas.toDataURL("image/png");
+    const blob = await (await fetch(img)).blob();
+    const buffer = await blob.arrayBuffer();
 
     await bluetoothCharacteristic.writeValue(new Uint8Array([0x1B,0x40])); // reset
     await bluetoothCharacteristic.writeValue(new Uint8Array(buffer));
 }
 
-/* =======================
-   عرض البيانات
-======================= */
-const table = document.getElementById("table");
+/* ================= Variables ================= */
+const tableBody = document.getElementById("subscribersTable");
+const searchInput = document.getElementById("search");
+const filterStatus = document.getElementById("filterStatus");
 
-onValue(ref(db,"subscribers"), snap=>{
-    const data = snap.val() || {};
-    table.innerHTML = "";
+let subscribers = [];
 
-    Object.values(data).forEach((sub,i)=>{
+/* ================= Render ================= */
+function renderTable(){
 
-        const paid = (sub.payments||[]).reduce((s,p)=>s+Number(p.amount||0),0);
-        const remaining = sub.price - paid;
+    const search = searchInput.value.toLowerCase();
+    const filter = filterStatus.value;
+
+    tableBody.innerHTML = "";
+
+    const currentMonth = new Date().getMonth()+1;
+
+    subscribers.forEach(sub=>{
+
+        const paid = sub.payments.reduce((s,p)=>s+Number(p.amount||0),0);
+        const remaining = +(sub.price - paid).toFixed(2);
+
+        const status =
+            remaining===0 ? "full" :
+            paid>0 ? "partial" : "unpaid";
+
+        if(filter!=="all" && filter!==status) return;
+
+        if(![sub.name,sub.phone,sub.address].some(x=>
+            (x||"").toString().toLowerCase().includes(search)
+        )) return;
 
         const tr = document.createElement("tr");
 
         tr.innerHTML = `
-        <td>${i+1}</td>
+        <td>${sub.id}</td>
         <td>${sub.name}</td>
         <td>${sub.phone}</td>
         <td>${sub.address}</td>
         <td>${sub.price}</td>
         <td>${paid}</td>
         <td>${remaining}</td>
+        <td>
+            ${status==="full"
+                ? '<span class="status-paid">مدفوع</span>'
+                : status==="partial"
+                ? '<span class="status-partial">جزئي</span>'
+                : '<span class="status-unpaid">غير مدفوع</span>'}
+        </td>
+        <td>${currentMonth}</td>
+        <td><input type="number"></td>
         <td><button class="print-btn">طباعة</button></td>
+        <td><button class="wa-btn">واتساب</button></td>
         `;
 
-        /* =======================
-           طباعة POS
-        ======================= */
+        /* ===== PRINT ===== */
         tr.querySelector(".print-btn").onclick = async ()=>{
 
             if(!bluetoothCharacteristic){
                 return alert("اربط الطابعة أولاً");
             }
 
-            const last = (sub.payments||[]).slice(-1)[0] || {};
+            const last = sub.payments[sub.payments.length-1] || {};
 
             const text =
 `FAST NET
@@ -203,17 +282,38 @@ onValue(ref(db,"subscribers"), snap=>{
 المدفوع: ${paid}
 المتبقي: ${remaining}
 
-رقم الإيصال: ${last.receiptNumber || "-"}
+الشهر: ${last.month || "-"}
 التاريخ: ${last.date || "-"}
 
 شكراً لكم`;
 
-            await printImage(text);
+            await printPOS(text);
         };
 
-        table.appendChild(tr);
+        tableBody.appendChild(tr);
     });
+}
+
+/* ================= Firebase Load ================= */
+onValue(ref(db,"subscribers"), snap=>{
+    const data = snap.val() || {};
+
+    subscribers = Object.entries(data).map(([fid,s],i)=>({
+        fid,
+        id:i+1,
+        name:s.name||"",
+        phone:s.phone||"",
+        address:s.address||"",
+        price:Number(s.price||0),
+        payments:Array.isArray(s.payments)?s.payments:[]
+    }));
+
+    renderTable();
 });
+
+/* ================= Events ================= */
+searchInput.addEventListener("input", renderTable);
+filterStatus.addEventListener("change", renderTable);
 
 </script>
 
