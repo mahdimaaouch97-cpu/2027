@@ -291,44 +291,38 @@ function renderTable(){
             }
           // sendWhatsApp(sub, amount, month, receiptNumber);
         });
+const printBtn = tr.querySelector(".print-btn");
 
-        const printBtn = tr.querySelector(".print-btn");
-        printBtn.addEventListener("click", ()=>{ 
-            if(sub.payments.length===0) return alert("لا توجد دفعات");
-            const last = sub.payments[sub.payments.length-1];
-            const totalPaid = sub.payments.reduce((sum,p)=>sum+Number(p.amount||0),0);
-            const remainingPrint = +(sub.price - totalPaid).toFixed(2);
+printBtn.addEventListener("click", () => {
 
+    if (sub.payments.length === 0) {
+        alert("لا توجد دفعات");
+        return;
+    }
 
-    if(sub.payments.length===0) return alert("لا توجد دفعات");
-
-    const last = sub.payments[sub.payments.length-1];
-    const totalPaid = sub.payments.reduce((s,p)=>s+Number(p.amount||0),0);
+    const last = sub.payments[sub.payments.length - 1];
+    const totalPaid = sub.payments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
     const remainingPrint = +(sub.price - totalPaid).toFixed(2);
 
-    const escpos =
-`ESC @
-ESC a 1
-FAST NET
-ESC a 0
-------------------------
-Receipt: ${last.receiptNumber || '-'}
+    const escpos = `FAST NET
+
+Receipt: ${last.receiptNumber}
+
 Name: ${sub.name}
 Phone: ${sub.phone}
-------------------------
-Price: ${sub.price}$
-Paid: ${last.amount}$
-Remaining: ${remainingPrint}$
+
+Price: $${sub.price}
+Paid: $${last.amount}
+Remaining: $${remainingPrint}
+
 Month: ${last.month}
 Date: ${last.date}
-------------------------
-Thank you
-GS V 1`;
+
+Thank you`;
 
     window.location.href = "rawbt:" + encodeURIComponent(escpos);
 
 });
-        });
 
         const waBtn = tr.querySelector(".wa-btn");
         waBtn.addEventListener("click", ()=> sendWhatsApp(sub));
