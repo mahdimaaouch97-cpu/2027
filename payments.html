@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>الدفع - FAST NET</title>
-
 <style>
 /* ===== قاعدة الصفحة ===== */
 body { 
@@ -150,7 +149,6 @@ input[type=number] {
 }
 </style>
 </head>
-
 <body>
 
 <h1>الدفع - FAST NET</h1>
@@ -200,6 +198,7 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
+
 const tableBody = document.getElementById("subscribersTable");
 const searchInput = document.getElementById("search");
 const filterStatus = document.getElementById("filterStatus");
@@ -207,13 +206,16 @@ const filterStatus = document.getElementById("filterStatus");
 let subscribers = [];
 
 function renderTable(){
+
     const searchFilter = searchInput.value.toLowerCase();
     const statusFilterValue = filterStatus.value;
+
     tableBody.innerHTML = "";
 
     const currentMonth = new Date().getMonth() + 1;
 
     subscribers.forEach(sub => {
+
         const paid = sub.payments.reduce((sum,p)=>sum+Number(p.amount||0),0);
         const remaining = +(sub.price - paid).toFixed(2);
         const status = remaining===0 ? "full" : (remaining<sub.price ? "partial" : "unpaid");
@@ -252,7 +254,7 @@ function renderTable(){
         const statusCell = tr.querySelector(".status-cell");
         statusCell.innerHTML = remaining===0 
             ? '<span class="status-paid">مدفوع كليًا</span>'
-            : remaining<sub.price
+            : remaining<sub.price 
                 ? '<span class="status-partial">مدفوع جزئيًا</span>'
                 : '<span class="status-unpaid">غير مدفوع</span>';
 
@@ -264,91 +266,101 @@ function renderTable(){
 
             const amount = parseFloat(payInput.value);
             if(isNaN(amount) || amount<=0 || amount>remaining){
-                return alert(`مبلغ غير صالح`);
+                return alert(`الرجاء إدخال مبلغ صالح. الحد الأقصى: $${remaining}`);
             }
 
             const month = monthSelect.value;
             const date = new Date().toLocaleDateString();
 
             const receiptRef = ref(db, "lastReceiptNumber");
-            let lastSnap = await get(receiptRef);
-            let last = lastSnap.exists() ? lastSnap.val() : 6000;
-            const receiptNumber = last + 1;
+            let lastReceiptSnap = await get(receiptRef);
+            let lastReceipt = lastReceiptSnap.exists() ? lastReceiptSnap.val() : 6000;
+            const receiptNumber = lastReceipt + 1;
 
             sub.payments.push({amount, month, date, receiptNumber});
 
-            await update(ref(db,"subscribers/"+sub.fid), {
-                payments: sub.payments
-            });
-
+            await update(ref(db, "subscribers/"+sub.fid), {payments: sub.payments});
             await set(receiptRef, receiptNumber);
 
-            const newPaid = sub.payments.reduce((s,p)=>s+Number(p.amount||0),0);
+            const newPaid = sub.payments.reduce((sum,p)=>sum+Number(p.amount||0),0).toFixed(2);
             const newRemaining = +(sub.price - newPaid).toFixed(2);
 
             tr.cells[5].innerText = `$${newPaid}`;
             tr.cells[6].innerText = `$${newRemaining}`;
 
+            statusCell.innerHTML = newRemaining===0 
+                ? '<span class="status-paid">مدفوع كليًا</span>'
+                : '<span class="status-partial">مدفوع جزئيًا</span>';
+
             payInput.value = "";
         });
 
-        /* ======= ✅ RAWBT PRINT (ESC/POS) ======= */
+        /* ===========================
+           🔥 FIXED RAWBT PRINT ONLY
+        ============================ */
         const printBtn = tr.querySelector(".print-btn");
-        printBtn.addEventListener("click", ()=>{
+        printBtn.addEventListener("click", ()=>{ 
 
-            if(sub.payments.length===0){
-                return alert("لا توجد دفعات");
-            }
+            if(sub.payments.length===0) return alert("لا توجد دفعات");
 
             const last = sub.payments[sub.payments.length-1];
-            const totalPaid = sub.payments.reduce((s,p)=>s+Number(p.amount||0),0);
+            const totalPaid = sub.payments.reduce((sum,p)=>sum+Number(p.amount||0),0);
             const remainingPrint = +(sub.price - totalPaid).toFixed(2);
 
             const text =
-`*** FAST NET ***
+`FAST NET
 --------------------
-Receipt: ${last.receiptNumber || '-'}
-Name: ${sub.name}
-Address: ${sub.address}
+رقم الإيصال: ${last.receiptNumber || '-'}
+الاسم: ${sub.name}
+الهاتف: ${sub.phone}
+العنوان: ${sub.address}
 --------------------
-Price: $${sub.price}
-Paid: $${last.amount}
-Remaining: $${remainingPrint}
-Month: ${last.month}
-Date: ${last.date}
---------------------
-THANK YOU`;
+سعر الاشتراك: $${sub.price}
+المدفوع: $${last.amount}
+المتبقي: $${remainingPrint}
+الشهر: ${last.month}
+التاريخ: ${last.date}
+--------------------`;
 
-            // إرسال إلى RawBT مباشرة
-            window.location.href = "rawbt:" + encodeURIComponent(text);
+            /* ✔ RAWBT INTENT FIX */
+            const url =
+                "intent:" + encodeURIComponent(text) +
+                "#Intent;" +
+                "scheme=rawbt;" +
+                "package=ru.a402d.rawbtprinter;" +
+                "end;";
+
+            window.location.href = url;
         });
-
-        const waBtn = tr.querySelector(".wa-btn");
-        waBtn.addEventListener("click", ()=> sendWhatsApp(sub));
 
         tableBody.appendChild(tr);
     });
 
     if(tableBody.innerHTML===""){
-        tableBody.innerHTML = `<tr><td colspan="12">لا يوجد مشتركين</td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="12">لا يوجد مشتركين مطابقين.</td></tr>`;
     }
 }
 
-function sendWhatsApp(sub){
-    if(sub.payments.length===0) return;
+function sendWhatsApp(sub, amount=null, month=null, receiptNumber=null){
+    if(sub.payments.length===0) return alert("لا توجد دفعات");
 
     const last = sub.payments[sub.payments.length-1];
-    const totalPaid = sub.payments.reduce((s,p)=>s+Number(p.amount||0),0);
+
+    const totalPaid = sub.payments.reduce((sum,p)=>sum+Number(p.amount||0),0);
     const remaining = +(sub.price - totalPaid).toFixed(2);
+    const date = last.date;
 
-    const phone = sub.phone.startsWith("+") ? sub.phone : "+961"+sub.phone;
+    let phone = sub.phone.startsWith("+") ? sub.phone : "+961"+sub.phone;
 
-    const msg =
-`FAST NET
-Receipt: ${last.receiptNumber}
-Name: ${sub.name}
-Paid: ${last.amount}
-Remaining: ${remaining}`;
+    const msg = `📩 إشعار دفع FAST NET
+🧾 رقم الإيصال: ${receiptNumber || last.receiptNumber}
+👤 الاسم: ${sub.name}
+📍 العنوان: ${sub.address}
+💰 سعر الإشتراك: $${sub.price}
+💰 المدفوع: $${last.amount}
+💵 المتبقي: $${remaining}
+🗓️ الشهر: ${month || last.month}
+📅 التاريخ: ${date}`;
 
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, "_blank");
 }
@@ -358,19 +370,18 @@ onValue(ref(db,"subscribers"), snap=>{
     subscribers = Object.entries(data).map(([fid, sub], i)=>({
         fid,
         id: i+1,
-        name: sub.name || "",
-        phone: sub.phone || "",
-        address: sub.address || "",
+        name: sub.name || "بدون اسم",
+        phone: sub.phone || "غير محدد",
+        address: sub.address || "غير محدد",
         price: Number(sub.price || 0),
         payments: Array.isArray(sub.payments) ? sub.payments : []
     }));
-
     renderTable();
 });
 
 searchInput.addEventListener("input", renderTable);
 filterStatus.addEventListener("change", renderTable);
-</script>
 
+</script>
 </body>
 </html>
