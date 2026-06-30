@@ -113,7 +113,10 @@ const firebaseConfig = {
   apiKey: "AIzaSyAolIz4UgOSV1oe0XTl8a8pVfg7Pnfs1w",
   authDomain: "pos2026-310b7.firebaseapp.com",
   databaseURL: "https://pos2026-310b7-default-rtdb.firebaseio.com",
-  projectId: "pos2026-310b7"
+  projectId: "pos2026-310b7",
+  storageBucket: "pos2026-310b7.appspot.com",
+  messagingSenderId: "221592625111",
+  appId: "1:221592625111:web:81b9704a1fa790bcd0f592"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -125,7 +128,6 @@ const filterStatus = document.getElementById("filterStatus");
 
 let subscribers = [];
 
-/* ================= TABLE ================= */
 function renderTable(){
 
     const searchFilter = searchInput.value.toLowerCase();
@@ -177,7 +179,7 @@ function renderTable(){
                 ? `<span class="status-partial">مدفوع جزئيًا</span>`
                 : `<span class="status-unpaid">غير مدفوع</span>`);
 
-        /* ================= RAWBT PRINT ================= */
+        /* ================= RAWBT PRINT FIX ================= */
         tr.querySelector(".print-btn").onclick = ()=>{
 
             const last = sub.payments[sub.payments.length-1] || {};
@@ -199,17 +201,14 @@ function renderTable(){
 
 ----------------`;
 
-            const url = "intent://print#" + encodeURIComponent(text) +
-            "#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;end;";
-
-            window.location.href = url;
+            // 🔥 الحل الصحيح RawBT
+            window.location.href = "rawbt:" + encodeURIComponent(text);
         };
 
         tableBody.appendChild(tr);
     });
 }
 
-/* ================= FIREBASE ================= */
 onValue(ref(db,"subscribers"), snap=>{
     const data = snap.val() || {};
 
