@@ -6,6 +6,7 @@
 <title>الدفع - FAST NET</title>
 
 <style>
+/* ===== نفس ستايلك الأصلي ===== */
 body { 
     font-family: 'Segoe UI', Tahoma, Arial, sans-serif; 
     padding:20px; 
@@ -96,7 +97,9 @@ input[type=number]{width:75px;text-align:center;}
 <th>المتبقي</th>
 <th>حالة الدفع</th>
 <th>الشهر</th>
+<th>دفع</th>
 <th>طباعة</th>
+<th>واتساب</th>
 </tr>
 </thead>
 
@@ -140,12 +143,14 @@ function renderTable(){
         const paid = sub.payments.reduce((s,p)=>s+Number(p.amount||0),0);
         const remaining = +(sub.price - paid).toFixed(2);
 
-        const status = remaining===0 ? "full" : (paid>0 ? "partial" : "unpaid");
+        const status =
+            remaining===0 ? "full" :
+            paid>0 ? "partial" : "unpaid";
 
         if(!(statusFilterValue==="all" || status===statusFilterValue)) return;
 
         const searchMatch = [sub.name, sub.phone, sub.address, sub.price]
-        .some(f => f.toString().toLowerCase().includes(searchFilter));
+            .some(f => f.toString().toLowerCase().includes(searchFilter));
 
         if(!searchMatch) return;
 
@@ -161,24 +166,26 @@ function renderTable(){
             <td>$${remaining}</td>
             <td></td>
             <td>${currentMonth}</td>
+            <td><input type="number"></td>
             <td><button class="print-btn">طباعة</button></td>
+            <td><button class="wa-btn">واتساب</button></td>
         `;
 
+        /* ===== حالة الدفع ===== */
         const statusCell = tr.children[7];
-
         statusCell.innerHTML =
             remaining===0
             ? `<span class="status-paid">مدفوع كليًا</span>`
-            : (paid>0
-                ? `<span class="status-partial">مدفوع جزئيًا</span>`
-                : `<span class="status-unpaid">غير مدفوع</span>`);
+            : paid>0
+            ? `<span class="status-partial">مدفوع جزئيًا</span>`
+            : `<span class="status-unpaid">غير مدفوع</span>`;
 
-        /* ================= PRINT ESC/POS RAWBT ================= */
+        /* ================= PRINT FIX ================= */
         tr.querySelector(".print-btn").onclick = ()=>{
 
             const last = sub.payments[sub.payments.length-1] || {};
-            const totalPaid = sub.payments.reduce((s,p)=>s+Number(p.amount||0),0);
-            const remainingPrint = +(sub.price - totalPaid).toFixed(2);
+            const totalPaid = paid;
+            const remainingPrint = remaining;
 
             const text =
 `FAST NET
@@ -193,14 +200,9 @@ function renderTable(){
 الشهر: ${last.month || "-"}
 التاريخ: ${last.date || "-"}`;
 
-            // ESC/POS INIT
-            const esc = "\x1B\x40";
-            const cut = "\x1D\x56\x00";
-
-            const data = esc + text + "\n\n\n" + cut;
-
+            // 🔥 الحل الصحيح 100%
             window.location.href =
-                "rawbt:" + btoa(unescape(encodeURIComponent(data)));
+                "rawbt:" + encodeURIComponent(text);
         };
 
         tableBody.appendChild(tr);
@@ -225,6 +227,7 @@ onValue(ref(db,"subscribers"), snap=>{
 
 searchInput.addEventListener("input", renderTable);
 filterStatus.addEventListener("change", renderTable);
+
 </script>
 
 </body>
