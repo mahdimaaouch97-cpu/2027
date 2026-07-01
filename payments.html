@@ -306,15 +306,23 @@ function renderTable(){
                 <p style="text-align:center; margin:2px 0; font-size:12px;">71-338640   📞  71-346411</p>
                 <tr><td>رقم الإيصال:</td><td>${last.receiptNumber || '-'}</td></tr>
                 <hr>
-                <table style="width:100%; border-collapse:collapse; direction:rtl; text-align:right; font-size:12px;">
-                    <tr><td>الاسم:</td><td>${sub.name}</td></tr>
-                    <tr><td>العنوان:</td><td>${sub.address}</td></tr>
-                    <tr><td>سعر الاشتراك:</td><td>$${sub.price}</td></tr>
-                    <tr><td>المدفوع:</td><td>$${last.amount}</td></tr>
-                    <tr><td>المتبقي:</td><td>$${remainingPrint}</td></tr>
-                    <tr><td>الشهر:</td><td>${last.month}</td></tr>
-                    <tr><td>التاريخ:</td><td>${last.date}</td></tr>
-                </table>
+                <table style="width:100%; font-size:16px; border-collapse:collapse;">
+<tr><td style="font-weight:bold;">رقم الإيصال:</td><td>${last.receiptNumber || '-'}</td></tr>
+
+<tr><td style="font-weight:bold; font-size:18px;">الاسم:</td><td style="font-size:18px;">${sub.name}</td></tr>
+
+<tr><td style="font-weight:bold; font-size:18px;">العنوان:</td><td style="font-size:18px;">${sub.address}</td></tr>
+
+<tr><td style="font-weight:bold; font-size:18px;">سعر الاشتراك:</td><td style="font-size:18px;">$${sub.price}</td></tr>
+
+<tr><td style="font-weight:bold; font-size:18px;">المدفوع:</td><td style="font-size:18px;">$${last.amount}</td></tr>
+
+<tr><td style="font-weight:bold; font-size:18px;">المتبقي:</td><td style="font-size:18px;">$${remainingPrint}</td></tr>
+
+<tr><td style="font-weight:bold; font-size:18px;">الشهر:</td><td style="font-size:18px;">${last.month}</td></tr>
+
+<tr><td style="font-weight:bold; font-size:18px;">التاريخ:</td><td style="font-size:18px;">${last.date}</td></tr>
+</table>
                 <hr>
             </div>
             `);
