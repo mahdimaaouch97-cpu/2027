@@ -183,6 +183,40 @@ input[type=number] {
 </table>
 
 <script type="module">
+function buildESCReceipt(sub, last, totalPaid, remainingPrint) {
+    const encoder = new TextEncoder();
+
+    let data = [];
+
+    // تهيئة الطابعة
+    data.push(0x1B, 0x40); // ESC @
+
+    // محاذاة وسط
+    data.push(0x1B, 0x61, 0x01);
+    data.push(...encoder.encode("FAST NET\n"));
+    data.push(...encoder.encode("71-338640 | 71-346411\n\n"));
+
+    // رجوع لليسار
+    data.push(0x1B, 0x61, 0x00);
+
+    data.push(...encoder.encode(`رقم الإيصال: ${last.receiptNumber}\n`));
+    data.push(...encoder.encode("-----------------------------\n"));
+
+    data.push(...encoder.encode(`الاسم: ${sub.name}\n`));
+    data.push(...encoder.encode(`العنوان: ${sub.address}\n`));
+    data.push(...encoder.encode(`سعر الاشتراك: $${sub.price}\n`));
+    data.push(...encoder.encode(`المدفوع: $${last.amount}\n`));
+    data.push(...encoder.encode(`المتبقي: $${remainingPrint}\n`));
+    data.push(...encoder.encode(`الشهر: ${last.month}\n`));
+    data.push(...encoder.encode(`التاريخ: ${last.date}\n`));
+
+    data.push(...encoder.encode("\n-----------------------------\n\n"));
+
+    // قطع الورق
+    data.push(0x1D, 0x56, 0x00);
+
+    return new Uint8Array(data);
+}
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getDatabase, ref, onValue, update, get, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
@@ -293,32 +327,28 @@ function renderTable(){
         });
 
         const printBtn = tr.querySelector(".print-btn");
-        printBtn.addEventListener("click", ()=>{ 
-            if(sub.payments.length===0) return alert("لا توجد دفعات");
-            const last = sub.payments[sub.payments.length-1];
-            const totalPaid = sub.payments.reduce((sum,p)=>sum+Number(p.amount||0),0);
-            const remainingPrint = +(sub.price - totalPaid).toFixed(2);
 
-            const win = window.open("", "", "width=220,height=500");
-            win.document.write(`
-            <div style="font-family:Arial, sans-serif; width:200px; padding:5px; direction:rtl; text-align:right; font-size:12px;">
-                <h3 style="text-align:center; margin:0;">FAST NET</h3>
-                <p style="text-align:center; margin:2px 0; font-size:12px;">71-338640   📞  71-346411</p>
-                <tr><td>رقم الإيصال:</td><td>${last.receiptNumber || '-'}</td></tr>
-                <hr>
-                <table style="width:100%; border-collapse:collapse; direction:rtl; text-align:right; font-size:12px;">
-                    <tr><td>الاسم:</td><td>${sub.name}</td></tr>
-                    <tr><td>العنوان:</td><td>${sub.address}</td></tr>
-                    <tr><td>سعر الاشتراك:</td><td>$${sub.price}</td></tr>
-                    <tr><td>المدفوع:</td><td>$${last.amount}</td></tr>
-                    <tr><td>المتبقي:</td><td>$${remainingPrint}</td></tr>
-                    <tr><td>الشهر:</td><td>${last.month}</td></tr>
-                    <tr><td>التاريخ:</td><td>${last.date}</td></tr>
-                </table>
-                <hr>
-            </div>
-            `);
-            win.print();
+printBtn.addEventListener("click", async ()=>{ 
+    if(sub.payments.length===0) return alert("لا توجد دفعات");
+
+    const last = sub.payments[sub.payments.length-1];
+    const totalPaid = sub.payments.reduce((sum,p)=>sum+Number(p.amount||0),0);
+    const remainingPrint = +(sub.price - totalPaid).toFixed(2);
+
+    const escposData = buildESCReceipt(sub, last, totalPaid, remainingPrint);
+
+    const base64 = btoa(String.fromCharCode(...escposData));
+
+    const url =
+        "intent:#Intent;" +
+        "package=ru.a402d.rawbtprinter;" +
+        "scheme=rawbt;" +
+        "S.data=" + base64 + ";" +
+        "end;";
+
+    window.location.href = url;
+});
+
         });
 
         const waBtn = tr.querySelector(".wa-btn");
