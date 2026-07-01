@@ -240,7 +240,7 @@ function renderTable(){
                 </select>
             </td>
             <td data-label="دفع">
-                <input type="number" class="pay-input" min="0.01" max="${remaining}" step="0.01" ${remaining===0?"disabled":""}>
+                <input type="number" class="pay-input" min="1" max="${remaining}" step="1" ${remaining===0?"disabled":""}>
                 <button class="pay-btn" ${remaining===0?"disabled":""}>دفع</button>
             </td>
             <td data-label="طباعة"><button class="print-btn">طباعة</button></td>
