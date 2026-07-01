@@ -1,6 +1,6 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getDatabase, ref, onValue, update, get, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 /* ================= FIREBASE ================= */
 const firebaseConfig = {
@@ -16,7 +16,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-/* ================= BLUETOOTH PRINTER ================= */
+/* ================= BLUETOOTH ================= */
 let device, server, service, characteristic;
 
 window.connectPrinter = async function () {
@@ -39,12 +39,11 @@ window.connectPrinter = async function () {
 
         const chars = await service.getCharacteristics();
 
-        for (let c of chars) {
-            if (c.properties.write || c.properties.writeWithoutResponse) {
-                characteristic = c;
-                break;
-            }
-        }
+        characteristic = chars.find(c =>
+            c.properties.write || c.properties.writeWithoutResponse
+        );
+
+        if (!characteristic) throw new Error("No writable characteristic found");
 
         alert("✔ تم الاتصال بالطابعة");
     } catch (e) {
@@ -52,13 +51,13 @@ window.connectPrinter = async function () {
     }
 };
 
-/* ================= ESC/POS BUILDER ================= */
+/* ================= ESC/POS (FIXED) ================= */
 function buildESC(text) {
     const enc = new TextEncoder();
 
     let data = [];
 
-    // INIT
+    // INIT PRINTER
     data.push(0x1B, 0x40);
 
     // CENTER HEADER
@@ -66,18 +65,29 @@ function buildESC(text) {
     data.push(...enc.encode("FAST NET\n"));
     data.push(...enc.encode("----------------------\n"));
 
-    // LEFT
+    // LEFT ALIGN
     data.push(0x1B, 0x61, 0x00);
 
     data.push(...enc.encode(text));
 
-    // FEED
+    // FEED LINES
     data.push(10, 10);
 
-    // CUT
+    // CUT PAPER
     data.push(0x1D, 0x56, 0x00);
 
     return new Uint8Array(data);
+}
+
+/* ================= SAFE WRITE (IMPORTANT FIX) ================= */
+async function sendToPrinter(data) {
+    const chunkSize = 180;
+
+    for (let i = 0; i < data.length; i += chunkSize) {
+        const chunk = data.slice(i, i + chunkSize);
+        await characteristic.writeValue(chunk);
+        await new Promise(r => setTimeout(r, 50)); // مهم جدًا للطابعات
+    }
 }
 
 /* ================= PRINT ================= */
@@ -110,20 +120,21 @@ Remaining: ${remaining}
 Month: ${last.month}
 Date: ${last.date}
 
-Thank you
+----------------------
+THANK YOU
 `;
 
     const bytes = buildESC(text);
 
     try {
-        await characteristic.writeValue(bytes);
-        alert("✔ تمت الطباعة");
+        await sendToPrinter(bytes);
+        alert("✔ تمت الطباعة بنجاح");
     } catch (e) {
         alert("❌ فشل الطباعة: " + e);
     }
 };
 
-/* ================= TABLE DATA ================= */
+/* ================= TABLE ================= */
 const tableBody = document.getElementById("subscribersTable");
 
 onValue(ref(db, "subscribers"), snap => {
@@ -155,21 +166,19 @@ onValue(ref(db, "subscribers"), snap => {
             <td><button class="printBtn">طباعة</button></td>
         `;
 
-        /* ================= PAY ================= */
+        /* PAY */
         tr.querySelector(".payBtn").onclick = async () => {
-
             const input = tr.querySelector(".payInput");
             const amount = Number(input.value);
 
             if (!amount || amount <= 0) return alert("مبلغ غير صحيح");
 
-            const date = new Date().toLocaleDateString();
             const receiptNumber = Date.now();
 
             sub.payments.push({
                 amount,
-                date,
-                month: new Date().getMonth()+1,
+                date: new Date().toLocaleDateString(),
+                month: new Date().getMonth() + 1,
                 receiptNumber
             });
 
@@ -181,7 +190,7 @@ onValue(ref(db, "subscribers"), snap => {
             alert("تم الدفع");
         };
 
-        /* ================= PRINT ================= */
+        /* PRINT */
         tr.querySelector(".printBtn").onclick = () => {
             printReceipt(sub);
         };
