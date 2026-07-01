@@ -198,7 +198,6 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
-
 const tableBody = document.getElementById("subscribersTable");
 const searchInput = document.getElementById("search");
 const filterStatus = document.getElementById("filterStatus");
@@ -206,29 +205,26 @@ const filterStatus = document.getElementById("filterStatus");
 let subscribers = [];
 
 function renderTable(){
-
     const searchFilter = searchInput.value.toLowerCase();
     const statusFilterValue = filterStatus.value;
-
     tableBody.innerHTML = "";
 
-    const currentMonth = new Date().getMonth() + 1;
+    const currentMonth = new Date().getMonth() + 1; // الشهر الحالي 1-12
 
     subscribers.forEach(sub => {
-
         const paid = sub.payments.reduce((sum,p)=>sum+Number(p.amount||0),0);
         const remaining = +(sub.price - paid).toFixed(2);
         const status = remaining===0 ? "full" : (remaining<sub.price ? "partial" : "unpaid");
 
         if(!(statusFilterValue==="all" || status===statusFilterValue)) return;
 
+        // تحقق من البحث في جميع الأعمدة
         const searchMatch = [sub.name, sub.phone, sub.address, sub.price].some(field =>
             field.toString().toLowerCase().includes(searchFilter)
         );
         if(!searchMatch) return;
 
         const tr = document.createElement("tr");
-
         tr.innerHTML = `
             <td data-label="#">${sub.id}</td>
             <td data-label="الاسم">${sub.name}</td>
@@ -252,22 +248,20 @@ function renderTable(){
         `;
 
         const statusCell = tr.querySelector(".status-cell");
-        statusCell.innerHTML = remaining===0 
-            ? '<span class="status-paid">مدفوع كليًا</span>'
-            : remaining < Number(sub.price)
-                ? '<span class="status-partial">مدفوع جزئيًا</span>'
-                : '<span class="status-unpaid">غير مدفوع</span>';
+        statusCell.innerHTML = remaining===0 ? '<span class="status-paid">مدفوع كليًا</span>' :
+                                remaining<sub.price ? '<span class="status-partial">مدفوع جزئيًا</span>' :
+                                '<span class="status-unpaid">غير مدفوع</span>';
 
         const payBtn = tr.querySelector(".pay-btn");
         const payInput = tr.querySelector(".pay-input");
         const monthSelect = tr.querySelector(".month-select");
 
         payBtn.addEventListener("click", async ()=>{
-
             const amount = parseFloat(payInput.value);
             if(isNaN(amount) || amount<=0 || amount>remaining){
                 return alert(`الرجاء إدخال مبلغ صالح. الحد الأقصى: $${remaining}`);
             }
+            if(!confirm(`تأكيد دفع مبلغ $${amount} ؟`)) return;
 
             const month = monthSelect.value;
             const date = new Date().toLocaleDateString();
@@ -284,111 +278,78 @@ function renderTable(){
 
             const newPaid = sub.payments.reduce((sum,p)=>sum+Number(p.amount||0),0).toFixed(2);
             const newRemaining = +(sub.price - newPaid).toFixed(2);
-
             tr.cells[5].innerText = `$${newPaid}`;
             tr.cells[6].innerText = `$${newRemaining}`;
-
-            statusCell.innerHTML = newRemaining===0 
-                ? '<span class="status-paid">مدفوع كليًا</span>'
-                : '<span class="status-partial">مدفوع جزئيًا</span>';
-
+            statusCell.innerHTML = newRemaining===0 ? '<span class="status-paid">مدفوع كليًا</span>' :
+                                    newRemaining<sub.price ? '<span class="status-partial">مدفوع جزئيًا</span>' :
+                                    '<span class="status-unpaid">غير مدفوع</span>';
             payInput.value = "";
+            payInput.max = newRemaining;
+            if(newRemaining===0){
+                payInput.disabled = true;
+                payBtn.disabled = true;
+            }
+            sendWhatsApp(sub, amount, month, receiptNumber);
         });
 
-      /* ===========================
-   🖨️ RAWBT PRINT (CLEAN & FIXED)
-=========================== */
+        const printBtn = tr.querySelector(".print-btn");
+        printBtn.addEventListener("click", ()=>{ 
+            if(sub.payments.length===0) return alert("لا توجد دفعات");
+            const last = sub.payments[sub.payments.length-1];
+            const totalPaid = sub.payments.reduce((sum,p)=>sum+Number(p.amount||0),0);
+            const remainingPrint = +(sub.price - totalPaid).toFixed(2);
 
-const printBtn = tr.querySelector(".print-btn");
-
-printBtn.addEventListener("click", () => {
-
-    try {
-
-        const payments = Array.isArray(sub.payments) ? sub.payments : [];
-
-        if (payments.length === 0) {
-            alert("لا توجد دفعات للطباعة");
-            return;
-        }
-
-        const totalPaid = payments.reduce((s, p) => s + Number(p.amount || 0), 0);
-        const remaining = +(sub.price - totalPaid).toFixed(2);
-        const last = payments[payments.length - 1];
-
-        const text =
-`FAST NET
-----------------------
-الاسم: ${sub.name}
-الهاتف: ${sub.phone}
-العنوان: ${sub.address}
-----------------------
-سعر الاشتراك: $${sub.price}
-المدفوع: $${totalPaid.toFixed(2)}
-المتبقي: $${remaining}
-الشهر: ${last?.month || "-"}
-التاريخ: ${last?.date || "-"}
-----------------------`;
-
-        // Android (RawBT)
-        if (/Android/i.test(navigator.userAgent)) {
-
-    const cleanText = text.trim();
-
-    const rawbtUrl =
-        "intent:#Intent;" +
-        "package=ru.a402d.rawbtprinter;" +
-        "scheme=rawbt;" +
-        "S.text=" + encodeURIComponent(cleanText) + ";" +
-        "action=android.intent.action.SEND;" +
-        "end;";
-
-    window.location.href = rawbtUrl;
-
-}
-        } else {
-
-            // PC fallback
-            const win = window.open("", "_blank", "width=350,height=600");
-            win.document.write(`<pre>${text}</pre>`);
-            win.document.close();
-            win.focus();
+            const win = window.open("", "", "width=220,height=500");
+            win.document.write(`
+            <div style="font-family:Arial, sans-serif; width:200px; padding:5px; direction:rtl; text-align:right; font-size:12px;">
+                <h3 style="text-align:center; margin:0;">FAST NET</h3>
+                <p style="text-align:center; margin:2px 0; font-size:12px;">71-338640   📞  71-346411</p>
+                <tr><td>رقم الإيصال:</td><td>${last.receiptNumber || '-'}</td></tr>
+                <hr>
+                <table style="width:100%; border-collapse:collapse; direction:rtl; text-align:right; font-size:12px;">
+                    <tr><td>الاسم:</td><td>${sub.name}</td></tr>
+                    <tr><td>العنوان:</td><td>${sub.address}</td></tr>
+                    <tr><td>سعر الاشتراك:</td><td>$${sub.price}</td></tr>
+                    <tr><td>المدفوع:</td><td>$${last.amount}</td></tr>
+                    <tr><td>المتبقي:</td><td>$${remainingPrint}</td></tr>
+                    <tr><td>الشهر:</td><td>${last.month}</td></tr>
+                    <tr><td>التاريخ:</td><td>${last.date}</td></tr>
+                </table>
+                <hr>
+            </div>
+            `);
             win.print();
-        }
+        });
 
-    } catch (err) {
-        console.error("PRINT ERROR:", err);
-        alert("فشل الطباعة - راجع الكونسول");
-    }
+        const waBtn = tr.querySelector(".wa-btn");
+        waBtn.addEventListener("click", ()=> sendWhatsApp(sub));
 
-});
         tableBody.appendChild(tr);
     });
 
-    if(tableBody.innerHTML===""){
-        tableBody.innerHTML = `<tr><td colspan="12">لا يوجد مشتركين مطابقين.</td></tr>`;
-    }
+    if(tableBody.innerHTML==="") tableBody.innerHTML=`<tr><td colspan="12">لا يوجد مشتركين مطابقين.</td></tr>`;
 }
 
 function sendWhatsApp(sub, amount=null, month=null, receiptNumber=null){
     if(sub.payments.length===0) return alert("لا توجد دفعات");
-
     const last = sub.payments[sub.payments.length-1];
+    amount = amount ?? last.amount;
+    month = month ?? last.month;
+    receiptNumber = receiptNumber ?? last.receiptNumber;
 
     const totalPaid = sub.payments.reduce((sum,p)=>sum+Number(p.amount||0),0);
     const remaining = +(sub.price - totalPaid).toFixed(2);
     const date = last.date;
-
     let phone = sub.phone.startsWith("+") ? sub.phone : "+961"+sub.phone;
 
     const msg = `📩 إشعار دفع FAST NET
-🧾 رقم الإيصال: ${receiptNumber || last.receiptNumber}
+🧾 رقم الإيصال: ${receiptNumber}
 👤 الاسم: ${sub.name}
 📍 العنوان: ${sub.address}
-💰 سعر الإشتراك: $${sub.price}
-💰 المدفوع: $${last.amount}
+💰 سعر الإشتراك :$${sub.price}
+💰 المدفوع : $${amount}
 💵 المتبقي: $${remaining}
-🗓️ الشهر: ${month || last.month}
+🗓️ الشهر: ${month}
 📅 التاريخ: ${date}`;
 
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, "_blank");
@@ -410,7 +371,6 @@ onValue(ref(db,"subscribers"), snap=>{
 
 searchInput.addEventListener("input", renderTable);
 filterStatus.addEventListener("change", renderTable);
-
 </script>
 </body>
 </html>
