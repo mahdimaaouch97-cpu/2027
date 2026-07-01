@@ -332,21 +332,27 @@ printBtn.addEventListener("click", async () => {
     if (sub.payments.length === 0) return alert("لا توجد دفعات");
 
     const last = sub.payments[sub.payments.length - 1];
-    const totalPaid = sub.payments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
-    const remainingPrint = +(sub.price - totalPaid).toFixed(2);
 
-    let text =
+    const totalPaid = sub.payments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
+    const remaining = +(sub.price - totalPaid).toFixed(2);
+
+    const text =
 `FAST NET
-----------------
+------------------------
 Receipt: ${last.receiptNumber}
 Name: ${sub.name}
 Phone: ${sub.phone}
-Price: ${sub.price}
-Paid: ${last.amount}
-Remaining: ${remainingPrint}
+Address: ${sub.address}
+
+Price: $${sub.price}
+Paid: $${last.amount}
+Remaining: $${remaining}
+
 Month: ${last.month}
 Date: ${last.date}
-----------------
+
+------------------------
+Thank you
 `;
 
     const intent =
