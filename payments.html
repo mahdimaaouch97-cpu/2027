@@ -335,25 +335,28 @@ printBtn.addEventListener("click", async () => {
     const totalPaid = sub.payments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
     const remainingPrint = +(sub.price - totalPaid).toFixed(2);
 
-    const escposData = buildESCReceipt(sub, last, totalPaid, remainingPrint);
+    let text =
+`FAST NET
+----------------
+Receipt: ${last.receiptNumber}
+Name: ${sub.name}
+Phone: ${sub.phone}
+Price: ${sub.price}
+Paid: ${last.amount}
+Remaining: ${remainingPrint}
+Month: ${last.month}
+Date: ${last.date}
+----------------
+`;
 
-    // ✔ تحويل صحيح 100%
-    let binary = new Uint8Array(escposData);
-    let binaryString = "";
-    for (let i = 0; i < binary.length; i++) {
-        binaryString += String.fromCharCode(binary[i]);
-    }
-
-    const base64 = btoa(binaryString);
-
-    const url =
+    const intent =
         "intent:#Intent;" +
-        "package=ru.a4a.rawbtprinter;" +
+        "package=ru.a402d.rawbtprinter;" +
         "scheme=rawbt;" +
-        "S.data=" + base64 + ";" +
+        "S.text=" + encodeURIComponent(text) + ";" +
         "end;";
 
-    window.location.href = url;
+    window.location.href = intent;
 });
 
         const waBtn = tr.querySelector(".wa-btn");
