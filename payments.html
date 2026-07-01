@@ -328,36 +328,16 @@ function renderTable(){
 
         const printBtn = tr.querySelector(".print-btn");
 
-printBtn.addEventListener("click", async () => { 
-    if (sub.payments.length === 0) return alert("لا توجد دفعات");
-
-    const last = sub.payments[sub.payments.length - 1];
-
-    const totalPaid = sub.payments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
-    const remaining = +(sub.price - totalPaid).toFixed(2);
+printBtn.addEventListener("click", () => {
 
     const text =
-`FAST NET
-------------------------
-Receipt: ${last.receiptNumber}
-Name: ${sub.name}
-Phone: ${sub.phone}
-Address: ${sub.address}
-
-Price: $${sub.price}
-Paid: $${last.amount}
-Remaining: $${remaining}
-
-Month: ${last.month}
-Date: ${last.date}
-
-------------------------
-Thank you
-`;
+`FAST NET TEST
+Hello Printer
+If you see this, printing works`;
 
     const intent =
         "intent:#Intent;" +
-        "package=ru.a402d.rawbtprinter;" +
+        "package=ru.a4a.rawbtprinter;" +
         "scheme=rawbt;" +
         "S.text=" + encodeURIComponent(text) + ";" +
         "end;";
